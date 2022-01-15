@@ -5,11 +5,11 @@ use crate::helpers::gen_pkce::Pkce;
 
 
 pub struct SettingsVars {
-    client_id: String,
-    response_type: String,
-    base_url: String,
-    redirect_url: String,
-    code_challenge: Pkce,
+    pub client_id: String,
+    pub response_type: String,
+    pub base_url: String,
+    pub redirect_uri: String,
+    pub code_challenge: Pkce,
 }
 
 impl SettingsVars {
@@ -17,7 +17,7 @@ impl SettingsVars {
     pub fn new() -> Self {
          dotenv().ok();
 
-        let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", "REDIRECT_URL"];
+        let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", "REDIRECT_URI", "CLIENT_ID"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {
@@ -31,7 +31,7 @@ impl SettingsVars {
             client_id: Self::get_var("CLIENT_ID"),
             response_type: Self::get_var("RESPONSE_TYPE"),
             base_url: Self::get_var("BASE_URL"),
-            redirect_url: Self::get_var("REDIRECT_URL"),
+            redirect_uri: Self::get_var("REDIRECT_URI"),
             code_challenge: Pkce::new(),
         }
     }

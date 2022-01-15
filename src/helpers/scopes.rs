@@ -1,5 +1,10 @@
 use core::fmt;
 
+pub enum AuthType {
+    User,
+    App,
+}
+
 pub enum Scope {
     ReadTweet,
     WriteTweet,
@@ -13,7 +18,7 @@ pub enum Scope {
 
 impl fmt::Display for Scope {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({})", Scope::generate(self))
+        write!(f, "{}", Scope::generate(self))
     }
 }
 
@@ -33,12 +38,22 @@ impl Scope {
         }
     }
 
-    pub fn get_required_scopes() -> Vec<String> {
+    fn required_user_scope() -> Vec<String> {
         vec![
             Scope::ReadTweet.to_string(), 
             Scope::WriteTweet.to_string(),
             Scope::OfflineAccess.to_string(),
             Scope::WriteLike.to_string(),
         ]
+    }
+
+    pub fn new(auth_type: AuthType) -> String {
+        match auth_type {
+            AuthType::User => {
+                let required_scope = Self::required_user_scope();
+                required_scope.join("%20")
+            }
+            AuthType::App => {"".to_string()}
+        }
     }
 }

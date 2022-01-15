@@ -1,3 +1,5 @@
+use core::fmt;
+
 use pkce;
 
 #[derive(Debug)]
@@ -19,4 +21,11 @@ impl Pkce {
         Self(base_64_url)
     }
 
+}
+
+
+impl fmt::Display for Pkce {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
