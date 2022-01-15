@@ -6,3 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hyper = { version = "0.14.16", features = ["client", "http2", "runtime", "tcp"]}
+url = "2.2.2"
+pkce = "0.1.1"
