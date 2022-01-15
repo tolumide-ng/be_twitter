@@ -1,13 +1,4 @@
 use core::fmt;
-use std::collections::HashMap;
-
-// macro to initialize an hashmap with values
-// macro_rules! hashmap {
-//     ($( $key: expr => $val: expr), *) => {{
-//         let mut map = ::std::collections::HashMap::new();
-//         $( map.insert($key, $val); )*
-//     }}
-// }
 
 pub enum Scope {
     ReadTweet,
@@ -29,18 +20,7 @@ impl fmt::Display for Scope {
 
 
 impl Scope {    
-    fn generate(permission: &Self) -> String{
-        // let scope_dic: HashMap<Scope, String> = hashmap![
-        //     Self::ReadTweet => String::from("tweet.read"),
-        //     Self::WriteTweet => String::from("tweet.write"),
-        //     // Self::ReadUsers => String::from("users.read"),
-        //     // Self::WriteUsers => String::from("users.write"),
-        //     // Self::ReadFollows => String::from("follows.read"),
-        //     // Self::WriteFollows => String::from("follows.write"),
-        //     Self::OfflineAccess => String::from("offline.access"),
-        //     Self::WriteLike => String::from("like.write")
-        //     ];
-            
+    fn generate(permission: &Self) -> String{            
         return match *permission {
             Self::ReadTweet => String::from("tweet.read"),
             Self::WriteTweet => String::from("tweet.write"),

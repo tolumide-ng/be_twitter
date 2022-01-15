@@ -22,6 +22,6 @@ impl App {
     // }
 
     fn new() {
-        let app_required_scope = Scope::generate();
+        // let app_required_scope = Scope::generate();
     }
 }
