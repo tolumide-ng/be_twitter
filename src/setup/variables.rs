@@ -10,6 +10,7 @@ pub struct SettingsVars {
     pub base_url: String,
     pub redirect_uri: String,
     pub code_challenge: Pkce,
+    pub state: String,
 }
 
 impl SettingsVars {
@@ -17,7 +18,7 @@ impl SettingsVars {
     pub fn new() -> Self {
          dotenv().ok();
 
-        let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", "REDIRECT_URI", "CLIENT_ID"];
+        let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", "REDIRECT_URI", "CLIENT_URL"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {
@@ -28,11 +29,12 @@ impl SettingsVars {
         };
 
         Self {
-            client_id: Self::get_var("CLIENT_ID"),
+            client_id: Self::get_var("CLIENT_URL"),
             response_type: Self::get_var("RESPONSE_TYPE"),
             base_url: Self::get_var("BASE_URL"),
             redirect_uri: Self::get_var("REDIRECT_URI"),
             code_challenge: Pkce::new(),
+            state: Self::get_var("STATE_CODE")
         }
     }
 

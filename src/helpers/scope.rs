@@ -51,7 +51,7 @@ impl Scope {
         match auth_type {
             AuthType::User => {
                 let required_scope = Self::required_user_scope();
-                required_scope.join("%20")
+                required_scope.join(" ")
             }
             AuthType::App => {"".to_string()}
         }

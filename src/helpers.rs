@@ -1,2 +1,2 @@
 pub mod gen_pkce;
-pub mod scopes;
+pub mod scope;
