@@ -1,5 +1,6 @@
 use pkce;
 
+#[derive(Debug)]
 pub struct Pkce(String);
 
 impl Pkce {
