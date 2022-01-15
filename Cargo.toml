@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 hyper = { version = "0.14.16", features = ["client", "http2", "runtime", "tcp"]}
-url = "2.2.2"
+url = { version = "2.2.2", features = ["serde"] }
 pkce = "0.1.1"
 config = "0.11.0"
 dotenv = "0.15.0"
