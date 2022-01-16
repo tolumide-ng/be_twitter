@@ -895,6 +895,7 @@ dependencies = [
  "config",
  "dotenv",
  "futures",
+ "http",
  "hyper",
  "lazy_static",
  "pkce",
