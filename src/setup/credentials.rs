@@ -14,7 +14,7 @@ pub struct Credentials {
 impl Credentials {
     pub fn new() -> Self {
         let SettingsVars { client_id, response_type, base_url, 
-            redirect_uri, code_challenge, state, client_secret } = SettingsVars::new();
+            redirect_uri, code_challenge, state, client_secret, app_address, .. } = SettingsVars::new();
         let app_scope = Scope::new(AuthType::User);
 
         let url = Url::parse_with_params(base_url.as_str(), &[
