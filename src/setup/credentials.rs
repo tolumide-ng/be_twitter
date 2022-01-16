@@ -5,13 +5,13 @@ use crate::helpers::scope::{Scope, AuthType};
 use crate::setup::variables::SettingsVars;
 
 #[derive(Debug)]
-pub struct App {
+pub struct Credentials {
     pub authorize_url: String,
     pub auth_header: String,
 }
 
 
-impl App {
+impl Credentials {
     pub fn new() -> Self {
         let SettingsVars { client_id, response_type, base_url, 
             redirect_uri, code_challenge, state, client_secret } = SettingsVars::new();

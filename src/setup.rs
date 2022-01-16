@@ -1,3 +1,3 @@
 mod variables;
-pub mod authorize_url;
+pub mod credentials;
 pub mod client;

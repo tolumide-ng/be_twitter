@@ -1,5 +1,5 @@
-use twitar::setup::authorize_url::App;
+use twitar::setup::credentials::Credentials;
 
 fn main() {
-    println!("Hello, world! {:#?}", App::new());
+    println!("Hello, world! {:#?}", Credentials::new());
 }

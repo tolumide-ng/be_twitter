@@ -2,6 +2,7 @@
 name = "twitar"
 version = "0.1.0"
 edition = "2021"
+author = "Tolumide Shopein <tolumideshopein@gmail.com>"
 
 [lib]
 path = "src/lib.rs"
@@ -21,3 +22,6 @@ dotenv = "0.15.0"
 serde = "1.0.133"
 base64 = "0.13.0"
 secrecy = "0.8.0"
+futures = "0.3.19"
+lazy_static = "1.4.0"
+serde_derive = "1.0.133"
