@@ -1,3 +1,4 @@
+use secrecy::Secret;
 use twitar::helpers::hmac_signature::{AuthorizeRequest, Signature, ApiCallMethod};
 
 // use twitar::setup::credentials::Credentials;
@@ -13,6 +14,9 @@ fn main() {
         oauth_version: String::from("1.0"),
         base_url: String::from("https://api.twitter.com/1.1/statuses/update.json"),
         method: ApiCallMethod::POST,
+        consumer_secret: Secret::new("kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw".to_owned()),
+        // how to get the user's oauth token - https://developer.twitter.com/en/docs/authentication/oauth-1-0a
+        oauth_token_secret: Some(Secret::new(String::from("LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")))
     };
     let abc = Signature::new(ab);
     println!("Hello, world! {:#?}", abc);

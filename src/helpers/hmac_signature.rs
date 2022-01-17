@@ -1,13 +1,15 @@
 // https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
 
+use secrecy::{ExposeSecret, Secret};
 use urlencoding::encode;
-use std::{collections::HashMap, fmt};
+use std::{collections::HashMap};
 
 
 #[derive(Default, Debug)]
 pub struct Signature {
     parameter_string: Option<String>,
     signature_base_string: Option<String>,
+    signing_key: Option<Secret<String>>
 }
 
 
@@ -23,7 +25,11 @@ pub struct AuthorizeRequest {
     pub oauth_version: String,
     pub base_url: String,
     pub method: ApiCallMethod,
+    pub consumer_secret: Secret<String>,
+    pub oauth_token_secret: Option<Secret<String>>, // OAuth token secret || token secret
 }
+
+// Request Token Secret === oauth_token_secret
 
 
 #[derive(Debug, Clone)]
@@ -45,11 +51,20 @@ impl From<ApiCallMethod> for String {
 
 
 impl Signature {
-    pub fn new(request: AuthorizeRequest) {
+    pub fn new(request: AuthorizeRequest) -> Self {
         let mut signature: Signature = Default::default();
 
-        signature.parameter_string = Some(signature.get_parameter(request.clone()));
-        signature.get_signature_base_string(request.clone());
+        let parameter_string = signature.get_parameter(request.clone());
+        signature.parameter_string = Some(parameter_string);
+        
+        let base_string = signature.get_signature_base_string(request.clone());
+        signature.signature_base_string = Some(base_string);
+
+        let signing_key = signature.get_signing_key(request);
+
+        signature.signing_key = Some(Secret::new(signing_key));
+
+        signature
 
     }
 
@@ -88,10 +103,10 @@ impl Signature {
             parameter_string.push_str(key_val.as_str());
         });
 
-        return parameter_string
+        parameter_string
     }
 
-    fn get_signature_base_string(&mut self, request: AuthorizeRequest) {
+    fn get_signature_base_string(&self, request: AuthorizeRequest) -> String {
         let mut base_string = String::from("");
 
         base_string.push_str(format!("{}&", String::from(request.method)).as_str());
@@ -100,7 +115,21 @@ impl Signature {
         let parameter_string = format!("{}", encode(self.parameter_string.as_ref().unwrap().as_str()));
         base_string.push_str(parameter_string.as_str());
 
-        self.signature_base_string = Some(base_string);
-
+        base_string
     }
+
+    fn get_signing_key(&self, request: AuthorizeRequest) -> String {
+        let mut signing_key = String::new();
+
+        let consumer_secret = format!("{}&", encode(request.consumer_secret.expose_secret().as_str()));
+        signing_key.push_str(consumer_secret.as_str());
+        
+        if request.oauth_token_secret.is_some() {
+            let token_secret = encode(request.oauth_token_secret.unwrap().expose_secret()).to_string();
+            signing_key.push_str(token_secret.as_str());
+        }
+
+        signing_key
+    }
+
 }
