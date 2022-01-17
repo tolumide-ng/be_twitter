@@ -1,27 +1,59 @@
 // https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
 
 use urlencoding::encode;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 
-struct Signature {}
-
-
-// to be removed later -- for practise only
-struct AuthorizeRequest {
-    include_entities: String,
-    oauth_consumer_key: String,
-    oauth_nonce: String,
-    oauth_signature_method: String,
-    oauth_timestamp: String,
-    oauth_token: String,
-    oauth_version: String,
+#[derive(Default, Debug)]
+pub struct Signature {
+    parameter_string: Option<String>,
+    signature_base_string: Option<String>,
 }
 
 
+// to be removed later -- for practise only
+#[derive(Debug, Clone)]
+pub struct AuthorizeRequest {
+    pub include_entities: String,
+    pub oauth_consumer_key: String,
+    pub oauth_nonce: String,
+    pub oauth_signature_method: String,
+    pub oauth_timestamp: String,
+    pub oauth_token: String,
+    pub oauth_version: String,
+    pub base_url: String,
+    pub method: ApiCallMethod,
+}
+
+
+#[derive(Debug, Clone)]
+pub enum ApiCallMethod {
+    POST,
+    DELETE,
+    GET,
+}
+
+impl From<ApiCallMethod> for String {
+    fn from(method: ApiCallMethod) -> Self {
+        match method {
+            ApiCallMethod::DELETE => "DELETE".to_string(),
+            ApiCallMethod::GET => "GET".to_string(),
+            ApiCallMethod::POST => "POST".to_string(),
+        }
+    }
+}
+
 
 impl Signature {
-    fn create_signature(request: AuthorizeRequest) {
+    pub fn new(request: AuthorizeRequest) {
+        let mut signature: Signature = Default::default();
+
+        signature.parameter_string = Some(signature.get_parameter(request.clone()));
+        signature.get_signature_base_string(request.clone());
+
+    }
+
+    fn get_parameter(&self, request: AuthorizeRequest) -> String {
         let mut request_params: HashMap<&str, String> = HashMap::new();
         let AuthorizeRequest {include_entities, oauth_consumer_key, oauth_nonce,
             oauth_signature_method, oauth_timestamp, oauth_token, oauth_version, ..
@@ -49,11 +81,26 @@ impl Signature {
         encoded_r_params.iter().enumerate().for_each(|(index,val)| {
             let mut key_val = format!("{}={}", val.0, val.1);
             
-            if index == encoded_r_params.len() - 1{
+            if index != encoded_r_params.len() - 1{
                 key_val.push_str("&");
             }
 
             parameter_string.push_str(key_val.as_str());
         });
+
+        return parameter_string
+    }
+
+    fn get_signature_base_string(&mut self, request: AuthorizeRequest) {
+        let mut base_string = String::from("");
+
+        base_string.push_str(format!("{}&", String::from(request.method)).as_str());
+        base_string.push_str(format!("{}&", encode(request.base_url.as_str())).as_str());
+
+        let parameter_string = format!("{}", encode(self.parameter_string.as_ref().unwrap().as_str()));
+        base_string.push_str(parameter_string.as_str());
+
+        self.signature_base_string = Some(base_string);
+
     }
 }
