@@ -1,14 +1,15 @@
 // https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
 
 use secrecy::{ExposeSecret, Secret};
+use sha1::{Sha1};
 use urlencoding::encode;
 use std::{collections::HashMap};
-
+use hmac::{Hmac, Mac, digest::core_api::CoreWrapper, HmacCore};
 
 #[derive(Default, Debug)]
 pub struct Signature {
     parameter_string: Option<String>,
-    signature_base_string: Option<String>,
+    base_string: Option<Secret<String>>,
     signing_key: Option<Secret<String>>
 }
 
@@ -57,12 +58,13 @@ impl Signature {
         let parameter_string = signature.get_parameter(request.clone());
         signature.parameter_string = Some(parameter_string);
         
-        let base_string = signature.get_signature_base_string(request.clone());
-        signature.signature_base_string = Some(base_string);
+        let base_string = signature.get_base_string(request.clone());
+        signature.base_string = Some(base_string);
 
         let signing_key = signature.get_signing_key(request);
+        signature.signing_key = Some(signing_key);
 
-        signature.signing_key = Some(Secret::new(signing_key));
+        let ad = signature.calculate_signature();
 
         signature
 
@@ -106,7 +108,7 @@ impl Signature {
         parameter_string
     }
 
-    fn get_signature_base_string(&self, request: AuthorizeRequest) -> String {
+    fn get_base_string(&self, request: AuthorizeRequest) -> Secret<String> {
         let mut base_string = String::from("");
 
         base_string.push_str(format!("{}&", String::from(request.method)).as_str());
@@ -115,10 +117,10 @@ impl Signature {
         let parameter_string = format!("{}", encode(self.parameter_string.as_ref().unwrap().as_str()));
         base_string.push_str(parameter_string.as_str());
 
-        base_string
+        Secret::new(base_string)
     }
 
-    fn get_signing_key(&self, request: AuthorizeRequest) -> String {
+    fn get_signing_key(&self, request: AuthorizeRequest) -> Secret<String> {
         let mut signing_key = String::new();
 
         let consumer_secret = format!("{}&", encode(request.consumer_secret.expose_secret().as_str()));
@@ -129,7 +131,25 @@ impl Signature {
             signing_key.push_str(token_secret.as_str());
         }
 
-        signing_key
+        Secret::new(signing_key)
+    }
+
+    fn calculate_signature(&self) -> String{
+        type HmacSha1 = Hmac<Sha1>;      
+
+        let parameter_string = self.parameter_string.as_ref().unwrap().as_bytes();
+        let base_string = self.base_string.as_ref().unwrap().expose_secret().as_bytes();
+
+        let mut mac = HmacSha1::new_from_slice(parameter_string).expect("Wrong key length");
+
+        mac.update(base_string);
+
+        let result = mac.finalize();
+        let code_bytes = result.into_bytes();
+
+        let signing_key =  base64::encode(code_bytes);
+
+        return signing_key
     }
 
 }
