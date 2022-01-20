@@ -22,7 +22,7 @@ impl From<hyper::Body> for ABody {
 pub async fn routes(req: Request<Body>) -> ApiResponse {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => health_check(),
-        (&Method::GET, "/enable") => authorize_bot(),
+        (&Method::GET, "/enable") => authorize_bot().await,
         _ => {
             not_found()
         }

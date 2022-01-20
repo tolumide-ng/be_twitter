@@ -6,12 +6,12 @@ use urlencoding::encode;
 use std::{collections::HashMap};
 use hmac::{Hmac, Mac};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Signature {
-    parameter_string: Option<String>,
-    base_string: Option<Secret<String>>,
-    signing_key: Option<Secret<String>>,
-    sign: Option<Secret<String>>,
+    pub parameter_string: Option<String>,
+    pub base_string: Option<Secret<String>>,
+    pub signing_key: Option<Secret<String>>,
+    pub sign: Option<Secret<String>>,
 }
 
 
@@ -62,7 +62,7 @@ impl From<ApiCallMethod> for String {
 
 
 impl Signature {
-    pub fn new(request: AuthorizeRequest) -> Self {
+    pub fn new(request: &AuthorizeRequest) -> Self {
         let mut signature: Signature = Default::default();
 
         let parameter_string = signature.get_parameter(request.clone());
@@ -132,14 +132,14 @@ impl Signature {
         Secret::new(base_string)
     }
 
-    fn get_signing_key(&self, request: AuthorizeRequest) -> Secret<String> {
+    fn get_signing_key(&self, request: &AuthorizeRequest) -> Secret<String> {
         let mut signing_key = String::new();
 
         let consumer_secret = format!("{}&", encode(request.consumer_secret.expose_secret().as_str()));
         signing_key.push_str(consumer_secret.as_str());
         
         if request.oauth_token.is_some() {
-            let token_secret = encode(request.oauth_token.unwrap().expose_secret()).to_string();
+            let token_secret = encode(request.oauth_token.as_ref().unwrap().expose_secret()).to_string();
             signing_key.push_str(token_secret.as_str());
         }
 

@@ -7,42 +7,49 @@ use urlencoding::encode;
 use uuid::Uuid;
 
 
-use crate::setup::variables::SettingsVars;
+use crate::{setup::variables::SettingsVars, helpers::hmac_signature::{AuthorizeRequest, Signature}};
 
+#[derive(Debug)]
 pub struct AppClient {
-    pool: Client<HttpsConnector<HttpConnector>>
+    pool: Client<HttpsConnector<HttpConnector>>,
+    signature: Signature,
 }
 
 
 impl AppClient {
-    pub fn new() -> Self {
+    pub fn new(signature: &Signature) -> Self {
         let https = HttpsConnector::new();
         let pool = Client::builder().build::<_, hyper::Body>(https);
         
         Self {
-            pool
+            pool,
+            signature: signature.clone(),
         }
 
     }
 
 
-    pub async fn make_call(&self, secret: Secret<String>) {
-        let ab = &self.get_oauth_request_token().await;
+    pub async fn make_call(&self, credentials: &AuthorizeRequest) {
+        &self.get_oauth_request_token(&credentials).await;
     }
 
-    async fn get_oauth_request_token(&self) -> Result<Response<Body>, Error> {
+    async fn get_oauth_request_token(&self, credentials: &AuthorizeRequest) {
+        //  -> Result<Response<Body>, Error>
         
         let client = &self.pool.clone();
 
-        let SettingsVars { app_address, api_key, .. } = SettingsVars::new();
+        let SettingsVars { api_key, .. } = SettingsVars::new();
 
-        let oauth_nonce = base64::encode(Uuid::new_v4().to_string());
-        let callback_url = encode(app_address.as_str());
+        let AuthorizeRequest {oauth_nonce, oauth_timestamp, ..} = credentials;
+
+        // let callback_url = encode(app_address.as_str());
 
         // let _url = Url::parse_with_params(
         //     "https://api.twitter.com/oauth/request_token", &[
         //         ("oauth_callback", callback_url),
         //     ]).unwrap();
+
+        let signature = self.signature.sign.clone().unwrap().expose_secret().clone();
 
 
         
@@ -52,12 +59,17 @@ impl AppClient {
             .uri("https://api.twitter.com/oauth/request_token")
             .header("Authorization", format!("OAuth oauth_consumer_key={}", api_key))
             .header("oauth_nonce", oauth_nonce)
-            .body(Body::from("Hello"))
-            // .await()
+            .header("oauth_timestamp", oauth_timestamp.to_string())
+            .header("oauth_signature", signature)
+            .header("oauth_signature_method", &credentials.oauth_signature_method)
+            .header("oauth_version", &credentials.oauth_version)
+            .body(Body::from(""))
             .expect("");
 
         // returns the oauth_token oauth_token_secret and  oauth_callback_confirmed (this must be true)
-        client.request(req).await
+        let abc = client.request(req).await;
+
+        println!("WE GOT AN ABC {:#?}", abc);
 
     }
 
