@@ -9,7 +9,8 @@ use uuid::Uuid;
 use tokio::io::{self, AsyncWriteExt as _};
 
 
-use crate::{setup::variables::SettingsVars, helpers::hmac_signature::{AuthorizeRequest, Signature}};
+use crate::{setup::variables::SettingsVars, helpers::hmac_signature::{Signature}};
+use crate::helpers::params::AuthorizeRequest;
 
 #[derive(Debug)]
 pub struct AppClient {
@@ -36,25 +37,18 @@ impl AppClient {
     }
 
     async fn get_oauth_request_token(&self, credentials: &AuthorizeRequest) {
-        //  -> Result<Response<Body>, Error>
-        
         let client = &self.pool.clone();
-
         let SettingsVars { api_key, .. } = SettingsVars::new();
-
         let AuthorizeRequest {oauth_nonce, oauth_timestamp, ..} = credentials;
-
-        // let callback_url = encode(app_address.as_str());
 
         // let _url = Url::parse_with_params(
         //     "https://api.twitter.com/oauth/request_token", &[
         //         ("oauth_callback", callback_url),
         //     ]).unwrap();
 
-        let signature = self.signature.sign.clone().unwrap().expose_secret().clone();
+        let signature = self.signature.sig.clone().unwrap().expose_secret().clone();
 
-
-        
+        println!("THE SIGNATURE>>>>>>> {}", signature);
         
         let req = Request::builder()
             .method(Method::POST)
@@ -73,10 +67,6 @@ impl AppClient {
 
         println!("WE GOT AN ABC {:#?}", res);
 
-        println!("THE RESPONSE BODY {:#?}", res.body());
-
-        println!("THE RESPONSE BODY {:#?}", res.body().is_end_stream());
-
         while let Some(next) = res.data().await {
             let chunk = next.unwrap();
 
@@ -84,26 +74,6 @@ impl AppClient {
             
             println!("DONE WRITING THE CHUNK {:#?}", chunk);
         }
-
-
-        // Ok(())
-
-        // let body_result = res.body().map_err(|_| {
-        //     println!("THERE IS AN ERROR HERE");
-        //     // ()
-        // }).map(|chunk| {
-        //     println!("==> CHUNK");
-        //     chunk
-        // }).fold(Vec::new(), |mut vector, chunk| {
-        //     println!("++++>>> FOLD");
-        //     vector.extend_from_slice(&chunk);
-        //     println!("=====>>>>> CONVERTED: {:#?}", String::from_utf8(chunk.to_vec()).unwrap())
-        //     Ok(vector)
-        // })
-        //     .and_then(|vector| {
-
-        //     });
-
 
     }
 

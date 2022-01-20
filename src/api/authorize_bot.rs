@@ -1,10 +1,14 @@
 use std::time::SystemTime;
 
-use hyper::{Response, StatusCode, Body};
+use hyper::{Response, StatusCode, Body, Method};
+// use http::method::Method;
 use secrecy::Secret;
 use uuid::Uuid;
 
-use crate::{helpers::{hmac_signature::{AuthorizeRequest, ApiCallMethod, Signature}, response::{ApiResponse, ApiResponseBody}}, app::client::AppClient};
+use crate::{helpers::{hmac_signature::{Signature}, 
+    response::{ApiResponse, ApiResponseBody}}, app::client::AppClient
+};
+use crate::helpers::params::AuthorizeRequest;
 
 pub async fn authorize_bot() -> ApiResponse {
     let oauth_timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -24,7 +28,7 @@ pub async fn authorize_bot() -> ApiResponse {
         oauth_token: Some(Secret::new(String::from("370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"))),
         oauth_version: String::from("1.0"),
         base_url: String::from("https://api.twitter.com/1.1/statuses/update.json"),
-        method: ApiCallMethod::POST,
+        method: Method::POST.to_string(),
         consumer_secret: Secret::new("kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw".to_owned()),
         // how to get the user's oauth token - https://developer.twitter.com/en/docs/authentication/oauth-1-0a
         // oauth_token_secret: Some(Secret::new(String::from("LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")))
@@ -45,8 +49,4 @@ pub async fn authorize_bot() -> ApiResponse {
 
     Response::builder()
         .status(StatusCode::OK).body(ok_body)
-
-    // Response::builder().status(StatusCode::OK).body(String::from(""))
-    // Ok(Response::default())
-    // Response::builder().status(StatusCode::OK).body(String::from(""))
 }
