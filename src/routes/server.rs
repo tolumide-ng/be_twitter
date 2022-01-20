@@ -1,7 +1,7 @@
-use hyper::{Request, Body, Response, Method};
+use hyper::{Request, Body, Response, Method, StatusCode};
 
 use crate::{helpers::response::ApiResponse};
-use crate::api::not_found;
+use crate::api::{not_found, authorize_bot, health_check};
 
 #[derive(Debug, serde::Deserialize)]
 struct ABody {
@@ -21,7 +21,8 @@ impl From<hyper::Body> for ABody {
 
 pub async fn routes(req: Request<Body>) -> ApiResponse {
     match (req.method(), req.uri().path()) {
-        (&Method::GET, "/") => Ok(Response::new(Body::from("".to_string()))),
+        (&Method::GET, "/") => health_check(),
+        (&Method::GET, "/enable") => authorize_bot(),
         _ => {
             not_found()
         }

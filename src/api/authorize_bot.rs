@@ -1,10 +1,10 @@
+use hyper::{Response, StatusCode};
 use secrecy::Secret;
-use twitar::helpers::hmac_signature::{AuthorizeRequest, Signature, ApiCallMethod};
 
-// use twitar::setup::credentials::Credentials;
+use crate::helpers::{hmac_signature::{AuthorizeRequest, ApiCallMethod, Signature}, response::{ApiResponse, ApiResponseBody}};
 
-fn main() {
-    let ab = AuthorizeRequest {
+pub fn authorize_bot() -> ApiResponse {
+    let app_credentials = AuthorizeRequest {
         include_entities: String::from("true"),
         oauth_consumer_key: String::from("xvz1evFS4wEEPTGEFPHBog"),
         oauth_nonce: String::from("kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"),
@@ -18,7 +18,18 @@ fn main() {
         // how to get the user's oauth token - https://developer.twitter.com/en/docs/authentication/oauth-1-0a
         // oauth_token_secret: Some(Secret::new(String::from("LswwdoUaIvS8ltyTt5jkRh4J50vUPVVHtR2YPi5kE")))
     };
-    let abc = Signature::new(ab);
-    println!("Hello, world! {:#?}", abc);
+
+    let app_signature = Signature::new(app_credentials);
     
+    println!("Hello WORLD!!!!!!!!!!!!!!!!!!!!!!!! {:#?}", app_signature);
+
+
+    let ok_body = ApiResponseBody::new("Ok".to_string(), Some("".to_string()));
+
+    Response::builder()
+        .status(StatusCode::OK).body(ok_body)
+
+    // Response::builder().status(StatusCode::OK).body(String::from(""))
+    // Ok(Response::default())
+    // Response::builder().status(StatusCode::OK).body(String::from(""))
 }

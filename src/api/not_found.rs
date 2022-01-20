@@ -1,17 +1,11 @@
 use hyper::{Response, StatusCode};
 
-use crate::helpers::response::ApiResponse;
+use crate::helpers::response::{ApiResponse, ApiResponseBody};
 
-pub fn not_found() -> ApiResponse {
-    let mut not_found = Response::default();
-    *not_found.status_mut() = StatusCode::NOT_FOUND;
-    
-    Ok(not_found)
+
+pub fn not_found () -> ApiResponse {    
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body(ApiResponseBody::new(
+            "Resorce not found".to_string(), Some("".to_owned())))
 }
-
-
-// pub fn not_found() -> http::Result<Response<()>> {
-//     Response::builder()
-//         .status(StatusCode::NOT_FOUND)
-//         .body("Resource not found".to_string())
-// }

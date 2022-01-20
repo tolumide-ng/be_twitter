@@ -2,5 +2,9 @@ pub mod timeline;
 pub mod auth;
 mod not_found;
 mod basic_response;
+mod authorize_bot;
+mod health_check;
 
 pub use not_found::not_found;
+pub use authorize_bot::authorize_bot;
+pub use health_check::health_check;
