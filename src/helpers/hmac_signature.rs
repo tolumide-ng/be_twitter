@@ -10,7 +10,8 @@ use hmac::{Hmac, Mac};
 pub struct Signature {
     parameter_string: Option<String>,
     base_string: Option<Secret<String>>,
-    signing_key: Option<Secret<String>>
+    signing_key: Option<Secret<String>>,
+    sign: Option<Secret<String>>,
 }
 
 
@@ -73,7 +74,9 @@ impl Signature {
         let signing_key = signature.get_signing_key(request);
         signature.signing_key = Some(signing_key);
 
-        let ad = signature.calculate_signature();
+        let app_signature = signature.calculate_signature();
+
+        signature.sign = Some(Secret::new(app_signature));
 
         signature
 

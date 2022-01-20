@@ -1,4 +1,4 @@
-use hyper::{Response, StatusCode};
+use hyper::{Response, StatusCode, Body};
 use secrecy::Secret;
 
 use crate::helpers::{hmac_signature::{AuthorizeRequest, ApiCallMethod, Signature}, response::{ApiResponse, ApiResponseBody}};
@@ -24,7 +24,7 @@ pub fn authorize_bot() -> ApiResponse {
     println!("Hello WORLD!!!!!!!!!!!!!!!!!!!!!!!! {:#?}", app_signature);
 
 
-    let ok_body = ApiResponseBody::new("Ok".to_string(), Some("".to_string()));
+    let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
 
     Response::builder()
         .status(StatusCode::OK).body(ok_body)

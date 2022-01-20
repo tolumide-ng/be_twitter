@@ -1,6 +1,7 @@
 use http::{Response};
 use hyper::{Client, client::{HttpConnector}, Method, Request, Body, Error};
 use hyper_tls::HttpsConnector;
+use secrecy::{Secret, ExposeSecret};
 use url::Url;
 use urlencoding::encode;
 use uuid::Uuid;
@@ -25,9 +26,12 @@ impl AppClient {
     }
 
 
-    pub async fn make_call() {}
+    pub async fn make_call(&self, secret: Secret<String>) {
+        let ab = &self.get_oauth_request_token().await;
+    }
 
     async fn get_oauth_request_token(&self) -> Result<Response<Body>, Error> {
+        
         let client = &self.pool.clone();
 
         let SettingsVars { app_address, api_key, .. } = SettingsVars::new();
@@ -45,7 +49,7 @@ impl AppClient {
         
         let req = Request::builder()
             .method(Method::POST)
-            .uri("https://api.twitter.com/oauth/authorize")
+            .uri("https://api.twitter.com/oauth/request_token")
             .header("Authorization", format!("OAuth oauth_consumer_key={}", api_key))
             .header("oauth_nonce", oauth_nonce)
             .body(Body::from("Hello"))

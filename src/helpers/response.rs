@@ -1,7 +1,7 @@
-use hyper::Response;
+use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
-pub type ApiResponse = http::Result<Response<String>>;
+pub type ApiResponse = http::Result<Response<Body>>;
 
 #[derive(Serialize, Deserialize)]
 pub struct ApiResponseBody<T> {
