@@ -1,15 +1,25 @@
+use std::time::SystemTime;
+
 use hyper::{Response, StatusCode, Body};
 use secrecy::Secret;
 
 use crate::helpers::{hmac_signature::{AuthorizeRequest, ApiCallMethod, Signature}, response::{ApiResponse, ApiResponseBody}};
 
 pub fn authorize_bot() -> ApiResponse {
+    let oauth_timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(e) => panic!("SystemTime before UNIX EPOCH!"),
+    };
+
+
+    println!("DURATION>>>>>>>>>>>> {:#?}", oauth_timestamp);
+
     let app_credentials = AuthorizeRequest {
         include_entities: String::from("true"),
         oauth_consumer_key: String::from("xvz1evFS4wEEPTGEFPHBog"),
         oauth_nonce: String::from("kYjzVBB8Y0ZFabxSWbWovY3uYSQ2pTgmZeNu2VS4cg"),
         oauth_signature_method: String::from("HMAC-SHA1"),
-        oauth_timestamp: String::from("1318622958"),
+        oauth_timestamp,
         oauth_token: Some(Secret::new(String::from("370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"))),
         oauth_version: String::from("1.0"),
         base_url: String::from("https://api.twitter.com/1.1/statuses/update.json"),

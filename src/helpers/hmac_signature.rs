@@ -27,7 +27,7 @@ pub struct AuthorizeRequest {
     /// the oauth signature method used by Twitter is HMAC-SHA1
     pub oauth_signature_method: String,
     /// Number of seconds since Unix epoch at the point the request is generated
-    pub oauth_timestamp: String,
+    pub oauth_timestamp: u64,
     /// You can initially use the access token of the twitter account that owns the twitter developer app but if you want to make a request on behalf
     /// of a different Twitter account owner, the account owner must grant you access by using the 3-legged OAuth flow (which we are currently 
     /// trying to generate in this case)
@@ -92,7 +92,7 @@ impl Signature {
         request_params.insert("oauth_consumer_key", oauth_consumer_key);
         request_params.insert("oauth_nonce", oauth_nonce);
         request_params.insert("oauth_signature_method", oauth_signature_method);
-        request_params.insert("oauth_timestamp", oauth_timestamp);
+        request_params.insert("oauth_timestamp", oauth_timestamp.to_string());
         request_params.insert("oauth_token", oauth_token.unwrap().expose_secret().to_string());
         request_params.insert("oauth_version", oauth_version);
 
