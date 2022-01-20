@@ -1,10 +1,12 @@
+use futures::AsyncWriteExt;
 use http::{Response};
-use hyper::{Client, client::{HttpConnector}, Method, Request, Body, Error};
+use hyper::{Client, client::{HttpConnector}, Method, Request, Body, Error, body::HttpBody};
 use hyper_tls::HttpsConnector;
 use secrecy::{Secret, ExposeSecret};
 use url::Url;
 use urlencoding::encode;
 use uuid::Uuid;
+use tokio::io::{self, AsyncWriteExt as _};
 
 
 use crate::{setup::variables::SettingsVars, helpers::hmac_signature::{AuthorizeRequest, Signature}};
@@ -67,9 +69,41 @@ impl AppClient {
             .expect("");
 
         // returns the oauth_token oauth_token_secret and  oauth_callback_confirmed (this must be true)
-        let abc = client.request(req).await;
+        let mut res = client.request(req).await.unwrap();
 
-        println!("WE GOT AN ABC {:#?}", abc);
+        println!("WE GOT AN ABC {:#?}", res);
+
+        println!("THE RESPONSE BODY {:#?}", res.body());
+
+        println!("THE RESPONSE BODY {:#?}", res.body().is_end_stream());
+
+        while let Some(next) = res.data().await {
+            let chunk = next.unwrap();
+
+            io::stdout().write_all(&chunk).await.unwrap();
+            
+            println!("DONE WRITING THE CHUNK {:#?}", chunk);
+        }
+
+
+        // Ok(())
+
+        // let body_result = res.body().map_err(|_| {
+        //     println!("THERE IS AN ERROR HERE");
+        //     // ()
+        // }).map(|chunk| {
+        //     println!("==> CHUNK");
+        //     chunk
+        // }).fold(Vec::new(), |mut vector, chunk| {
+        //     println!("++++>>> FOLD");
+        //     vector.extend_from_slice(&chunk);
+        //     println!("=====>>>>> CONVERTED: {:#?}", String::from_utf8(chunk.to_vec()).unwrap())
+        //     Ok(vector)
+        // })
+        //     .and_then(|vector| {
+
+        //     });
+
 
     }
 
