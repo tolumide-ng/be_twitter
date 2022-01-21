@@ -13,7 +13,10 @@ pub struct SettingsVars {
     pub code_challenge: Pkce,
     pub state: String,
     pub app_address: String,
+    //consumer_key
     pub api_key: String,
+    // consumer_secret
+    pub api_key_secret: String,
     pub client_secret: Secret<String>,
 }
 
@@ -23,7 +26,8 @@ impl SettingsVars {
          dotenv().ok();
 
         let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", 
-        "REDIRECT_URI", "CLIENT_URL", "CLIENT_SECRET", "APP_ADDRESS", "API_KEY"];
+        "REDIRECT_URI", "CLIENT_URL", "CLIENT_SECRET", "APP_ADDRESS", "API_KEY",
+        "API_KEY_SECRET"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {
@@ -42,6 +46,8 @@ impl SettingsVars {
             state: Self::get_var("STATE_CODE"),
             app_address: Self::get_var("APP_ADDRESS"),
             api_key: Self::get_var("API_KEY"),
+            // consumer_secret
+            api_key_secret: Self::get_var("API_KEY_SECRET"),
             client_secret: Secret::new(Self::get_var("CLIENT_SECRET")),
         }
     }

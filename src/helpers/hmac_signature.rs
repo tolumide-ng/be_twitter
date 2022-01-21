@@ -25,7 +25,7 @@ impl Signature {
         signature.parameter_string = Some(parameter_string);
 
         // step 2
-        let base_string = signature.get_base_string(request.clone());
+        let base_string = signature.get_signature_base_string(request.clone());
         signature.base_string = Some(base_string);
 
         // step 3
@@ -46,8 +46,6 @@ impl Signature {
         let AuthorizeRequest {include_entities, oauth_consumer_key, oauth_nonce,
             oauth_signature_method, oauth_timestamp, oauth_token, oauth_version, ..
         } = request;
-
-        // let mut params = vec![("include_entities", include_entities), (), (), ()];
 
         request_params.insert("include_entities", include_entities);
         request_params.insert("oauth_consumer_key", oauth_consumer_key);
@@ -83,17 +81,18 @@ impl Signature {
         parameter_string
     }
 
-    fn get_base_string(&self, request: AuthorizeRequest) -> Secret<String> {
-        let mut base_string = String::from("");
 
-        base_string.push_str(format!("{}&", String::from(request.method)).as_str());
-        base_string.push_str(format!("{}&", encode(request.base_url.as_str())).as_str());
+    fn get_signature_base_string(&self, request: AuthorizeRequest) -> Secret<String> {
 
-        let parameter_string = format!("{}", encode(self.parameter_string.as_ref().unwrap().as_str()));
-        base_string.push_str(parameter_string.as_str());
+        let output_str = format!("{}&{}&{}", 
+            request.method.to_uppercase(),
+            encode(&request.base_url),
+            encode(self.parameter_string.as_ref().unwrap().as_str())
+        );
 
-        Secret::new(base_string)
+        Secret::new(output_str)
     }
+
 
     fn get_signing_key(&self, request: &AuthorizeRequest) -> Secret<String> {
         let mut signing_key = String::new();
