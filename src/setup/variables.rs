@@ -45,6 +45,7 @@ impl SettingsVars {
             code_challenge: Pkce::new(),
             state: Self::get_var("STATE_CODE"),
             app_address: Self::get_var("APP_ADDRESS"),
+            // consumer_key
             api_key: Self::get_var("API_KEY"),
             // consumer_secret
             api_key_secret: Self::get_var("API_KEY_SECRET"),
