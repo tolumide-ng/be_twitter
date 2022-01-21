@@ -6,7 +6,7 @@ use urlencoding::encode;
 use std::{collections::HashMap};
 use hmac::{Hmac, Mac};
 
-use super::params::AuthorizeRequest;
+use super::app_credentials::AuthorizeRequest;
 
 #[derive(Default, Debug, Clone)]
 pub struct Signature {
@@ -20,29 +20,34 @@ impl Signature {
     pub fn new(request: &AuthorizeRequest) -> Self {
         let mut signature: Signature = Default::default();
 
-        let parameter_string = signature.get_parameter(request.clone());
+        // step 1
+        let parameter_string = signature.get_parameters(request.clone());
         signature.parameter_string = Some(parameter_string);
-        
+
+        // step 2
         let base_string = signature.get_base_string(request.clone());
         signature.base_string = Some(base_string);
 
+        // step 3
         let signing_key = signature.get_signing_key(request);
         signature.signing_key = Some(signing_key);
 
+        
         let app_signature = signature.calculate_signature();
-
         signature.sig = Some(Secret::new(app_signature));
 
         signature
 
     }
 
-    fn get_parameter(&self, request: AuthorizeRequest) -> String {
+    fn get_parameters(&self, request: AuthorizeRequest) -> String {
         let mut request_params: HashMap<&str, String> = HashMap::new();
 
         let AuthorizeRequest {include_entities, oauth_consumer_key, oauth_nonce,
             oauth_signature_method, oauth_timestamp, oauth_token, oauth_version, ..
         } = request;
+
+        // let mut params = vec![("include_entities", include_entities), (), (), ()];
 
         request_params.insert("include_entities", include_entities);
         request_params.insert("oauth_consumer_key", oauth_consumer_key);

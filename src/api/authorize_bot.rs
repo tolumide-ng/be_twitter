@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{helpers::{hmac_signature::{Signature}, 
     response::{ApiResponse, ApiResponseBody}}, app::client::AppClient
 };
-use crate::helpers::params::AuthorizeRequest;
+use crate::helpers::app_credentials::AuthorizeRequest;
 
 pub async fn authorize_bot() -> ApiResponse {
     let oauth_timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -27,7 +27,7 @@ pub async fn authorize_bot() -> ApiResponse {
         oauth_timestamp,
         oauth_token: Some(Secret::new(String::from("370773112-GmHxMAgYyLbNEtIKZeRNFsMKPR9EyMZeS9weJAEb"))),
         oauth_version: String::from("1.0"),
-        base_url: String::from("https://api.twitter.com/1.1/statuses/update.json"),
+        base_url: String::from("https://api.twitter.com/oauth/request_token"),
         method: Method::POST.to_string(),
         consumer_secret: Secret::new("kAcSOqF21Fu85e7zjz7ZN2U4ZRhfV3WpwPAoE3Z7kBw".to_owned()),
         // how to get the user's oauth token - https://developer.twitter.com/en/docs/authentication/oauth-1-0a
