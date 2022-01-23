@@ -2,7 +2,6 @@ use std::fmt;
 
 use hyper::{Client, client::{HttpConnector}, Method, Request, Body};
 use hyper_tls::HttpsConnector;
-use urlencoding::encode;
 
 
 use crate::{helpers::keypair::KeyPair, middlewares::request_builder::RequestBuilder};
@@ -60,8 +59,8 @@ impl AppClient {
     // }
 
 
-    pub async fn oauth2_authorize(&self, query: String) {
-        let request = RequestBuilder::new(Method::GET, "")
-            .with_query(KeyPair::new("", ""));
+    pub async fn oauth2_authorize(&self, response_type: String, client_id: String) {
+        let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
+            .with_query(KeyPair::new("response_type", response_type));
     }
 }
