@@ -167,8 +167,5 @@ impl OAuthParams {
 
 
     /// 2.0 Authentication on behalf of users (confidential clients)
-    pub fn basic_authentication(self) -> String {
-        let basic = base64::encode(format!("{}:{}", self.consumer.key, self.consumer.value));
-        format!("Basic {}", basic)
-    }
+ 
 }

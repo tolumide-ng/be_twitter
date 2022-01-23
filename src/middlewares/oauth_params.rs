@@ -34,7 +34,14 @@ impl OAuthParams {
         }
     }
 
-    pub fn encoded_scope(&self) -> String {
+    pub fn with_permissions(self, scope: Vec<Scope>) -> Self {
+        Self {
+            scope,
+            ..self
+        }
+    }
+
+    fn encoded_scope(&self) -> String {
         let all_scopes = &self.scope
             .iter().map(|sc| sc.to_string())
             .collect::<Vec<_>>().join(" ");

@@ -1,4 +1,5 @@
 use std::{borrow::Cow, fmt};
+use http::header::AUTHORIZATION;
 use hyper::Body;
 use http::{Method, Request};
 
@@ -11,6 +12,7 @@ pub struct RequestBuilder<'a> {
     params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
+    header: Option<KeyPair>,
     // addon: OAuthAddOn,
 }
 
@@ -22,34 +24,29 @@ impl<'a> RequestBuilder<'a> {
             params: None,
             query: None,
             body: None,
+            header: None,
             // addon: OAuthAddOn::None,
         }
     }
 
-    // pub fn with_oauth_callback(self, callback: impl Into<String>) -> Self {
-    //     Self {
-    //         addon: OAuthAddOn::Callback(callback.into()),
-    //         ..self
-    //     }
-    // }
+    pub fn with_query(self, key: String, value: String) -> Self {
+        // if key.len() == 0 || value.len() == 0 {return self}
+        let query = match &self.query {
+            Some(query) => format!("{}&{}={}", query, key, value),
+            None => format!("{}={}", key, value)
+        };
 
-    // pub fn with_oauth_verifier(self, verifier: impl Into<String>) -> Self {
-    //     Self {
-    //         addon: OAuthAddOn::Verifier(verifier.into()),
-    //         ..self
-    //     }
-    // }
-
-    pub fn with_query(self, query: KeyPair) -> Self {
         Self {
-            query: Some(format!("{}?{}={}", self.query.unwrap_or("".into()), query.key, query.value)),
+            query: Some(query),
             ..self
         }
     }
 
     pub fn get_uri(&self) -> String {
-        format!("{}{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
+        format!("{}?{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
     }
+
+    // pub fn with_header(&self)
 
 
     // pub fn request_keys(self, consumer: KeyPair, token: Option<KeyPair>) -> Request<Body> {
@@ -61,14 +58,14 @@ impl<'a> RequestBuilder<'a> {
     //     self.build_reqest(oauth.get_header())
     // }
 
-    fn build_reqest(self, auth: String) -> Request<Body> {
+    fn build_reqest(self, authorization: String) -> Request<Body> {
         let url = self.get_uri();
 
 
         let request = Request::builder()
             .method(self.method)
             .uri(url)
-            .header("Authorization".to_string(), auth)
+            .header(AUTHORIZATION, format!("Basic {}", authorization))
             .body(Body::from("")).unwrap();
 
         println!("THE REQUEST BODY {:#?}", request);

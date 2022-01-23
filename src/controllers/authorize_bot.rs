@@ -12,11 +12,9 @@ use crate::{setup::variables::SettingsVars, helpers::{response::{ApiResponseBody
 
 pub async fn authorize_bot() -> ApiResponse {
 
-    let SettingsVars{api_key, redirect_uri, api_key_secret, ..} = SettingsVars::new();
+    let SettingsVars{api_key, redirect_uri, api_key_secret, client_id, ..} = SettingsVars::new();
 
-    let ab = AppClient::new();
-
-    let consumer = KeyPair::new(api_key, api_key_secret);
+    let app = AppClient::new();
 
     // ab.get_request_token(redirect_uri, consumer).await;
     

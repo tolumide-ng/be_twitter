@@ -2,9 +2,13 @@ use std::fmt;
 
 use hyper::{Client, client::{HttpConnector}, Method, Request, Body};
 use hyper_tls::HttpsConnector;
+use secrecy::Secret;
 
 
-use crate::{helpers::keypair::KeyPair, middlewares::request_builder::RequestBuilder};
+use crate::{middlewares::{
+    request_builder::RequestBuilder, oauth_params::OAuthParams
+}};
+use crate::helpers::scope::Scope;
 
 
 #[derive(Debug)]
@@ -59,8 +63,13 @@ impl AppClient {
     // }
 
 
-    pub async fn oauth2_authorize(&self, response_type: String, client_id: String) {
+    pub async fn oauth2_authorize(&self, redirect_uri: String, client_id: Secret<String>) {
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
-            .with_query(KeyPair::new("response_type", response_type));
+            .with_query("authorize".to_string(), 
+            OAuthParams::seed().with_permissions(
+                vec![Scope::ReadTweet, Scope::WriteTweet, Scope::OfflineAccess, Scope::WriteLike]
+            ).to_string());
+            // .with_query("response_type", "code".to_string())
+            // .with_query(KeyPa);
     }
 }
