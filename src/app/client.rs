@@ -1,73 +1,76 @@
+use std::fmt;
+
 use futures::AsyncWriteExt;
 use http::{Response};
 use hyper::{Client, client::{HttpConnector}, Method, Request, Body, Error, body::HttpBody};
 use hyper_tls::HttpsConnector;
-use secrecy::{Secret, ExposeSecret};
-use url::Url;
 use urlencoding::encode;
-use uuid::Uuid;
-use tokio::io::{self, AsyncWriteExt as _};
 
 
-use crate::{setup::variables::SettingsVars, helpers::hmac_signature::{Signature}};
-use crate::helpers::app_credentials::AuthorizeRequest;
+use crate::helpers::request::RequestBuilder;
+use crate::helpers::params::KeyPair;
+
 
 #[derive(Debug)]
 pub struct AppClient {
     pool: Client<HttpsConnector<HttpConnector>>,
-    signature: Signature,
+    // signature: Signature,
 }
 
 
 impl AppClient {
-    pub fn new(signature: &Signature) -> Self {
+    pub fn new() -> Self {
         let https = HttpsConnector::new();
         let pool = Client::builder().build::<_, hyper::Body>(https);
         
         Self {
             pool,
-            signature: signature.clone(),
+            // signature: signature.clone(),
         }
 
     }
 
 
-    pub async fn make_call(&self, credentials: &AuthorizeRequest) {
-        &self.get_oauth_request_token(&credentials).await;
-    }
-
-    async fn get_oauth_request_token(&self, credentials: &AuthorizeRequest) {
+    pub async fn make_call(&self, request: Request<Body>) {
+        // &self.get_oauth_request_token(&credentials).await;
         let client = &self.pool.clone();
-        let SettingsVars { api_key, redirect_uri, .. } = SettingsVars::new();
-        let AuthorizeRequest {oauth_nonce, oauth_timestamp, base_url, ..} = credentials;
-        
-        let signature = self.signature.sig.clone().unwrap().expose_secret().clone();
-        
-        let req = Request::builder()
-            .method(Method::POST)
-            .uri(base_url)
-            .header("Authorization", format!("OAuth oauth_consumer_key={}", api_key))
-            .header("oauth_nonce", oauth_nonce)
-            .header("oauth_timestamp", oauth_timestamp.to_string())
-            .header("oauth_signature", signature)
-            .header("oauth_signature_method", &credentials.oauth_signature_method)
-            .header("oauth_version", &credentials.oauth_version)
-            .body(Body::from(""))
-            .expect("");
+        // need to write an error converter for this
+        let res = client.request(request).await.unwrap();
+        let (parts, body) = res.into_parts();
+        let body: Vec<_> = hyper::body::to_bytes(body).await.unwrap().to_vec();
 
-        // returns the oauth_token oauth_token_secret and  oauth_callback_confirmed (this must be true)
-        let mut res = client.request(req).await.unwrap();
+        // if let Ok(errors) = serde_json::from_slice() {}
+        // Ok((parts.headers, body))
+        // Ok(body)
 
-        println!("WE GOT AN ABC {:#?}", res);
+        let body = std::str::from_utf8(&body).map_err(|_| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "stream did not contain valid UTF-8",
+            )
+        }).unwrap();
 
-        while let Some(next) = res.data().await {
-            let chunk = next.unwrap();
+        println!("THE BODY {}", body);
 
-            io::stdout().write_all(&chunk).await.unwrap();
+        println!("OBTAINED PARTS {:#?}", parts);
+
+    }
+
+    pub async fn get_request_token<S: Clone + fmt::Display + Into<String>>(&self, callback: S, consumer: KeyPair) {
+        let c = callback.clone().to_owned();
+
+
+        // let dt = format!("{}", encode(format!("{}", ab).as_str()));
+
+        let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/request_token")
+            .with_oauth_callback(callback.clone().into())
+            .with_query(KeyPair::new("oauth_callback", encode(&callback.clone().into()).into_owned()))
+            .request_keys(consumer, None);
+      
             
-            println!("DONE WRITING THE CHUNK {:#?}", chunk);
-        }
+        println!("WHAT THE REQUEST LOOKS LIKE {:#?}", request);
 
+        self.make_call(request).await;
     }
 
 

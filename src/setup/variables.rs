@@ -13,9 +13,7 @@ pub struct SettingsVars {
     pub code_challenge: Pkce,
     pub state: String,
     pub app_address: String,
-    //consumer_key
     pub api_key: String,
-    // consumer_secret
     pub api_key_secret: String,
     pub client_secret: Secret<String>,
 }
