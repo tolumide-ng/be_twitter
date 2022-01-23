@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt};
 use hyper::Body;
 use http::{Method, Request};
 
@@ -16,13 +16,14 @@ impl SignedHeader {
     fn get_header(&self) -> String {
         let oauth_str = self.params
             .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
+            .map(|(k, v)| format!("{}=\"{}\"", k, urlencoding::encode(v)))
             .collect::<Vec<String>>()
             .join(", ");
 
         format!("OAuth {}", oauth_str)
     }
 }
+
 
 pub struct RequestBuilder<'a> {
     base_uri: &'a str,

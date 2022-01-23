@@ -43,13 +43,6 @@ impl RequestParams {
         self
     }
 
-    // fn add_param_ref(&mut self, 
-    //     key: impl Into<Cow<'static, str>>, 
-    //     value: impl Into<Cow<'static, str>>
-    // ) {
-    //     &self.insert(key.into(), value.into());
-    // }
-
     pub fn add_list_params(
         self, 
         list: Vec<(impl Into<Cow<'static, str>>, impl Into<Cow<'static, str>>)> 

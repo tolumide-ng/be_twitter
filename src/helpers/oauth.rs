@@ -98,6 +98,7 @@ impl OAuthParams {
         }
     }
 
+    /// 1.0 Authentication on behalf of users
     pub fn sign_request(self, method: &Method, params: Option<&RequestParams>, url: &str, req_query: String) -> SignedHeader {
         let the_params = params
             .cloned()
@@ -110,7 +111,7 @@ impl OAuthParams {
             .add_opt_param("oauth_token", self.token.clone().map(|k| k.key))
             .add_opt_param("oauth_verifier", self.addon.with_verifier().map(|k| k))
             .add_param("oauth_version", "1.0");
-        
+
         let mut query: Vec<String> = the_params
             .iter()
             .map(|(k, v)| format!("{}={}", encode(k), encode(v)))
@@ -166,12 +167,15 @@ impl OAuthParams {
             all_params.push(("token", token.key.clone()));
         }
 
-        
-
-        // all_params.push();
-
         SignedHeader {
             params: all_params
         }
+    }
+
+
+    /// 2.0 Authentication on behalf of users (confidential clients)
+    pub fn basic_authentication(self) -> String {
+        let basic = base64::encode(format!("{}:{}", self.consumer.key, self.consumer.value));
+        format!("Basic {}", basic)
     }
 }
