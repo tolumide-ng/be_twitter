@@ -5,8 +5,7 @@ use hyper_tls::HttpsConnector;
 use urlencoding::encode;
 
 
-use crate::helpers::request::RequestBuilder;
-use crate::helpers::params::KeyPair;
+use crate::{helpers::keypair::KeyPair, middlewares::request_builder::RequestBuilder};
 
 
 #[derive(Debug)]
@@ -30,16 +29,11 @@ impl AppClient {
 
 
     pub async fn make_call(&self, request: Request<Body>) {
-        // &self.get_oauth_request_token(&credentials).await;
         let client = &self.pool.clone();
         // need to write an error converter for this
         let res = client.request(request).await.unwrap();
         let (parts, body) = res.into_parts();
         let body: Vec<_> = hyper::body::to_bytes(body).await.unwrap().to_vec();
-
-        // if let Ok(errors) = serde_json::from_slice() {}
-        // Ok((parts.headers, body))
-        // Ok(body)
 
         let body = std::str::from_utf8(&body).map_err(|_| {
             std::io::Error::new(
@@ -54,23 +48,20 @@ impl AppClient {
 
     }
 
-    pub async fn get_request_token<S: Clone + fmt::Display + Into<String>>(&self, callback: S, consumer: KeyPair) {
-        // let c = callback.clone().to_owned();
+    // pub async fn get_request_token<S: Clone + fmt::Display + Into<String>>(&self, callback: S, consumer: KeyPair) {
+
+    //     let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/request_token")
+    //         .with_oauth_callback(callback.clone().into())
+    //         .with_query(KeyPair::new("oauth_callback", encode(&callback.clone().into()).into_owned()))
+    //         // .with_query(KeyPair::new("oauth_callback", c.into()))
+    //         .request_keys(consumer, None);
+
+    //     self.make_call(request).await;
+    // }
 
 
-        // let dt = format!("{}", encode(format!("{}", ab).as_str()));
-
-        let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/request_token")
-            .with_oauth_callback(callback.clone().into())
-            .with_query(KeyPair::new("oauth_callback", encode(&callback.clone().into()).into_owned()))
-            // .with_query(KeyPair::new("oauth_callback", c.into()))
-            .request_keys(consumer, None);
-
-        self.make_call(request).await;
-    }
-
-
-    pub async fn get_oauth_authorize(&self) {
-        let client = &self.pool.clone();
+    pub async fn oauth2_authorize(&self, query: String) {
+        let request = RequestBuilder::new(Method::GET, "")
+            .with_query(KeyPair::new("", ""));
     }
 }

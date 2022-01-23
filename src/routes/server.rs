@@ -1,7 +1,7 @@
 use hyper::{Request, Body, Response, Method, StatusCode};
 
 use crate::{helpers::response::ApiResponse};
-use crate::api::{not_found, authorize_bot, health_check, handle_redirect};
+use crate::controllers::{not_found, authorize_bot, health_check, handle_redirect};
 
 #[derive(Debug, serde::Deserialize)]
 struct ABody {
