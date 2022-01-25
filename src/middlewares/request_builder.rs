@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::{borrow::Cow, fmt};
 use http::header::AUTHORIZATION;
 use hyper::Body;
@@ -46,7 +47,20 @@ impl<'a> RequestBuilder<'a> {
         format!("{}?{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
     }
 
-    // pub fn with_header(&self)
+    
+    fn with_body(self, body: impl Into<Body>, content: &'static str) -> Self {
+        Self {
+            body: Some((body.into(), content)),
+            ..self
+        }
+    }
+
+    pub fn with_json_body(self, body: impl serde::Serialize) -> Self {
+        self.with_body(
+            serde_json::to_string(&body).unwrap(),
+            "application/json; charset=UTF-8"
+        )
+    }
 
 
     // pub fn request_keys(self, consumer: KeyPair, token: Option<KeyPair>) -> Request<Body> {
