@@ -33,3 +33,14 @@ impl fmt::Display for Scope {
         write!(f, "{}", scope_str)
     }
 }
+
+
+impl Scope {
+    pub fn with_scopes(all_scopes: Vec<Self>) -> String {
+        let space_separated_scopes = all_scopes.iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>().join(" ");
+
+        urlencoding::encode(&space_separated_scopes).to_string()
+    }
+}

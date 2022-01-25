@@ -30,11 +30,11 @@ impl<'a> RequestBuilder<'a> {
         }
     }
 
-    pub fn with_query(self, key: String, value: String) -> Self {
+    pub fn with_query<T: Into<String> + fmt::Display>(self, key: T, value: T) -> Self {
         // if key.len() == 0 || value.len() == 0 {return self}
         let query = match &self.query {
             Some(query) => format!("{}&{}={}", query, key, value),
-            None => format!("{}={}", key, value)
+            None => format!("?{}={}", key, value)
         };
 
         Self {

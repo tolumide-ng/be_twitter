@@ -2,13 +2,17 @@ use std::fmt;
 
 use hyper::{Client, client::{HttpConnector}, Method, Request, Body};
 use hyper_tls::HttpsConnector;
-use secrecy::Secret;
+use secrecy::{Secret, ExposeSecret};
+use uuid::Uuid;
 
 
 use crate::{middlewares::{
     request_builder::RequestBuilder, oauth_params::OAuthParams
-}};
-use crate::helpers::scope::Scope;
+}, setup::variables::SettingsVars};
+use crate::helpers::{
+    scope::Scope,
+    gen_pkce::Pkce,
+};
 
 
 #[derive(Debug)]
@@ -63,12 +67,25 @@ impl AppClient {
     // }
 
 
-    pub async fn oauth2_authorize(&self, redirect_uri: String, client_id: Secret<String>) {
+    pub async fn oauth2_authorize(&self, redirect_uri: String) {
+
+        let SettingsVars {client_id, redirect_uri, ..} = SettingsVars::new();
+
+        let state = &base64::encode(Uuid::new_v4().to_string());
+        let pkce = &Pkce::new().to_string();
+        // let pkce = Pk
+
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
-            .with_query("authorize".to_string(), 
-            OAuthParams::seed().with_permissions(
-                vec![Scope::ReadTweet, Scope::WriteTweet, Scope::OfflineAccess, Scope::WriteLike]
-            ).to_string());
+            .with_query("response_tyoe", "code")
+            .with_query("client_id", client_id.expose_secret())
+            .with_query("redirect_uri", &redirect_uri)
+            .with_query("scope", &Scope::with_scopes(
+                vec![Scope::ReadTweet, Scope::WriteTweet, Scope::OfflineAccess, Scope::WriteLike
+            ]))
+            .with_query("state", state)
+            .with_query("code_challenge", pkce)
+            .with_query("challenge_method", "plain");
+            // .with_json_body(String::from("t"));
             // .with_query("response_type", "code".to_string())
             // .with_query(KeyPa);
     }
