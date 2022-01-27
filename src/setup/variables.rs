@@ -25,7 +25,7 @@ impl SettingsVars {
 
         let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", 
         "REDIRECT_URI", "CLIENT_URL", "CLIENT_SECRET", "APP_ADDRESS", "API_KEY",
-        "API_KEY_SECRET"];
+        "API_KEY_SECRET", "REQUEST_URL"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {

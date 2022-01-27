@@ -1,13 +1,11 @@
-use std::fmt;
-
-use hyper::{Client, client::{HttpConnector}, Method, Request, Body, body::HttpBody};
+use hyper::{Client, client::{HttpConnector}, Method, Request, Body};
 use hyper_tls::HttpsConnector;
-use secrecy::{Secret, ExposeSecret};
+use secrecy::{ExposeSecret};
 use hyper::{Response};
 
 
 use crate::{middlewares::{
-    request_builder::RequestBuilder, oauth_params::OAuthParams
+    request_builder::RequestBuilder,
 }, setup::variables::SettingsVars};
 use crate::helpers::{
     scope::Scope,
@@ -67,13 +65,10 @@ impl AppClient {
     // }
 
 
-    pub async fn oauth2_authorize(&self) {
+    pub async fn oauth2_authorize(&self) -> Response<Body> {
 
         let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
-
-        // let state = &base64::encode(Uuid::new_v4().to_string());
         let pkce = &Pkce::new().to_string();
-        // let pkce = Pk
 
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
             .with_query("response_type", "code")
@@ -81,27 +76,26 @@ impl AppClient {
             .with_query("redirect_uri", &redirect_uri)
             .with_query("scope", &Scope::with_scopes(
                 vec![
-                // tweet.read%20users.read%20follows.read%20follows.write
                 Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-                // Scope::OfflineAccess,
-                // Scope::WriteTweet, Scope::WriteLike
+                Scope::OfflineAccess,
+                Scope::WriteTweet, Scope::WriteLike
             ]))
-            .with_query("state", "state")
-            .with_query("code_challenge", "challenge")
+            .with_query("state", &state)
+            .with_query("code_challenge", pkce)
             .with_query("code_challenge_method", "plain")
             // .with_body("", "application/x-www-form-urlencoded")
             .request_no_keys();
 
-        println!("THE IS THE ACTUAL REQUEST {:#?}", request);
+        println!("THE IS THE ACTUAL REQUEST {:#?}", request.uri());
 
-        self.redirect_user(request).await;
+        self.redirect_user(request).await
     }
 
     pub async fn redirect_user(&self, request: Request<Body>) -> Response<Body> {
            Response::builder()
             .status(302)
-            .header("Location", "https://twitter.com/i/oauth2/authorize?response_type=code&client_id=wink&redirect_uri=https://127.0.0.1:8080/twitter/oauth&scope=tweet.read%20users.read%20follows.read%20follows.write&state=state&code_challenge=challenge&code_challenge_method=plain")
-            .body(Body::empty())
+            .header("Location", request.uri().to_string())
+            .body(Body::from(request.uri().to_string()))
             .unwrap()
     }
 }
