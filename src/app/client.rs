@@ -49,8 +49,6 @@ impl AppClient {
             )
         }).unwrap();
 
-        println!("THIS IS THE BODY {:#?}", body);
-
     }
 
     // pub async fn get_request_token<S: Clone + fmt::Display + Into<String>>(&self, callback: S, consumer: KeyPair) {
