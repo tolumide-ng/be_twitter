@@ -1,9 +1,9 @@
 use std::fmt;
 
-use hyper::{Client, client::{HttpConnector}, Method, Request, Body};
+use hyper::{Client, client::{HttpConnector}, Method, Request, Body, body::HttpBody};
 use hyper_tls::HttpsConnector;
 use secrecy::{Secret, ExposeSecret};
-use uuid::Uuid;
+use hyper::{Response};
 
 
 use crate::{middlewares::{
@@ -39,6 +39,8 @@ impl AppClient {
         let client = &self.pool.clone();
         // need to write an error converter for this
         let res = client.request(request).await.unwrap();
+
+        println!("THE RESPONSE OR WHATEVER {:#?}", res);
         let (parts, body) = res.into_parts();
         let body: Vec<_> = hyper::body::to_bytes(body).await.unwrap().to_vec();
 
@@ -49,9 +51,7 @@ impl AppClient {
             )
         }).unwrap();
 
-        println!("THE BODY {}", body);
-
-        println!("OBTAINED PARTS {:#?}", parts);
+        println!("THIS IS THE BODY {:#?}", body);
 
     }
 
@@ -67,26 +67,41 @@ impl AppClient {
     // }
 
 
-    pub async fn oauth2_authorize(&self, redirect_uri: String) {
+    pub async fn oauth2_authorize(&self) {
 
-        let SettingsVars {client_id, redirect_uri, ..} = SettingsVars::new();
+        let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
 
-        let state = &base64::encode(Uuid::new_v4().to_string());
+        // let state = &base64::encode(Uuid::new_v4().to_string());
         let pkce = &Pkce::new().to_string();
         // let pkce = Pk
 
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
-            .with_query("response_tyoe", "code")
+            .with_query("response_type", "code")
             .with_query("client_id", client_id.expose_secret())
             .with_query("redirect_uri", &redirect_uri)
             .with_query("scope", &Scope::with_scopes(
-                vec![Scope::ReadTweet, Scope::WriteTweet, Scope::OfflineAccess, Scope::WriteLike
+                vec![
+                // tweet.read%20users.read%20follows.read%20follows.write
+                Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
+                // Scope::OfflineAccess,
+                // Scope::WriteTweet, Scope::WriteLike
             ]))
-            .with_query("state", state)
-            .with_query("code_challenge", pkce)
-            .with_query("challenge_method", "plain");
-            // .with_json_body(String::from("t"));
-            // .with_query("response_type", "code".to_string())
-            // .with_query(KeyPa);
+            .with_query("state", "state")
+            .with_query("code_challenge", "challenge")
+            .with_query("code_challenge_method", "plain")
+            // .with_body("", "application/x-www-form-urlencoded")
+            .request_no_keys();
+
+        println!("THE IS THE ACTUAL REQUEST {:#?}", request);
+
+        self.redirect_user(request).await;
+    }
+
+    pub async fn redirect_user(&self, request: Request<Body>) -> Response<Body> {
+           Response::builder()
+            .status(302)
+            .header("Location", "https://twitter.com/i/oauth2/authorize?response_type=code&client_id=wink&redirect_uri=https://127.0.0.1:8080/twitter/oauth&scope=tweet.read%20users.read%20follows.read%20follows.write&state=state&code_challenge=challenge&code_challenge_method=plain")
+            .body(Body::empty())
+            .unwrap()
     }
 }

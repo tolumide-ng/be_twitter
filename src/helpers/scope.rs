@@ -27,7 +27,7 @@ impl fmt::Display for Scope {
             Self::ReadFollows => String::from("follows.read"),
             Self::WriteFollows => String::from("follows.write"),
             Self::OfflineAccess => String::from("offline.access"),
-            Self::WriteLike => String::from("like.write")
+            Self::WriteLike => String::from("like.write"),
         };
 
         write!(f, "{}", scope_str)

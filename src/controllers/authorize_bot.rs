@@ -16,6 +16,8 @@ pub async fn authorize_bot() -> ApiResponse {
 
     let app = AppClient::new();
 
+    app.oauth2_authorize().await;
+
     // ab.get_request_token(redirect_uri, consumer).await;
     
     let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));

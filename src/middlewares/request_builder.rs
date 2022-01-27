@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 use std::{borrow::Cow, fmt};
-use http::header::AUTHORIZATION;
-use hyper::Body;
-use http::{Method, Request};
+use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use hyper::{Body, Request, Method};
 
 use crate::middlewares::request_params::RequestParams;
 use crate::helpers::keypair::KeyPair;
@@ -34,7 +33,7 @@ impl<'a> RequestBuilder<'a> {
         // if key.len() == 0 || value.len() == 0 {return self}
         let query = match &self.query {
             Some(query) => format!("{}&{}={}", query, key, value),
-            None => format!("?{}={}", key, value)
+            None => format!("{}={}", key, value)
         };
 
         Self {
@@ -48,7 +47,7 @@ impl<'a> RequestBuilder<'a> {
     }
 
     
-    fn with_body(self, body: impl Into<Body>, content: &'static str) -> Self {
+    pub fn with_body(self, body: impl Into<Body>, content: &'static str) -> Self {
         Self {
             body: Some((body.into(), content)),
             ..self
@@ -63,6 +62,13 @@ impl<'a> RequestBuilder<'a> {
     }
 
 
+    pub fn request_no_keys(self) -> Request<Body> {
+        self.build_request(None)
+    }
+
+
+
+
     // pub fn request_keys(self, consumer: KeyPair, token: Option<KeyPair>) -> Request<Body> {
 
     //     let oauth = OAuthParams::from_keys(consumer.clone(), token.clone())
@@ -72,18 +78,32 @@ impl<'a> RequestBuilder<'a> {
     //     self.build_reqest(oauth.get_header())
     // }
 
-    fn build_reqest(self, authorization: String) -> Request<Body> {
+    fn build_request(self, authorization: Option<String>) -> Request<Body> {
         let url = self.get_uri();
-
 
         let request = Request::builder()
             .method(self.method)
-            .uri(url)
-            .header(AUTHORIZATION, format!("Basic {}", authorization))
-            .body(Body::from("")).unwrap();
+            .uri(url);
 
-        println!("THE REQUEST BODY {:#?}", request);
-        return request;
+        let request= match authorization {
+            Some(auth) => request.header(AUTHORIZATION, format!("Basic {}", auth)),
+            None => request
+        };
+
+        if let Some((body, content)) = self.body {
+            // println!("THE REQUEST BODY {:#?}", request);
+            request.header(CONTENT_TYPE, content).body(body).unwrap()
+        } else {
+            // println!("THE REQUEST BODY {:#?}", request);
+            request.body(Body::from("")).unwrap()
+        }
+        // .header(AUTHORIZATION, format!("Basic {}", authorization))
+        // .body(Body::from("")).unwrap();
+
+
+        
+
+
     }
 
     pub fn request_authorize(self) {

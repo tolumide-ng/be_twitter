@@ -9,7 +9,7 @@ use crate::routes::server::routes;
 
 pub async fn server() {
     dotenv().ok();
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8090));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
 
     // let addr: SocketAddr = match env::var("APP_ADDRESS") {
     //     Ok(value) => value.parse().unwrap(),
