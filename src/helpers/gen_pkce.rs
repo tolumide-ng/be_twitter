@@ -2,7 +2,7 @@ use core::fmt;
 
 use pkce;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, derive_more::From)]
 pub struct Pkce(String);
 
 impl Pkce {

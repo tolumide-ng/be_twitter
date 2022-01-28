@@ -1,12 +1,11 @@
 use dotenv::dotenv;
 use std::env;
-use secrecy::Secret;
 
 use crate::helpers::gen_pkce::Pkce;
 
 
 pub struct SettingsVars {
-    pub client_id: Secret<String>,
+    pub client_id: String,
     pub response_type: String,
     pub base_url: String,
     pub redirect_uri: String,
@@ -15,7 +14,7 @@ pub struct SettingsVars {
     pub app_address: String,
     pub api_key: String,
     pub api_key_secret: String,
-    pub client_secret: Secret<String>,
+    pub client_secret: String,
 }
 
 impl SettingsVars {
@@ -36,7 +35,7 @@ impl SettingsVars {
         };
 
         Self {
-            client_id: Secret::new(Self::get_var("CLIENT_URL")),
+            client_id: Self::get_var("CLIENT_URL"),
             response_type: Self::get_var("RESPONSE_TYPE"),
             base_url: Self::get_var("BASE_URL"),
             redirect_uri: Self::get_var("REDIRECT_URI"),
@@ -47,7 +46,7 @@ impl SettingsVars {
             api_key: Self::get_var("API_KEY"),
             // consumer_secret
             api_key_secret: Self::get_var("API_KEY_SECRET"),
-            client_secret: Secret::new(Self::get_var("CLIENT_SECRET")),
+            client_secret: Self::get_var("CLIENT_SECRET"),
         }
     }
 

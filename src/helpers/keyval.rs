@@ -10,13 +10,13 @@ impl KeyVal {
         Self(HashMap::new())
     }
 
-    pub fn add_keyval(self, key: Cow<'static, str>, val: Cow<'static, str>) -> Self {
-        self.insert(key, val);
+    pub fn add_keyval(self, key: String, val: String) -> Self {
+        self.insert(key.into(), val.into());
         self
     }
 
-    pub fn add_list_keyval(self, list: Vec<(Cow<'static, str>, Cow<'static, str>)>) -> Self {
-        list.into_iter().map(|(k, v)| self.insert(k, v));
+    pub fn add_list_keyval(self, list: Vec<(String, String)>) -> Self {
+        list.into_iter().map(|(k, v)| self.insert(k.into(), v.into()));
         self
     }
 

@@ -66,27 +66,25 @@ impl AppClient {
     pub async fn oauth2_authorize(&self) -> Response<Body> {
 
         let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
-        let pkce = &Pkce::new().to_string();
+        let pkce = Pkce::new().to_string();
+        // let client_id = client_id;
+        let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
+            Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
 
-        let query_params = KeyVal::new();
+        let query_params = KeyVal::new()
+            .add_list_keyval(vec![
+                ("response_type".to_string(), "code".to_string()),
+                ("client_id".to_string(), client_id),
+                ("redirect_uri".to_string(), redirect_uri),
+                ("scope".to_string(), Scope::with_scopes(scopes)),
+                ("state".to_string(), state),
+                ("code_challenge".to_string(), pkce),
+                ("code_challenge_method".to_string(), "plain".to_string()),
+            ]);
 
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
-            .with_query("response_type", "code")
-            .with_query("client_id", client_id.expose_secret())
-            .with_query("redirect_uri", &redirect_uri)
-            .with_query("scope", &Scope::with_scopes(
-                vec![
-                Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-                Scope::OfflineAccess,
-                Scope::WriteTweet, Scope::WriteLike
-            ]))
-            .with_query("state", &state)
-            .with_query("code_challenge", pkce)
-            .with_query("code_challenge_method", "plain")
-            // .with_body("", "application/x-www-form-urlencoded")
+            .add_query_params(query_params)
             .request_no_keys();
-
-        println!("THE IS THE ACTUAL REQUEST {:#?}", request.uri());
 
         self.redirect_user(request).await
     }
@@ -125,7 +123,7 @@ impl AccessTokenReq {
         Self {
             code,
             grant_type: "authorization_code".to_string(),
-            client_id: client_id.expose_secret().to_string(),
+            client_id: client_id.expose_secret(),
             redirect_uri,
             code_verifier: "code_challenge".to_string(),
         }
