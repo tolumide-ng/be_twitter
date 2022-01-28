@@ -1,5 +1,6 @@
 use hyper::{Request, Body, Method};
 
+// use crate::app::client::AppClient;
 use crate::{helpers::response::ApiResponse};
 use crate::controllers::{not_found, authorize_bot, health_check, handle_redirect};
 

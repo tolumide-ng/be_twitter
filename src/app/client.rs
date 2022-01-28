@@ -96,4 +96,36 @@ impl AppClient {
             .body(Body::from(request.uri().to_string()))
             .unwrap()
     }
+
+    // this method won't be public after we refactor the controllers to be methods in just one Struct as is currently in this module
+    pub async fn access_token(&self, auth_code: String) {
+        let SettingsVars{client_id, redirect_uri, ..} = SettingsVars::new();
+        let req_body = AccessTokenReq::new(auth_code);
+        // the header is  a base64 of client_id and client_secret
+
+        // let request = RequestBuilder::new(Method::POST, "https://twitter.com/i/oauth2/token");
+    }
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+struct AccessTokenReq {
+    code: String,
+    grant_type: String,
+    client_id: String,
+    redirect_uri: String,
+    code_verifier: String,
+}
+
+impl AccessTokenReq {
+    pub fn new(code: String) -> Self {
+        let SettingsVars {client_id, redirect_uri, ..} = SettingsVars::new();
+        Self {
+            code,
+            grant_type: "authorization_code".to_string(),
+            client_id: client_id.expose_secret().to_string(),
+            redirect_uri,
+            code_verifier: "code_challenge".to_string(),
+        }
+    }
 }
