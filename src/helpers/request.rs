@@ -3,7 +3,7 @@ use hyper::Uri;
 use url::Url;
 
 
-pub fn get_param_from_uri(uri: &Uri, query: &str) -> Option<HashMap<String, String>> {
+pub fn get_param_from_uri(uri: &Uri) -> Option<HashMap<String, String>> {
     let mut dic = HashMap::new();
     let mut uri_string = uri.to_string();
 
@@ -32,16 +32,4 @@ pub fn get_param_from_uri(uri: &Uri, query: &str) -> Option<HashMap<String, Stri
     }
 
     None
-}
-
-
-
-fn talk() -> HashMap<String, String> {
-    let mut ab = HashMap::new();
-
-    for x in 0..=10 {
-        ab.insert(x.to_string(), "v");
-    }
-
-    return ab;
 }

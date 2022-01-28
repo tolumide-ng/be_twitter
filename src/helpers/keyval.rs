@@ -10,13 +10,14 @@ impl KeyVal {
         Self(HashMap::new())
     }
 
-    pub fn add_keyval(self, key: String, val: String) -> Self {
+    pub fn add_keyval(mut self, key: String, val: String) -> Self {
         self.insert(key.into(), val.into());
         self
     }
 
-    pub fn add_list_keyval(self, list: Vec<(String, String)>) -> Self {
-        list.into_iter().map(|(k, v)| self.insert(k.into(), v.into()));
+    pub fn add_list_keyval(mut self, list: Vec<(String, String)>) -> Self {
+        list.into_iter()
+            .map(|(k, v)| self.insert(k.into(), v.into()));
         self
     }
 
