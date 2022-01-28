@@ -3,24 +3,45 @@ use hyper::Uri;
 use url::Url;
 
 
-pub fn get_param_from_uri(uri: &Uri, query: &str) -> Option<String> {
-    let uri_string = uri.to_string();
-    let parsed_uri = Url::parse(&uri_string).unwrap();
+pub fn get_param_from_uri(uri: &Uri, query: &str) -> Option<HashMap<String, String>> {
+    let mut dic = HashMap::new();
+    let mut uri_string = uri.to_string();
+
+    if !uri_string.starts_with("https:/") {
+        uri_string = format!("https:/{}", uri_string);
+    }
+
+    let parsed_uri = match Url::parse(&uri_string) {
+        Ok(uri) => uri,
+        Err(e) => {
+            panic!("There was an error parsing the uri {}", e);
+        }
+    };
+
 
     if let Some(all_qs) = parsed_uri.query() {
         let params: Vec<&str> = all_qs.split("&").collect();
-        let mut dic = HashMap::new();
+        
 
         for param in params {
             let vec_param = param.split("=").collect::<Vec<_>>();
-            dic.insert(vec_param[0], vec_param[1]);
+            dic.insert(vec_param[0].to_string(), vec_param[1].to_string());
         }
 
-        return match &dic.get(&query) {
-            Some(v) => Some(v.to_string()),
-            None => None
-        }
+        return Some(dic)
     }
 
     None
+}
+
+
+
+fn talk() -> HashMap<String, String> {
+    let mut ab = HashMap::new();
+
+    for x in 0..=10 {
+        ab.insert(x.to_string(), "v");
+    }
+
+    return ab;
 }
