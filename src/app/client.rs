@@ -6,7 +6,7 @@ use hyper::{Response};
 
 use crate::{middlewares::{
     request_builder::RequestBuilder,
-}, setup::variables::SettingsVars};
+}, setup::variables::SettingsVars, helpers::keyval::KeyVal};
 use crate::helpers::{
     scope::Scope,
     gen_pkce::Pkce,
@@ -67,6 +67,8 @@ impl AppClient {
 
         let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
         let pkce = &Pkce::new().to_string();
+
+        let query_params = KeyVal::new();
 
         let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
             .with_query("response_type", "code")

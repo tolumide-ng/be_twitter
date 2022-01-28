@@ -15,6 +15,11 @@ impl KeyVal {
         self
     }
 
+    pub fn add_list_keyval(self, list: Vec<(Cow<'static, str>, Cow<'static, str>)>) -> Self {
+        list.into_iter().map(|(k, v)| self.insert(k, v));
+        self
+    }
+
     pub fn to_urlencode(&self) -> String {
         self.iter()
             .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
