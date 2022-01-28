@@ -3,6 +3,7 @@ use std::{borrow::Cow, fmt};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
+use crate::helpers::keyval::KeyVal;
 use crate::middlewares::request_params::RequestParams;
 use crate::helpers::keypair::KeyPair;
 
@@ -38,6 +39,17 @@ impl<'a> RequestBuilder<'a> {
 
         Self {
             query: Some(query),
+            ..self
+        }
+    }
+
+    pub fn add_query_params(self, query_dict: KeyVal) -> Self {
+        let query_str = query_dict
+            .iter().map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<_>>().join("&");
+            
+        Self {
+            query: Some(query_str),
             ..self
         }
     }

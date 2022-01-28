@@ -16,9 +16,12 @@ impl KeyVal {
     }
 
     pub fn to_urlencode(&self) -> String {
-        let ab = self.iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<_>>().join("&");
-        String::from("")
+        self.iter()
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
+            .collect::<Vec<_>>().join("&")
     }
+
+    // pub fn to_query_params(&self) -> String {
+    //     self.iter().map(|(k, v)| forma)
+    // }
 }
