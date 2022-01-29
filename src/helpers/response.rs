@@ -1,11 +1,12 @@
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
-pub type ApiResponse = http::Result<Response<Body>>;
+use crate::errors::response::ApiResponseErrors;
 
-pub struct TApiResponse {
-    
-}
+// pub type ApiResponse = http::Result<Response<Body>>;
+
+pub type ApiResponse = Result<Response<Body>, ApiResponseErrors>;
+
 
 #[derive(Serialize, Deserialize)]
 pub struct ApiResponseBody<T> {

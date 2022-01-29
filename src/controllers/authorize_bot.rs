@@ -1,5 +1,6 @@
 use hyper::{Method, Body, Response};
-use redis::{Client, AsyncCommands, RedisError};
+use redis::{AsyncCommands};
+use redis::{Client as RedisClient};
 
 use crate::helpers::{
     response::{ApiResponse},
@@ -12,20 +13,11 @@ use crate::setup::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 
-pub async fn authorize_bot(client: &HyperClient, redis_client: &Client) -> ApiResponse {
+pub async fn authorize_bot(req: &HyperClient, client: RedisClient) -> ApiResponse {
     let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
-    // TODO - REFACTOR ALL OF THE REDIS HANDLING LATER
-    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut conn = client.get_async_connection().await?;
-    
-    // conn.set("key1", b"foo").await.expect("msg");
-    // conn.set("", "");
-    redis::cmd("SET").arg(&["key2", "bar"]).query_async(&mut conn).await;
-
-    // redis::cmd("SET").arg(&["key2", "bar"]).query_async(&mut conn).await;
-
-
+    let mut connection = client.get_async_connection().await.unwrap();
+    connection.set("test", &client_id).await?;
 
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
@@ -42,7 +34,7 @@ pub async fn authorize_bot(client: &HyperClient, redis_client: &Client) -> ApiRe
             ("code_challenge_method".to_string(), "plain".to_string()),
         ]);
 
-    println!("THE QUERY PARAMS {:#?}", query_params);
+    // println!("THE QUERY PARAMS {:#?}", query_params);
 
     let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
         .add_query_params(query_params)
@@ -50,7 +42,7 @@ pub async fn authorize_bot(client: &HyperClient, redis_client: &Client) -> ApiRe
 
     let response_body= Response::builder().status(302)
         .header("Location", request.uri().to_string())
-        .body(Body::from(request.uri().to_string()));
+        .body(Body::from(request.uri().to_string())).unwrap();
 
-    response_body
+    Ok(response_body)
 }

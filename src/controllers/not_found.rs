@@ -7,7 +7,9 @@ pub fn not_found () -> ApiResponse {
     let response = ApiResponseBody::new(
 "Resorce not found".to_string(), Some("".to_owned()));
 
-    Response::builder()
+    let response_body = Response::builder()
         .status(StatusCode::NOT_FOUND)
-        .body(Body::from(response))
+        .body(Body::from(response)).unwrap();
+
+    Ok(response_body)
 }

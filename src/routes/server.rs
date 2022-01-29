@@ -15,8 +15,9 @@ pub async fn routes(
 ) -> ApiResponse {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") => health_check(),
-        (&Method::GET, "/enable") => authorize_bot(&client, &conn).await,
-        (&Method::GET, "/twitter/oauth") => handle_redirect(req, &client).await,
+        (&Method::GET, "/enable") => authorize_bot(&client, conn).await,
+        (&Method::GET, "/twitter/oauth") => handle_redirect(req, &client, conn).await,
+        // (&Method::GET)
         _ => {
             not_found()
         }

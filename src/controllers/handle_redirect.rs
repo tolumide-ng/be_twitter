@@ -1,10 +1,11 @@
 use hyper::{Body, Response, StatusCode, Request};
+use redis::{Client as RedisClient};
 use crate::{helpers::{response::{ApiResponse, ApiResponseBody}, request::{get_param_from_uri, HyperClient}}, setup::variables::SettingsVars};
 
 
 
 // todo() - I should move all the controllers used to handle 2.0 authentication into one struct and represent them as methods within the struct
-pub async fn handle_redirect(req: Request<hyper::Body>, client: &HyperClient) -> ApiResponse {
+pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: &HyperClient, redis_client: RedisClient) -> ApiResponse {
     let SettingsVars{state, ..} = SettingsVars::new();
 
     let query_params = get_param_from_uri(req.uri());
@@ -14,11 +15,14 @@ pub async fn handle_redirect(req: Request<hyper::Body>, client: &HyperClient) ->
         if *obtained_state != state {
             panic!("Please try again later, state isn't same, CSRF?")
         }
+        
         let auth_code = dict.get("code").unwrap();
     };
 
      let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
 
-    Response::builder()
-        .status(StatusCode::OK).body(ok_body)
+    let response_body = Response::builder()
+        .status(StatusCode::OK).body(ok_body).unwrap();
+
+    Ok(response_body)
 }
