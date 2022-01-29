@@ -39,15 +39,4 @@ impl AppClient {
         }).unwrap();
 
     }
-
-    // pub async fn get_request_token<S: Clone + fmt::Display + Into<String>>(&self, callback: S, consumer: KeyPair) {
-
-    //     let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/request_token")
-    //         .with_oauth_callback(callback.clone().into())
-    //         .with_query(KeyPair::new("oauth_callback", encode(&callback.clone().into()).into_owned()))
-    //         // .with_query(KeyPair::new("oauth_callback", c.into()))
-    //         .request_keys(consumer, None);
-
-    //     self.make_call(request).await;
-    // }
 }

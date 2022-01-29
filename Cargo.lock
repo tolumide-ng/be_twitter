@@ -95,7 +95,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50b727aacc797f9fc28e355d21f34709ac4fc9adecfe470ad07b8f4464f53062"
 dependencies = [
  "bytes",
+ "futures-core",
  "memchr",
+ "pin-project-lite",
+ "tokio",
+ "tokio-util",
 ]
 
 [[package]]
@@ -843,11 +847,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a80b5f38d7f5a020856a0e16e40a9cfabf88ae8f0e4c2dcd8a3114c1e470852"
 dependencies = [
  "async-trait",
+ "bytes",
  "combine",
  "dtoa",
+ "futures-util",
  "itoa 0.4.8",
+ "native-tls",
  "percent-encoding",
+ "pin-project-lite",
  "sha1 0.6.1",
+ "tokio",
+ "tokio-native-tls",
+ "tokio-util",
  "url",
 ]
 
@@ -1118,6 +1129,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "thiserror"
+version = "1.0.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "854babe52e4df1653706b98fcfc05843010039b406875930a70e4d9644e5c417"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1240,7 +1271,6 @@ dependencies = [
  "http",
  "hyper",
  "hyper-tls",
- "lazy_static",
  "pkce",
  "redis",
  "secrecy",
@@ -1248,6 +1278,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha1 0.10.0",
+ "thiserror",
  "tokio",
  "url",
  "urlencoding",

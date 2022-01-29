@@ -3,6 +3,10 @@ use serde::{Serialize, Deserialize};
 
 pub type ApiResponse = http::Result<Response<Body>>;
 
+pub struct TApiResponse {
+    
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ApiResponseBody<T> {
     message: String,
