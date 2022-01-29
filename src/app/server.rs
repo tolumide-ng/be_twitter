@@ -5,7 +5,6 @@ use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
-use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
 
 type GenericError = hyper::Error;

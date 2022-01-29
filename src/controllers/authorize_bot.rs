@@ -2,6 +2,7 @@ use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
 use redis::{Client as RedisClient};
 
+use crate::helpers::response::ApiBody;
 use crate::helpers::{
     response::{ApiResponse},
     request::{HyperClient},
@@ -13,7 +14,7 @@ use crate::setup::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 
-pub async fn authorize_bot(req: &HyperClient, client: RedisClient) -> ApiResponse {
+pub async fn authorize_bot(req: &HyperClient, client: RedisClient) -> ApiResponse<ApiBody> {
     let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
     let mut connection = client.get_async_connection().await.unwrap();

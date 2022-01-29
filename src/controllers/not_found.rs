@@ -1,9 +1,9 @@
 use hyper::{Response, StatusCode, Body};
 
-use crate::helpers::response::{ApiResponse, ApiResponseBody};
+use crate::helpers::response::{ApiResponse, ApiResponseBody, ApiBody};
 
 
-pub fn not_found () -> ApiResponse {
+pub fn not_found () -> ApiResponse<ApiBody> {
     let response = ApiResponseBody::new(
 "Resorce not found".to_string(), Some("".to_owned()));
 

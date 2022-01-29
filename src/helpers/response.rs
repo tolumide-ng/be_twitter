@@ -5,7 +5,10 @@ use crate::errors::response::ApiResponseErrors;
 
 // pub type ApiResponse = http::Result<Response<Body>>;
 
-pub type ApiResponse = Result<Response<Body>, ApiResponseErrors>;
+pub type ApiResponse<T> = Result<T, anyhow::Error>;
+
+
+pub type ApiBody = Response<Body>;
 
 
 #[derive(Serialize, Deserialize)]

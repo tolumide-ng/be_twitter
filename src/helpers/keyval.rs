@@ -29,7 +29,7 @@ impl KeyVal {
         self
     }
 
-    // pub fn from_uri_param_to_dict(uri: &Uri) -> Self {}
+    pub fn query_params_to_keyval() {}
 
     pub fn to_urlencode(&self) -> String {
         self.iter()

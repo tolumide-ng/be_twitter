@@ -2,29 +2,8 @@ use std::collections::HashMap;
 
 use hyper::{Body, Response, StatusCode, Request};
 use redis::{Client as RedisClient};
-use crate::{helpers::{response::{ApiResponse, ApiResponseBody}, request::{get_param_from_uri, HyperClient}, keyval::KeyVal}, setup::variables::SettingsVars};
+use crate::{helpers::{response::{ApiResponse, ApiResponseBody, ApiBody}, request::{get_param_from_uri, HyperClient}, keyval::KeyVal}, setup::variables::SettingsVars};
 
-struct AccessToken {
-    pub state: String,
-    pub  code: String,
-}
-
-impl AccessToken {
-    pub fn new(token: Option<HashMap<String, String>>) -> Self {
-        match token {
-            Some(token) => {
-                if token.contains_key("state") && token.contains_key("code") {
-                    return AccessToken {
-                        state: token.get("state").unwrap().to_string(),
-                        code: token.get("code").unwrap().to_string(),
-                    }
-                }
-                panic!("")
-            },
-            None => panic!("Invalid AccessToken")
-        }
-    }
-}
 
 // struct UriParams(String);
 
@@ -33,7 +12,7 @@ impl AccessToken {
 // }
 
 // todo() - I should move all the controllers used to handle 2.0 authentication into one struct and represent them as methods within the struct
-pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: &HyperClient, redis_client: RedisClient) -> ApiResponse {
+pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: &HyperClient, redis_client: RedisClient) -> ApiResponse<ApiBody> {
     let SettingsVars{state, ..} = SettingsVars::new();
 
     let query_params = get_param_from_uri(req.uri());
