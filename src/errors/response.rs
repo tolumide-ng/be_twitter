@@ -12,6 +12,14 @@ impl fmt::Display for RedisStoreError {
 }
 
 
+impl std::error::Error for RedisStoreError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        // Compiler transparently casts RedisError to dyn::Error
+        Some(&self.0)
+    }
+}
+
+
 pub enum ApiResponseErrors {
 
 }
