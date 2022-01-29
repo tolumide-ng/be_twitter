@@ -1,10 +1,10 @@
 use hyper::{Body, Response, StatusCode, Request};
-use crate::{helpers::{response::{ApiResponse, ApiResponseBody}, request::get_param_from_uri}, setup::variables::SettingsVars};
+use crate::{helpers::{response::{ApiResponse, ApiResponseBody}, request::{get_param_from_uri, HyperClient}}, setup::variables::SettingsVars};
 
 
 
 // todo() - I should move all the controllers used to handle 2.0 authentication into one struct and represent them as methods within the struct
-pub async fn handle_redirect(req: Request<hyper::Body>) -> ApiResponse {
+pub async fn handle_redirect(req: Request<hyper::Body>, client: &HyperClient) -> ApiResponse {
     let SettingsVars{state, ..} = SettingsVars::new();
 
     let query_params = get_param_from_uri(req.uri());

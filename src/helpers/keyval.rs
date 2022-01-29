@@ -16,8 +16,11 @@ impl KeyVal {
     }
 
     pub fn add_list_keyval(mut self, list: Vec<(String, String)>) -> Self {
-        list.into_iter()
-            .map(|(k, v)| self.insert(k.into(), v.into()));
+        for (k, v) in list {
+            self.insert(k.into(), v.into());
+        }
+        // let ab = list.into_iter()
+        //     .map(|(k, v)| self.insert(k.into(), v.into())).collect();
         self
     }
 

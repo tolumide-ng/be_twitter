@@ -1,22 +1,26 @@
-use hyper::Server;
+use hyper::{Server};
 use hyper::service::{make_service_fn, service_fn};
 use std::{net::SocketAddr};
 use dotenv::dotenv;
 
+use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
 
 
-pub async fn server() {
+type GenericError = hyper::Error;
+
+pub async fn server(client: HyperClient) {
     dotenv().ok();
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
 
-    // let addr: SocketAddr = match env::var("APP_ADDRESS") {
-    //     Ok(value) => value.parse().unwrap(),
-    //     Err(_) => panic!("Env Variable: APP_ADDRESS is required"),
-    // };
-    
-    let service = make_service_fn(|_| async {
-        Ok::<_, hyper::Error>(service_fn(routes))
+    let service = make_service_fn(move|_| {
+        let client = client.clone();
+
+        async {
+            Ok::<_, GenericError>(service_fn(move |req| {
+                routes(req, client.to_owned())
+            }))
+        }
     });
 
     let server = Server::bind(&addr).serve(service);

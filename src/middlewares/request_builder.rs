@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::{borrow::Cow, fmt};
+use http::Response;
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
@@ -47,7 +48,7 @@ impl<'a> RequestBuilder<'a> {
         let query_str = query_dict
             .iter().map(|(k, v)| format!("{}={}", k, v))
             .collect::<Vec<_>>().join("&");
-            
+
         Self {
             query: Some(query_str),
             ..self
@@ -91,11 +92,13 @@ impl<'a> RequestBuilder<'a> {
     // }
 
     fn build_request(self, authorization: Option<String>) -> Request<Body> {
-        let url = self.get_uri();
+        let uri = self.get_uri();
+
+        println!("THE URI {:#?}", uri);
 
         let request = Request::builder()
             .method(self.method)
-            .uri(url);
+            .uri(uri);
 
         let request= match authorization {
             Some(auth) => request.header(AUTHORIZATION, format!("Basic {}", auth)),
@@ -111,14 +114,5 @@ impl<'a> RequestBuilder<'a> {
         }
         // .header(AUTHORIZATION, format!("Basic {}", authorization))
         // .body(Body::from("")).unwrap();
-
-
-        
-
-
-    }
-
-    pub fn request_authorize(self) {
-        
     }
 }

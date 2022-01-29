@@ -1,6 +1,10 @@
 use std::{collections::HashMap};
-use hyper::Uri;
+use hyper::{Uri, Client, client::HttpConnector};
+use hyper_tls::HttpsConnector;
 use url::Url;
+
+
+pub type HyperClient = Client<HttpsConnector<HttpConnector>>;
 
 
 pub fn get_param_from_uri(uri: &Uri) -> Option<HashMap<String, String>> {
