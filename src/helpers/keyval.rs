@@ -37,37 +37,20 @@ impl KeyVal {
             .collect::<Vec<_>>().join("&")
     }
 
-    // pub fn to_access_token(&self) -> Result<AccessToken, ValidationError> {
-    //     if self.contains_key("state") && self.contains_key("code") {
-    //         let at = AccessToken {
-    //             state: self.get("state").unwrap().to_string(),
-    //             code: self.get("code").unwrap().to_string()
-    //         };
+    pub fn to_access_token(&self) -> Result<AccessToken, Box<dyn std::error::Error>> {
+        if self.contains_key("state") && self.contains_key("code") {
+            let at = AccessToken {
+                state: self.get("state").unwrap().to_string(),
+                code: self.get("code").unwrap().to_string()
+            };
 
-    //         return Ok(at)
-    //     }
-    //     return ValidationError("State or Code in missen in AccessToken".to_string())
-    //     // panic!("Invalid AccessToken")
-    // }
+            return Ok(at)
+        }
+
+        Err("State or Code in missen in AccessToken")?
+    }
 
     // pub fn to_query_params(&self) -> String {
     //     self.iter().map(|(k, v)| forma)
     // }
-}
-
-#[derive(Debug, Clone)]
-struct ValidationError(String);
-
-impl std::fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-
-impl std::error::Error for ValidationError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        // Compiler transparently casts RedisError to dyn::Error
-        Some(self)
-    }
 }
