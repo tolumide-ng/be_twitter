@@ -74,7 +74,7 @@ impl KeyVal {
             return Ok(at)
         }
 
-        Err(TError::InvalidCredential("State or Code in missen in AccessToken"))
+        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken"))
     }
 
     // pub fn to_query_params(&self) -> String {

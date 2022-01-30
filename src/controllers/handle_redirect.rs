@@ -21,7 +21,7 @@ pub struct AccessToken {
 impl AccessToken {
     pub fn validate_state(self, local_state: String) -> TResult<Self> {
         if self.state != local_state {
-            return Err(TError::InvalidCredential("The state value obtained from the redirect uri does not match the local one"));
+            return Err(TError::InvalidCredentialError("The state value obtained from the redirect uri does not match the local one"));
         }
 
         Ok(self)
