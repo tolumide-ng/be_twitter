@@ -29,17 +29,20 @@ impl AccessToken {
 }
 // todo() - I should move all the controllers used to handle 2.0 authentication into one struct and represent them as methods within the struct
 pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
+    println!("!!!!!!!!!!!!!!HANDLE REDIRECT IS CALLED!!!!!!!!!!!!!!");
     let SettingsVars{state, ..} = SettingsVars::new();
 
     let query_params = KeyVal::query_params_to_keyval(req.uri())?
         .to_access_token()?.validate_state(state)?;
 
     // Make request to POST the access token
-    access_token(hyper_client, redis_client, query_params.code);
+    access_token(hyper_client.clone(), redis_client, query_params.code).await?;
+    
+    // println!("||||WHAT WE GOT FROM THE GET ACCESS TOKEN REQUEST||||| {:#?}", get_access_token);
 
 
 
-     let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
+     let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("from me to you".to_string())));
 
     let response_body = Response::builder()
         .status(StatusCode::OK).body(ok_body).unwrap();

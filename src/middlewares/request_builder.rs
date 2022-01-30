@@ -3,24 +3,22 @@ use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
 use crate::helpers::keyval::KeyVal;
-use crate::middlewares::request_params::RequestParams;
 
-pub struct RequestBuilder<'a> {
-    base_uri: &'a str,
+pub struct RequestBuilder {
+    base_uri: String,
     method: Method,
-    params: Option<RequestParams>,
+    // params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
     header: Option<KeyVal>,
     // addon: OAuthAddOn,
 }
 
-impl<'a> RequestBuilder<'a> {
-    pub fn new(method: Method, base_uri: &'a str) -> Self {
+impl RequestBuilder {
+    pub fn new(method: Method, base_uri: String) -> Self {
         Self {
             base_uri,
             method,
-            params: None,
             query: None,
             body: None,
             header: None,
@@ -62,7 +60,11 @@ impl<'a> RequestBuilder<'a> {
     }
 
     pub fn get_uri(&self) -> String {
-        format!("{}?{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
+        let base_uri = self.base_uri.to_string();
+        match &self.query {
+            Some(query) => format!("{}?{}", base_uri, query),
+            None => base_uri
+        }
     }
 
     
@@ -80,13 +82,14 @@ impl<'a> RequestBuilder<'a> {
         )
     }
 
-    pub fn with_basic_auth(mut self, id: String, secret: String) -> Self {
+    pub fn with_basic_auth(self, id: String, secret: String) -> Self {
         let auth_header = base64::encode(format!("{}:{}", id, secret));
-        let header_value = format!("Basic {}", urlencoding::encode(&auth_header));
+        let header_value = format!("Basic {}", &auth_header);
         let header_key = "Authorization".into();
         
+        println!("HEADER --->>>>>> {:#?} <<<<<<--------", header_value);
         let updated_header = match self.header {
-            Some(mut header) => header.add_keyval(header_key, header_value),
+            Some(header) => header.add_keyval(header_key, header_value),
             None => KeyVal::new_with_keyval(header_key, header_value)
         };
 
@@ -96,42 +99,24 @@ impl<'a> RequestBuilder<'a> {
         }
     }
 
-
-    pub fn request_no_keys(self) -> Request<Body> {
-        self.build_request(None)
-    }
-
-
-
-
-    // pub fn request_keys(self, consumer: KeyPair, token: Option<KeyPair>) -> Request<Body> {
-
-    //     let oauth = OAuthParams::from_keys(consumer.clone(), token.clone())
-    //         .with_addon(self.addon.clone())
-    //         .sign_request(&self.method, self.params.as_ref(), &self.base_uri,  self.get_uri());
-
-    //     self.build_reqest(oauth.get_header())
-    // }
-
-    fn build_request(self, authorization: Option<String>) -> Request<Body> {
+    pub fn build_request(self) -> Request<Body> {
         let uri = self.get_uri();
 
         println!("THE URI {:#?}", uri);
-
-        let request = Request::builder()
+        let mut request = Request::builder()
             .method(self.method)
             .uri(uri);
 
-        let request= match authorization {
-            Some(auth) => request.header(AUTHORIZATION, format!("Basic {}", auth)),
-            None => request
-        };
+        if let Some(header_map) = self.header {
+            for (k, v) in header_map.iter() {
+                request = request.header(k.to_string(), v.to_string());
+                println!("|||||||||||||| THE RESPONSE |||||||||||||| {:#?}", request);
+            }
+        }
 
         if let Some((body, content)) = self.body {
-            // println!("THE REQUEST BODY {:#?}", request);
             request.header(CONTENT_TYPE, content).body(body).unwrap()
         } else {
-            // println!("THE REQUEST BODY {:#?}", request);
             request.body(Body::from("")).unwrap()
         }
     }
