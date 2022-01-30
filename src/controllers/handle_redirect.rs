@@ -2,30 +2,47 @@ use std::collections::HashMap;
 
 use hyper::{Body, Response, StatusCode, Request};
 use redis::{Client as RedisClient};
-use crate::{helpers::{response::{ApiResponse, ApiResponseBody, ApiBody}, request::{get_param_from_uri, HyperClient}, keyval::KeyVal}, setup::variables::SettingsVars};
+use crate::{helpers::{
+    response::{TResult, ApiResponseBody, ApiBody}, 
+    request::{HyperClient}, keyval::KeyVal}, 
+    setup::variables::SettingsVars, errors::response::TError
+};
 
 
-// struct UriParams(String);
 
-// impl UriParams {
-//     pub fn new() -> Self {}
-// }
+#[derive(Debug, Clone)]
+pub struct AccessToken {
+    pub state: String,
+    pub  code: String,
+}
 
+impl AccessToken {
+    pub fn validate_state(self, local_state: String) -> TResult<Self> {
+        if self.state != local_state {
+            return Err(TError::InvalidCredential("The state value obtained from the redirect uri does not match the local one"));
+        }
+
+        Ok(self)
+    }
+}
 // todo() - I should move all the controllers used to handle 2.0 authentication into one struct and represent them as methods within the struct
-pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: &HyperClient, redis_client: RedisClient) -> ApiResponse<ApiBody> {
+pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: &HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let SettingsVars{state, ..} = SettingsVars::new();
 
-    let query_params = get_param_from_uri(req.uri());
-    // let act = KeyVal::to_access_token(query_params.unwrap());
-    if let Some(dict) = query_params {
-        //todo() find a way to confirm if code and state are present in the dic, handle the edge cases
-        let obtained_state = dict.get("state").unwrap();
-        if *obtained_state != state {
-            panic!("Please try again later, state isn't same, CSRF?")
-        }
-        
-        let auth_code = dict.get("code").unwrap();
-    };
+    let query_params = KeyVal::query_params_to_keyval(req.uri())?
+        .to_access_token()?.validate_state(state)?;
+
+
+    let mut con = redis_client.get_async_connection().await.unwrap();
+
+    // connection.get("test");
+    let result = redis::cmd("MGET")
+        .arg(&["key1"])
+        .query_async(&mut con)
+        .await?;
+
+    println!("THE RESULT OF THE REDIS QUERY {:#?}", result);
+    
 
      let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
 

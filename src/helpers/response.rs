@@ -1,12 +1,12 @@
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
-use crate::errors::response::ApiResponseErrors;
+use crate::errors::response::TError;
 
 // pub type ApiResponse = http::Result<Response<Body>>;
 
-pub type ApiResponse<T> = Result<T, anyhow::Error>;
-
+// pub type ApiResponse<T> = Result<T, anyhow::Error>;
+pub type TResult<T> = std::result::Result<T, TError>;
 
 pub type ApiBody = Response<Body>;
 

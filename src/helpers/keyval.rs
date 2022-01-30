@@ -1,16 +1,15 @@
 use std::{collections::HashMap, borrow::Cow};
 use derive_more;
-use http::Uri;
+use hyper::{Uri};
+use url::{Url};
+
+use crate::{helpers::response::TResult, errors::response::TError};
+use crate::controllers::handle_redirect::AccessToken;
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct KeyVal(HashMap<Cow<'static, str>, Cow<'static, str>>);
 
 
-#[derive(Debug, Clone)]
-pub struct AccessToken {
-    pub state: String,
-    pub  code: String,
-}
 
 impl KeyVal {
     pub fn new() -> Self {
@@ -29,7 +28,28 @@ impl KeyVal {
         self
     }
 
-    pub fn query_params_to_keyval() {}
+    pub fn query_params_to_keyval(uri: &Uri) -> TResult<Self> {
+        let mut uri_string = uri.to_string();
+
+        if !uri_string.starts_with("https:/") {
+            uri_string = format!("https:/{}", uri_string);
+        }
+
+        let parsed_uri = Url::parse(&uri_string)?;
+
+        let mut dic = Self::new();
+
+        if let Some(all_qs) = parsed_uri.query() {
+            let params: Vec<&str> = all_qs.split("&").collect();
+
+            for param in params {
+                let vec_param = param.split("=").collect::<Vec<_>>();
+                dic = dic.add_keyval(vec_param[0].into(), vec_param[1].into());
+            }
+        }
+
+        Ok(dic)
+    }
 
     pub fn to_urlencode(&self) -> String {
         self.iter()
@@ -37,7 +57,7 @@ impl KeyVal {
             .collect::<Vec<_>>().join("&")
     }
 
-    pub fn to_access_token(&self) -> Result<AccessToken, Box<dyn std::error::Error>> {
+    pub fn to_access_token(&self) -> TResult<AccessToken> {
         if self.contains_key("state") && self.contains_key("code") {
             let at = AccessToken {
                 state: self.get("state").unwrap().to_string(),
@@ -47,7 +67,7 @@ impl KeyVal {
             return Ok(at)
         }
 
-        Err("State or Code in missen in AccessToken")?
+        Err(TError::InvalidCredential("State or Code in missen in AccessToken"))
     }
 
     // pub fn to_query_params(&self) -> String {

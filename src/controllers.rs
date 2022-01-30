@@ -4,7 +4,7 @@ mod not_found;
 mod basic_response;
 mod authorize_bot;
 mod health_check;
-mod handle_redirect;
+pub mod handle_redirect;
 mod access_token;
 
 pub use not_found::not_found;
