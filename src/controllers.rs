@@ -11,4 +11,3 @@ pub use not_found::not_found;
 pub use authorize_bot::authorize_bot;
 pub use health_check::health_check;
 pub use handle_redirect::handle_redirect;
-pub use access_token::access_token;

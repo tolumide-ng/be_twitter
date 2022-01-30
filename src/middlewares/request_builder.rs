@@ -86,8 +86,6 @@ impl RequestBuilder {
         let auth_header = base64::encode(format!("{}:{}", id, secret));
         let header_value = format!("Basic {}", &auth_header);
         let header_key = "Authorization".into();
-        
-        println!("HEADER --->>>>>> {:#?} <<<<<<--------", header_value);
         let updated_header = match self.header {
             Some(header) => header.add_keyval(header_key, header_value),
             None => KeyVal::new_with_keyval(header_key, header_value)
@@ -101,8 +99,6 @@ impl RequestBuilder {
 
     pub fn build_request(self) -> Request<Body> {
         let uri = self.get_uri();
-
-        println!("THE URI {:#?}", uri);
         let mut request = Request::builder()
             .method(self.method)
             .uri(uri);
@@ -110,7 +106,6 @@ impl RequestBuilder {
         if let Some(header_map) = self.header {
             for (k, v) in header_map.iter() {
                 request = request.header(k.to_string(), v.to_string());
-                println!("|||||||||||||| THE RESPONSE |||||||||||||| {:#?}", request);
             }
         }
 

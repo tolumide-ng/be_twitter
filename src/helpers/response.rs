@@ -39,35 +39,24 @@ impl<T: Serialize> ApiResponseBody<T> {
 pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResult<(THeaders, Vec<u8>)> {
     let res = client.request(request).await.unwrap();
     
-    println!("THE RESPONSE {:#?}", res);
-
     let (parts, body) = res.into_parts();
-    println!(":::::::::::::::::::::::::::::::::::::::::::::");
     let body = hyper::body::to_bytes(body).await?.to_vec();
-
-    // println!("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ {:#?}", body);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
-        println!("there was an error!!!!!!!!!!!!!!! {:#?}", errors);
-
         if errors.errors.iter().any(|e| e.code == 88)
         && parts.headers.contains_key(X_RATE_LIMIT_RESET) {
-            println!("CONTENT OF THE PARTS HEADER {:#?}", parts);
             return Err(TError::RateLimit())
         } else {
             return Err(TError::TwitterError(parts.headers, errors))
         }
     }
 
-    println!("<<<<<<<<<<<<<IT SHOULD BE HERE>>>>>>>>>>>");
     if !parts.status.is_success() {
-        // println!("WHAT'S IS THE THE BODY {:#?}", body);
-        let s = String::from_utf8_lossy(&body);
-        println!("result: {}", s);
+        let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
     }
 
-    println!("THE ACTUAL BODY>>>>>>>>>>>> {:#?}", body);
+
     
     Ok((parts.headers, body))
 }

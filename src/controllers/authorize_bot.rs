@@ -40,8 +40,6 @@ pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<Api
             ("code_challenge_method".to_string(), "plain".to_string()),
         ]);
 
-    // println!("THE QUERY PARAMS {:#?}", query_params);
-
     let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize".into())
         .add_query_params(query_params)
         .build_request();
