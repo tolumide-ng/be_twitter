@@ -1,29 +1,24 @@
-use std::fmt::Debug;
-use std::{borrow::Cow, fmt};
-use http::Response;
+use std::{fmt};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
 use crate::helpers::keyval::KeyVal;
-use crate::middlewares::request_params::RequestParams;
-use crate::helpers::keypair::KeyPair;
 
-pub struct RequestBuilder<'a> {
-    base_uri: &'a str,
+pub struct RequestBuilder {
+    base_uri: String,
     method: Method,
-    params: Option<RequestParams>,
+    // params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
-    header: Option<KeyPair>,
+    header: Option<KeyVal>,
     // addon: OAuthAddOn,
 }
 
-impl<'a> RequestBuilder<'a> {
-    pub fn new(method: Method, base_uri: &'a str) -> Self {
+impl RequestBuilder {
+    pub fn new(method: Method, base_uri: String) -> Self {
         Self {
             base_uri,
             method,
-            params: None,
             query: None,
             body: None,
             header: None,
@@ -32,7 +27,6 @@ impl<'a> RequestBuilder<'a> {
     }
 
     pub fn with_query<T: Into<String> + fmt::Display>(self, key: T, value: T) -> Self {
-        // if key.len() == 0 || value.len() == 0 {return self}
         let query = match &self.query {
             Some(query) => format!("{}&{}={}", query, key, value),
             None => format!("{}={}", key, value)
@@ -55,8 +49,22 @@ impl<'a> RequestBuilder<'a> {
         }
     }
 
+    pub fn with_header(self, header_dict: Option<KeyVal>) -> Self {
+        if let Some(_) = header_dict {
+            return Self {
+                header: header_dict,
+                ..self
+            }
+        }
+        self
+    }
+
     pub fn get_uri(&self) -> String {
-        format!("{}?{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
+        let base_uri = self.base_uri.to_string();
+        match &self.query {
+            Some(query) => format!("{}?{}", base_uri, query),
+            None => base_uri
+        }
     }
 
     
@@ -74,45 +82,37 @@ impl<'a> RequestBuilder<'a> {
         )
     }
 
+    pub fn with_basic_auth(self, id: String, secret: String) -> Self {
+        let auth_header = base64::encode(format!("{}:{}", id, secret));
+        let header_value = format!("Basic {}", &auth_header);
+        let header_key = "Authorization".into();
+        let updated_header = match self.header {
+            Some(header) => header.add_keyval(header_key, header_value),
+            None => KeyVal::new_with_keyval(header_key, header_value)
+        };
 
-    pub fn request_no_keys(self) -> Request<Body> {
-        self.build_request(None)
+        Self {
+            header: Some(updated_header),
+            ..self
+        }
     }
 
-
-
-
-    // pub fn request_keys(self, consumer: KeyPair, token: Option<KeyPair>) -> Request<Body> {
-
-    //     let oauth = OAuthParams::from_keys(consumer.clone(), token.clone())
-    //         .with_addon(self.addon.clone())
-    //         .sign_request(&self.method, self.params.as_ref(), &self.base_uri,  self.get_uri());
-
-    //     self.build_reqest(oauth.get_header())
-    // }
-
-    fn build_request(self, authorization: Option<String>) -> Request<Body> {
+    pub fn build_request(self) -> Request<Body> {
         let uri = self.get_uri();
-
-        println!("THE URI {:#?}", uri);
-
-        let request = Request::builder()
+        let mut request = Request::builder()
             .method(self.method)
             .uri(uri);
 
-        let request= match authorization {
-            Some(auth) => request.header(AUTHORIZATION, format!("Basic {}", auth)),
-            None => request
-        };
+        if let Some(header_map) = self.header {
+            for (k, v) in header_map.iter() {
+                request = request.header(k.to_string(), v.to_string());
+            }
+        }
 
         if let Some((body, content)) = self.body {
-            // println!("THE REQUEST BODY {:#?}", request);
             request.header(CONTENT_TYPE, content).body(body).unwrap()
         } else {
-            // println!("THE REQUEST BODY {:#?}", request);
             request.body(Body::from("")).unwrap()
         }
-        // .header(AUTHORIZATION, format!("Basic {}", authorization))
-        // .body(Body::from("")).unwrap();
     }
 }

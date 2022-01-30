@@ -1,8 +1,10 @@
 use hyper::{Method, Body, Response};
-use redis::{Client, AsyncCommands, RedisError};
+use redis::{AsyncCommands};
+use redis::{Client as RedisClient};
 
+use crate::helpers::response::ApiBody;
 use crate::helpers::{
-    response::{ApiResponse},
+    response::{TResult},
     request::{HyperClient},
     gen_pkce::Pkce,
     scope::Scope,
@@ -12,24 +14,20 @@ use crate::setup::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 
-pub async fn authorize_bot(client: &HyperClient, redis_client: &Client) -> ApiResponse {
+pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<ApiBody> {
     let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
-    // TODO - REFACTOR ALL OF THE REDIS HANDLING LATER
-    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-    let mut conn = client.get_async_connection().await?;
+    let mut con = client.get_async_connection().await.unwrap();
     
-    // conn.set("key1", b"foo").await.expect("msg");
-    // conn.set("", "");
-    redis::cmd("SET").arg(&["key2", "bar"]).query_async(&mut conn).await;
-
-    // redis::cmd("SET").arg(&["key2", "bar"]).query_async(&mut conn).await;
-
-
-
+    
+    
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
+    
+    con.set("tolumide_test_pkce", &pkce).await?;
+    redis::cmd("SET").arg(&["tolumide_testing_pkce", &pkce]).query_async(&mut con).await?;
+
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![
@@ -42,15 +40,13 @@ pub async fn authorize_bot(client: &HyperClient, redis_client: &Client) -> ApiRe
             ("code_challenge_method".to_string(), "plain".to_string()),
         ]);
 
-    println!("THE QUERY PARAMS {:#?}", query_params);
-
-    let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize")
+    let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize".into())
         .add_query_params(query_params)
-        .request_no_keys();
+        .build_request();
 
     let response_body= Response::builder().status(302)
         .header("Location", request.uri().to_string())
-        .body(Body::from(request.uri().to_string()));
+        .body(Body::from(request.uri().to_string())).unwrap();
 
-    response_body
+    Ok(response_body)
 }
