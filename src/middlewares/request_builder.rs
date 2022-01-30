@@ -1,12 +1,9 @@
-use std::fmt::Debug;
-use std::{borrow::Cow, fmt};
-use http::Response;
+use std::{fmt};
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
 use crate::helpers::keyval::KeyVal;
 use crate::middlewares::request_params::RequestParams;
-use crate::helpers::keypair::KeyPair;
 
 pub struct RequestBuilder<'a> {
     base_uri: &'a str,
@@ -14,7 +11,7 @@ pub struct RequestBuilder<'a> {
     params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
-    header: Option<KeyPair>,
+    header: Option<KeyVal>,
     // addon: OAuthAddOn,
 }
 
@@ -32,7 +29,6 @@ impl<'a> RequestBuilder<'a> {
     }
 
     pub fn with_query<T: Into<String> + fmt::Display>(self, key: T, value: T) -> Self {
-        // if key.len() == 0 || value.len() == 0 {return self}
         let query = match &self.query {
             Some(query) => format!("{}&{}={}", query, key, value),
             None => format!("{}={}", key, value)
@@ -55,6 +51,16 @@ impl<'a> RequestBuilder<'a> {
         }
     }
 
+    pub fn with_header(self, header_dict: Option<KeyVal>) -> Self {
+        if let Some(_) = header_dict {
+            return Self {
+                header: header_dict,
+                ..self
+            }
+        }
+        self
+    }
+
     pub fn get_uri(&self) -> String {
         format!("{}?{}", &self.base_uri.to_string(), &self.query.clone().unwrap_or("".into()))
     }
@@ -72,6 +78,22 @@ impl<'a> RequestBuilder<'a> {
             serde_json::to_string(&body).unwrap(),
             "application/json; charset=UTF-8"
         )
+    }
+
+    pub fn with_basic_auth(mut self, id: String, secret: String) -> Self {
+        let auth_header = base64::encode(format!("{}:{}", id, secret));
+        let header_value = format!("Basic {}", urlencoding::encode(&auth_header));
+        let header_key = "Authorization".into();
+        
+        let updated_header = match self.header {
+            Some(mut header) => header.add_keyval(header_key, header_value),
+            None => KeyVal::new_with_keyval(header_key, header_value)
+        };
+
+        Self {
+            header: Some(updated_header),
+            ..self
+        }
     }
 
 
@@ -112,7 +134,5 @@ impl<'a> RequestBuilder<'a> {
             // println!("THE REQUEST BODY {:#?}", request);
             request.body(Body::from("")).unwrap()
         }
-        // .header(AUTHORIZATION, format!("Basic {}", authorization))
-        // .body(Body::from("")).unwrap();
     }
 }

@@ -18,6 +18,7 @@ pub async fn authorize_bot(req: &HyperClient, client: RedisClient) -> TResult<Ap
     let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
     let mut con = client.get_async_connection().await.unwrap();
+    
     con.set("tolumide_test", &client_id).await?;
     redis::cmd("SET").arg(&["tolumide_testing", &client_id]).query_async(&mut con).await?;
 

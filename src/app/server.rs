@@ -16,7 +16,8 @@ pub async fn server() {
     let hyper_pool = Client::builder().build::<_, hyper::Body>(https);
     let hyper_client = hyper_pool.clone();
     
-    let redis_client= RedisClient::open("rediss://127.0.0.1/").expect("Redis connection failed");
+    let redis_client= RedisClient::open("redis://127.0.0.1/").expect("Redis connection failed");
+    // let hyper_client = redis_client.get_async_connection().await.un
     // let mgr = ConnectionManager::new(redis_client).await.unwrap();
 
     let service = make_service_fn(move|_| {

@@ -21,6 +21,13 @@ impl KeyVal {
         self
     }
 
+    pub fn new_with_keyval(key: String, val: String) -> Self {
+        let mut dict = Self::new();
+        dict.insert(key.into(), val.into());
+
+        dict
+    }
+
     pub fn add_list_keyval(mut self, list: Vec<(String, String)>) -> Self {
         for (k, v) in list {
             self.insert(k.into(), v.into());
