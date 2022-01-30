@@ -1,7 +1,5 @@
 pub mod timeline;
-pub mod auth;
 mod not_found;
-mod basic_response;
 mod authorize_bot;
 mod health_check;
 pub mod handle_redirect;
