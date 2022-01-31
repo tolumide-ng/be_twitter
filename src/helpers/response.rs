@@ -1,4 +1,4 @@
-use http::{Request, HeaderMap, HeaderValue};
+use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
@@ -14,26 +14,6 @@ pub type ApiBody = Response<Body>;
 
 
 const X_RATE_LIMIT_RESET: &str = "X-Rate-Limit-Reset";
-
-
-#[derive(Serialize, Deserialize)]
-pub struct ApiResponseBody<T> {
-    message: String,
-    body: Option<T>
-}
-
-
-impl<T: Serialize> ApiResponseBody<T> {
-    pub fn new(message: String, body: Option<T>) -> String {
-        let response= Self {
-            message,
-            body,
-        };
-
-        let res= serde_json::to_string(&response).unwrap();
-        res
-    }
-}
 
 
 pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResult<(THeaders, Vec<u8>)> {
@@ -66,4 +46,29 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
 
     
     Ok((parts.headers, body))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResponseBuilder<T: Serialize> {
+    message: String,
+    body: Option<T>,
+    code: u16,
+}
+
+impl<T> ResponseBuilder<T> where T: Serialize {
+    pub fn new(message: String, body: Option<T>, code: u16) -> Self {
+        Self {message, body, code}
+    }
+
+    fn make_body(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+
+    pub fn reply(self) -> TResult<ApiBody> {
+        let body = Body::from(self.make_body());
+        let code = StatusCode::from_u16(self.code)?;
+        let response = Response::builder().status(code).body(body).unwrap();
+
+        Ok(response)
+    }
 }

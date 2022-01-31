@@ -1,9 +1,13 @@
 use http::{StatusCode, Method};
-use hyper::{Request, Response, Body};
+use hyper::{Request};
 use redis::{Client as RedisClient};
 use serde::{Serialize, Deserialize};
 
-use crate::{helpers::{request::HyperClient, keyval::KeyVal, response::{ApiResponseBody, TResult, ApiBody, make_request}}, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder};
+use crate::{helpers::{
+    request::HyperClient, keyval::KeyVal, 
+    response::{TResult, ApiBody, make_request, ResponseBuilder}}, 
+    setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder
+};
 
 
 
@@ -37,10 +41,6 @@ pub async fn revoke_token(
     make_request(request, hyper_client.clone()).await?;
     // let body: ApiResponse = serde_json::from_slice(&body)?;
 
-    let ok_body = Body::from(ApiResponseBody::new("Access revoked".into(), Some("".to_string())));
+    ResponseBuilder::new("Access revoked".into(), Some(""), StatusCode::OK.as_u16()).reply()
 
-    let response_body = Response::builder()
-        .status(StatusCode::OK).body(ok_body).unwrap();
-
-    Ok(response_body)
 }

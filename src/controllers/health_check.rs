@@ -1,13 +1,8 @@
-use hyper::{Response, StatusCode, Body};
+use hyper::{StatusCode};
 
-use crate::helpers::response::{TResult, ApiResponseBody, ApiBody};
+use crate::helpers::response::{TResult, ApiBody, ResponseBuilder};
 
 
 pub fn health_check() -> TResult<ApiBody> {
-    let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
-
-    let response_body = Response::builder()
-        .status(StatusCode::OK).body(ok_body).unwrap();
-
-    Ok(response_body)
+    ResponseBuilder::new("Ok".into(), Some(""), StatusCode::OK.as_u16()).reply()
 }

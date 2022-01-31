@@ -1,4 +1,5 @@
 use http::StatusCode;
+use http::status::InvalidStatusCode;
 use serde::{Deserialize, Serialize};
 use thiserror;
 use redis::RedisError;
@@ -74,7 +75,7 @@ pub enum TError {
     ApiResponseError(#[from] HError),
     #[error("Error parsing query params on uri")]
     BadQueryParamsError(#[from] ParseError),
-    #[error("Errpr Status")]
+    #[error("Error Status")]
     BadStatus(StatusCode),
     #[error("Json Deserialization error: {0}")]
     DeserializeError(#[from] serde_json::Error),
@@ -82,6 +83,8 @@ pub enum TError {
     /// match the one originally sent from the application
     #[error("Values do not match")]
     InvalidCredentialError(&'static str),
+    #[error("Invalid Status code {}", 0)]
+    InvalidStatusCode(#[from] InvalidStatusCode),
     #[error("Rate Limit exceeded, please try again in")]
     RateLimit(),
     #[error("DataStore error")]
