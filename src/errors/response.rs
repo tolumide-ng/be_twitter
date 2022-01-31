@@ -44,7 +44,9 @@ impl fmt::Display for TwitterErrors {
             }
 
             write!(f, "{}", e)?;
+            println!("WHAT THE FN LOOKS LIKE {:#?}", e);
         }
+
 
         Ok(())
     }
@@ -66,8 +68,6 @@ impl fmt::Display for TwitterErrorCodes {
     }
 }
 
-
-
 #[derive(thiserror::Error)]
 pub enum TError {
     /// This error is encountered when there is problem deserializing the response body
@@ -75,8 +75,8 @@ pub enum TError {
     ApiResponseError(#[from] HError),
     #[error("Error parsing query params on uri")]
     BadQueryParamsError(#[from] ParseError),
-    #[error("Error Status")]
-    BadStatus(StatusCode),
+    #[error("Error Status: {}", _0)]
+    BadStatus(hyper::StatusCode),
     #[error("Json Deserialization error: {0}")]
     DeserializeError(#[from] serde_json::Error),
     /// This would be called when the state value on the query_params of the redirect_uri does not
@@ -99,6 +99,7 @@ pub enum TError {
 
 impl fmt::Debug for TError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        println!("WITHIN THE ERROR CHAIN");
        error_chain_fmt(self, f)
     }
 }

@@ -23,6 +23,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
     println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
+    // println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
         println!("THE LOOPED ERROR SETS");
@@ -37,11 +38,11 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     if !parts.status.is_success() {
         println!("IS THIS AN ERROR!!!???");
         // put the body in the logger
-        let body = String::from_utf8_lossy(&body);
+        // let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
     }
 
-    println!("THIS WAS A SUCCESS");
+    println!("THIS WAS A SUCCESS {:#?}", parts);
 
 
     
