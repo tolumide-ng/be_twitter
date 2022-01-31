@@ -1,8 +1,16 @@
 use http::{StatusCode, Method};
 use hyper::{Request, Response, Body};
 use redis::{Client as RedisClient};
+use serde::{Serialize, Deserialize};
 
 use crate::{helpers::{request::HyperClient, keyval::KeyVal, response::{ApiResponseBody, TResult, ApiBody, make_request}}, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder};
+
+
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ApiResponse {
+    revoked: bool,
+}
 
 pub async fn revoke_token(
     _req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
@@ -13,15 +21,11 @@ pub async fn revoke_token(
     let SettingsVars{client_id, client_secret, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
-    println!("PAST THE REDIS CONNECTION");
-
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("token".into(), redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?),
         ("client_id".into(), client_id.clone()),
         ("token_type_hint".into(), "access_token".into()),
     ]).to_urlencode();
-
-    println!("REQUEST BODY FORMED {:#?}", req_body);
 
     let content_type = "application/x-www-form-urlencoded";
 
@@ -29,23 +33,11 @@ pub async fn revoke_token(
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    println!("----------------THE REQUEST IS HERE---------------- {:#?}", request);
+    // let (_header, body) = 
+    make_request(request, hyper_client.clone()).await?;
+    // let body: ApiResponse = serde_json::from_slice(&body)?;
 
-    let (_header, body) = make_request(request, hyper_client.clone()).await?;
-
-    println!("i am back from the request");
-
-    struct ApiResponse {
-        revoked: bool,
-    }
-
-    let body: ApiResponse = serde_json::from_slice(&body)?;
-
-    println!("THE RESPONSE FROM REQUESTING FOR A REVOKE ACCESS {:#?}", body);
-
-
-
-    let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
+    let ok_body = Body::from(ApiResponseBody::new("Access revoked".into(), Some("".to_string())));
 
     let response_body = Response::builder()
         .status(StatusCode::OK).body(ok_body).unwrap();

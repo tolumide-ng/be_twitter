@@ -1,6 +1,7 @@
 use http::Method;
 use hyper::{Body, Response, StatusCode, Request};
 use redis::{Client as RedisClient};
+use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     response::{TResult, ApiResponseBody, ApiBody, make_request}, 
     request::{HyperClient}, keyval::KeyVal}, 
@@ -22,6 +23,15 @@ impl AccessToken {
 
         Ok(self)
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct AppAccess {
+    token_type: String,
+    expires_in: i32,
+    access_token: String,
+    scope: String,
+    refresh_token: String,
 }
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> TResult<ApiBody> {
@@ -47,19 +57,12 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
-    struct AppAccess {
-        token_type: String,
-        expires_in: i32,
-        access_token: String,
-        scope: String,
-        refresh_token: String,
-    }
 
     let body: AppAccess = serde_json::from_slice(&body)?;
         
     println!("\n\n THE DESERIALIZED BODY \n\n {:#?} \n", body);
 
-    let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("".to_string())));
+    let ok_body = Body::from(ApiResponseBody::new("Access granted".to_string(), Some("".to_string())));
 
     let response_body = Response::builder()
         .status(StatusCode::OK).body(ok_body).unwrap();
