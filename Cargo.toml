@@ -36,3 +36,4 @@ serde_json = "1.0.75"
 derive_more = "0.99.17"
 thiserror = "1.0.30"
 anyhow = "1.0.53"
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "json", "chrono", "uuid", "macros", "tls" ] }
