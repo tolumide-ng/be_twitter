@@ -5,7 +5,7 @@ use crate::helpers::request::HyperClient;
 use crate::helpers::response::ApiBody;
 // use crate::app::client::AppClient;
 use crate::{helpers::response::TResult};
-use crate::controllers::{not_found, authorize_bot, health_check, handle_redirect};
+use crate::controllers::{not_found, authorize_bot, health_check, handle_redirect, revoke_token};
 
 
 
@@ -18,7 +18,7 @@ pub async fn routes(
         (&Method::GET, "/") => health_check(),
         (&Method::GET, "/enable") => authorize_bot(client, conn).await,
         (&Method::GET, "/twitter/oauth") => handle_redirect(req, client, conn).await,
-        // (&Method::GET)
+        (&Method::POST, "/revoke") => revoke_token(req, client, conn).await,
         _ => {
             not_found()
         }
