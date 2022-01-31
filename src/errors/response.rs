@@ -78,6 +78,8 @@ pub enum TError {
     BadStatus(StatusCode),
     #[error("Json Deserialization error: {0}")]
     DeserializeError(#[from] serde_json::Error),
+    // #[error("")]
+    // SerdeDeserializeError(#[from] serde::de::value::Error),
     /// This would be called when the state value on the query_params of the redirect_uri does not
     /// match the one originally sent from the application
     #[error("Values do not match")]

@@ -47,7 +47,15 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
-    let body = serde_json::from_slice(&body)?;
+    struct AppAccess {
+        token_type: String,
+        expires_in: i32,
+        access_token: String,
+        scope: String,
+        refresh_token: String,
+    }
+
+    let body: AppAccess = serde_json::from_slice(&body)?;
         
     println!("\n\n THE DESERIALIZED BODY \n\n {:#?} \n", body);
 

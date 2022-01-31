@@ -7,10 +7,13 @@ use crate::{helpers::{request::HyperClient, keyval::KeyVal, response::{ApiRespon
 pub async fn revoke_token(
     _req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 ) -> TResult<ApiBody> {
+    println!("NOW WITHIN THE REVOKE TOKEN CONTROLLER");
     // todo() All the environment variables access i.e. SettingsVars should be moved into routes/server.rs
     // where the env variable can then be shared as a controller params
     let SettingsVars{client_id, client_secret, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
+
+    println!("PAST THE REDIS CONNECTION");
 
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("token".into(), redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?),
@@ -18,15 +21,25 @@ pub async fn revoke_token(
         ("token_type_hint".into(), "access_token".into()),
     ]).to_urlencode();
 
+    println!("REQUEST BODY FORMED {:#?}", req_body);
+
     let content_type = "application/x-www-form-urlencoded";
 
     let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/2/oauth2/revoke".into())
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
+    println!("----------------THE REQUEST IS HERE---------------- {:#?}", request);
+
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
-    let body = serde_json::from_slice(&body)?;
+    println!("i am back from the request");
+
+    struct ApiResponse {
+        revoked: bool,
+    }
+
+    let body: ApiResponse = serde_json::from_slice(&body)?;
 
     println!("THE RESPONSE FROM REQUESTING FOR A REVOKE ACCESS {:#?}", body);
 

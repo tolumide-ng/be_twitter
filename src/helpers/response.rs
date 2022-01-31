@@ -41,8 +41,11 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     
     let (parts, body) = res.into_parts();
     let body = hyper::body::to_bytes(body).await?.to_vec();
+
+    println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
+        println!("THE LOOPED ERROR SETS");
         if errors.errors.iter().any(|e| e.code == 88)
         && parts.headers.contains_key(X_RATE_LIMIT_RESET) {
             return Err(TError::RateLimit())
@@ -52,9 +55,12 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     }
 
     if !parts.status.is_success() {
+        println!("IS THIS AN ERROR!!!???");
         let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
     }
+
+    println!("THIS WAS A SUCCESS");
 
 
     
