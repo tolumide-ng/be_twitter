@@ -71,10 +71,12 @@ impl fmt::Display for TwitterErrorCodes {
 #[derive(thiserror::Error)]
 pub enum TError {
     /// This error is encountered when there is problem deserializing the response body
-    #[error("Error processing response")]
-    ApiResponseError(#[from] HError),
+    #[error("Network Error: {}", 0)]
+    NetworkError(#[from] HError),
     #[error("Error parsing query params on uri")]
     BadQueryParamsError(#[from] ParseError),
+    #[error("Error processing request: {}", 0)]
+    ApiResponseError{message: &'static str},
     #[error("Error Status: {}", _0)]
     BadStatus(hyper::StatusCode),
     #[error("Json Deserialization error: {0}")]
