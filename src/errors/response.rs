@@ -68,7 +68,7 @@ impl fmt::Display for TwitterErrorCodes {
     }
 }
 
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, Debug)]
 pub enum TError {
     /// This error is encountered when there is problem deserializing the response body
     #[error("Network Error: {}", 0)]
@@ -99,10 +99,12 @@ pub enum TError {
     ValidationError(String),
 }
 
-impl fmt::Debug for TError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        println!("WITHIN THE ERROR CHAIN");
-       error_chain_fmt(self, f)
-    }
-}
+
+
+// impl fmt::Debug for TError {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         println!("WITHIN THE ERROR CHAIN");
+//        error_chain_fmt(self, f)
+//     }
+// }
 

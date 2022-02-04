@@ -27,17 +27,11 @@ pub async fn refresh_token(_req: Request<hyper::Body>, hyper_client: HyperClient
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content).build_request();
 
-    // let (header, body) = make_request(request, hyper_client.clone()).await.map_err(|e| TError::ApiResponseError{
-    //     message: "Could not get a refresh token"
-    // })?;
+    let res = make_request(request, hyper_client.clone()).await;
 
-    let (header, body) = make_request(request, hyper_client.clone()).await.context("Could not get a refresh token")?;
-
-    // let body: AppAccess = serde_json::from_slice(&body).unwrap();
-    println!("\n\n ------------------------------ WHAT THE HEAD LOOKS LIKE ------------------------------ {:#?}", header);
-
-    println!("\n\n THIS IS THE HEADER =======>>>>>>>>>>>>>> {:#?} \n\n ", body);
-
+    if let Err(e) = res {
+        return ResponseBuilder::new("Error connecting to your Twitter account".into(), Some(""), 400).reply();
+    }
 
     ResponseBuilder::new("Refresh token obtained".into(), Some(""), StatusCode::OK.as_u16()).reply()
 

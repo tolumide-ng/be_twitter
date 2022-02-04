@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
@@ -49,7 +51,25 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     Ok((parts.headers, body))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+
+
+#[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
+pub struct Errors(HashMap<&'static str, &'static str>);
+
+impl Errors {
+    pub fn new(mut self, errs: &[(TError, &'static str)]) -> Self {
+        // let map = self;
+        for err in errs {
+            // let ab = err.0.into();
+            // let ab = format!("{:#?}", errs[0].0);
+            // self.insert(&ab, err.1);
+            println!("the error {:#?}", err);
+        }
+        self
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ResponseBuilder<T: Serialize> {
     message: String,
     body: Option<T>,
@@ -64,6 +84,8 @@ impl<T> ResponseBuilder<T> where T: Serialize {
     fn make_body(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+
+    // pub fn reply_err(errs: &[(TError, &'static str, Option<StatusCode>)]) {}
 
     pub fn reply(self) -> TResult<ApiBody> {
         let body = Body::from(self.make_body());
