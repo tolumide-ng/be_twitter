@@ -1,4 +1,6 @@
-use http::{Request, HeaderMap, HeaderValue};
+use std::collections::HashMap;
+
+use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
@@ -16,26 +18,6 @@ pub type ApiBody = Response<Body>;
 const X_RATE_LIMIT_RESET: &str = "X-Rate-Limit-Reset";
 
 
-#[derive(Serialize, Deserialize)]
-pub struct ApiResponseBody<T> {
-    message: String,
-    body: Option<T>
-}
-
-
-impl<T: Serialize> ApiResponseBody<T> {
-    pub fn new(message: String, body: Option<T>) -> String {
-        let response= Self {
-            message,
-            body,
-        };
-
-        let res= serde_json::to_string(&response).unwrap();
-        res
-    }
-}
-
-
 pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResult<(THeaders, Vec<u8>)> {
     let res = client.request(request).await.unwrap();
     
@@ -43,6 +25,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
     println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
+    // println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
         println!("THE LOOPED ERROR SETS");
@@ -57,13 +40,58 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     if !parts.status.is_success() {
         println!("IS THIS AN ERROR!!!???");
         // put the body in the logger
-        let body = String::from_utf8_lossy(&body);
+        // let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
     }
 
-    println!("THIS WAS A SUCCESS");
+    println!("THIS WAS A SUCCESS {:#?}", parts);
 
 
     
     Ok((parts.headers, body))
+}
+
+
+
+#[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
+pub struct Errors(HashMap<&'static str, &'static str>);
+
+impl Errors {
+    pub fn new(mut self, errs: &[(TError, &'static str)]) -> Self {
+        // let map = self;
+        for err in errs {
+            // let ab = err.0.into();
+            // let ab = format!("{:#?}", errs[0].0);
+            // self.insert(&ab, err.1);
+            println!("the error {:#?}", err);
+        }
+        self
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct ResponseBuilder<T: Serialize> {
+    message: String,
+    body: Option<T>,
+    code: u16,
+}
+
+impl<T> ResponseBuilder<T> where T: Serialize {
+    pub fn new(message: String, body: Option<T>, code: u16) -> Self {
+        Self {message, body, code}
+    }
+
+    fn make_body(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+
+    // pub fn reply_err(errs: &[(TError, &'static str, Option<StatusCode>)]) {}
+
+    pub fn reply(self) -> TResult<ApiBody> {
+        let body = Body::from(self.make_body());
+        let code = StatusCode::from_u16(self.code)?;
+        let response = Response::builder().status(code).body(body).unwrap();
+
+        Ok(response)
+    }
 }

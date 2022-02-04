@@ -1,9 +1,9 @@
 use http::Method;
-use hyper::{Body, Response, StatusCode, Request};
+use hyper::{StatusCode, Request};
 use redis::{Client as RedisClient};
 use serde::{Serialize, Deserialize};
 use crate::{helpers::{
-    response::{TResult, ApiResponseBody, ApiBody, make_request}, 
+    response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal}, 
     setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder
 };
@@ -34,7 +34,7 @@ struct AppAccess {
     refresh_token: String,
 }
 
-async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> TResult<ApiBody> {
+async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, redirect_uri, client_secret, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
@@ -53,21 +53,16 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    println!("||||||||||\n\n {:#?} \n\n |||||||||||||||||||", request);
-
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
 
-    let body: AppAccess = serde_json::from_slice(&body)?;
-        
-    println!("\n\n THE DESERIALIZED BODY \n\n {:#?} \n", body);
+    let body: AppAccess = serde_json::from_slice(&body).unwrap();
 
-    let ok_body = Body::from(ApiResponseBody::new("Access granted".to_string(), Some("".to_string())));
+    redis::cmd("SET").arg(&["tolumide_test_access", &body.access_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["tolumide_refresh_token", &body.refresh_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["tolumide_token_type", &body.token_type]).query_async(&mut con).await?;
 
-    let response_body = Response::builder()
-        .status(StatusCode::OK).body(ok_body).unwrap();
-
-    Ok(response_body)
+    Ok(())
 }
 
 
@@ -81,10 +76,5 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
     // Make request to POST the access token
     access_token(hyper_client.clone(), redis_client, query_params.code).await?;
 
-     let ok_body = Body::from(ApiResponseBody::new("Ok".to_string(), Some("from me to you".to_string())));
-
-    let response_body = Response::builder()
-        .status(StatusCode::OK).body(ok_body).unwrap();
-
-    Ok(response_body)
+    ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply()
 }

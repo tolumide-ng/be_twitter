@@ -27,6 +27,7 @@ pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<Api
     
     con.set("tolumide_test_pkce", &pkce).await?;
     redis::cmd("SET").arg(&["tolumide_testing_pkce", &pkce]).query_async(&mut con).await?;
+    
 
 
     let query_params = KeyVal::new()

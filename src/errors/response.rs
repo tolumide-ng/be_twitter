@@ -1,4 +1,5 @@
 use http::StatusCode;
+use http::status::InvalidStatusCode;
 use serde::{Deserialize, Serialize};
 use thiserror;
 use redis::RedisError;
@@ -43,7 +44,9 @@ impl fmt::Display for TwitterErrors {
             }
 
             write!(f, "{}", e)?;
+            println!("WHAT THE FN LOOKS LIKE {:#?}", e);
         }
+
 
         Ok(())
     }
@@ -65,23 +68,25 @@ impl fmt::Display for TwitterErrorCodes {
     }
 }
 
-
-
-#[derive(thiserror::Error)]
+#[derive(thiserror::Error, Debug)]
 pub enum TError {
     /// This error is encountered when there is problem deserializing the response body
-    #[error("Error processing response")]
-    ApiResponseError(#[from] HError),
+    #[error("Network Error: {}", 0)]
+    NetworkError(#[from] HError),
     #[error("Error parsing query params on uri")]
     BadQueryParamsError(#[from] ParseError),
-    #[error("Errpr Status")]
-    BadStatus(StatusCode),
+    #[error("Error processing request: {}", 0)]
+    ApiResponseError{message: &'static str},
+    #[error("Error Status: {}", _0)]
+    BadStatus(hyper::StatusCode),
     #[error("Json Deserialization error: {0}")]
     DeserializeError(#[from] serde_json::Error),
     /// This would be called when the state value on the query_params of the redirect_uri does not
     /// match the one originally sent from the application
     #[error("Values do not match")]
     InvalidCredentialError(&'static str),
+    #[error("Invalid Status code {}", 0)]
+    InvalidStatusCode(#[from] InvalidStatusCode),
     #[error("Rate Limit exceeded, please try again in")]
     RateLimit(),
     #[error("DataStore error")]
@@ -94,9 +99,12 @@ pub enum TError {
     ValidationError(String),
 }
 
-impl fmt::Debug for TError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-       error_chain_fmt(self, f)
-    }
-}
+
+
+// impl fmt::Debug for TError {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         println!("WITHIN THE ERROR CHAIN");
+//        error_chain_fmt(self, f)
+//     }
+// }
 
