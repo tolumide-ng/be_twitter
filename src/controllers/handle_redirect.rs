@@ -53,14 +53,14 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    println!("||||||||||\n\n {:#?} \n\n |||||||||||||||||||", request);
-
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
 
     let body: AppAccess = serde_json::from_slice(&body).unwrap();
-        
-    println!("\n\n THE DESERIALIZED BODY \n\n {:#?} \n", body);
+
+    redis::cmd("SET").arg(&["tolumide_test_access", &body.access_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["tolumide_refresh_token", &body.refresh_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["tolumide_token_type", &body.token_type]).query_async(&mut con).await?;
 
     Ok(())
 }

@@ -19,7 +19,6 @@ struct ApiResponse {
 pub async fn revoke_token(
     _req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 ) -> TResult<ApiBody> {
-    println!("NOW WITHIN THE REVOKE TOKEN CONTROLLER");
     // todo() All the environment variables access i.e. SettingsVars should be moved into routes/server.rs
     // where the env variable can then be shared as a controller params
     let SettingsVars{client_id, client_secret, ..} = SettingsVars::new();
