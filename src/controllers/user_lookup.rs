@@ -38,7 +38,7 @@ impl Data {
 }
 
 
-
+// use this endpoint to verify the validity of the username when they want to request for their timeline
 pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     // todo!() move this to params once route management is migrated to routerify
     let username = request.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
