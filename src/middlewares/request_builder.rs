@@ -82,19 +82,29 @@ impl RequestBuilder {
         )
     }
 
-    pub fn with_basic_auth(self, id: String, secret: String) -> Self {
-        let auth_header = base64::encode(format!("{}:{}", id, secret));
-        let header_value = format!("Basic {}", &auth_header);
-        let header_key = "Authorization".into();
+    fn update_header(self, key: String, val: String) -> Self {
         let updated_header = match self.header {
-            Some(header) => header.add_keyval(header_key, header_value),
-            None => KeyVal::new_with_keyval(header_key, header_value)
+            Some(header) => header.add_keyval(key, val),
+            None => KeyVal::new_with_keyval(key, val)
         };
 
         Self {
             header: Some(updated_header),
             ..self
         }
+    }
+
+    pub fn with_basic_auth(self, id: String, secret: String) -> Self {
+        let auth_header = base64::encode(format!("{}:{}", id, secret));
+        let header_value = format!("Basic {}", &auth_header);
+        let header_key = "Authorization".into();
+        self.update_header(header_key, header_value)
+    }
+
+    pub fn with_access_token(self, access_token: String) -> Self {
+        let header_value = format!("Bearer {}", access_token);
+        let header_key = "Authorization".into();
+        self.update_header(header_key, header_value)
     }
 
     pub fn build_request(self) -> Request<Body> {

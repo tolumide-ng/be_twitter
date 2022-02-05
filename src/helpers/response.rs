@@ -17,6 +17,8 @@ pub type ApiBody = Response<Body>;
 
 const X_RATE_LIMIT_RESET: &str = "X-Rate-Limit-Reset";
 
+pub const CONTENT_TYPE: &'static str = "application/x-www-form-urlencoded";
+
 
 pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResult<(THeaders, Vec<u8>)> {
     let res = client.request(request).await.unwrap();
@@ -38,7 +40,8 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     }
 
     if !parts.status.is_success() {
-        println!("IS THIS AN ERROR!!!???");
+        println!("THERE WAS AN ISSUE!!!");
+        // println!("IS THIS AN ERROR!!!??? {:#?}", body);
         // put the body in the logger
         // let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
