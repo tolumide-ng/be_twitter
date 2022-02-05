@@ -17,6 +17,8 @@ pub type ApiBody = Response<Body>;
 
 const X_RATE_LIMIT_RESET: &str = "X-Rate-Limit-Reset";
 
+pub const CONTENT_TYPE: &'static str = "application/x-www-form-urlencoded";
+
 
 pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResult<(THeaders, Vec<u8>)> {
     let res = client.request(request).await.unwrap();
