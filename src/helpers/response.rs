@@ -40,7 +40,8 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     }
 
     if !parts.status.is_success() {
-        println!("IS THIS AN ERROR!!!???");
+        println!("THERE WAS AN ISSUE!!!");
+        // println!("IS THIS AN ERROR!!!??? {:#?}", body);
         // put the body in the logger
         // let body = String::from_utf8_lossy(&body);
         return Err(TError::BadStatus(parts.status))
