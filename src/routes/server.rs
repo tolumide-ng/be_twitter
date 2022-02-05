@@ -5,7 +5,9 @@ use crate::helpers::request::HyperClient;
 use crate::helpers::response::{ApiBody};
 // use crate::app::client::AppClient;
 use crate::{helpers::response::TResult};
-use crate::controllers::{not_found, authorize_bot, health_check, handle_redirect, revoke_token, refresh_token, user_lookup};
+use crate::controllers::{not_found, authorize_bot, 
+    health_check, handle_redirect, revoke_token, refresh_token, user_lookup, 
+    get_timeline};
 
 
 
@@ -22,6 +24,7 @@ pub async fn routes(
         (&Method::POST, "/revoke", _) => revoke_token(req, client, conn).await,
         (&Method::GET, "/refresh", _) => refresh_token(req, client, conn).await,
         (&Method::GET, "/user", x) => user_lookup(req, client, conn).await,
+        (&Method::GET, "/timeline", x) => get_timeline(req, client, conn).await,
         _ => {
             not_found()
         }

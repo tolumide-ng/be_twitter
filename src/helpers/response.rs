@@ -4,6 +4,7 @@ use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
 
+
 use crate::errors::response::{TError, TwitterErrors};
 use crate::helpers::request::HyperClient;
 
@@ -97,4 +98,29 @@ impl<T> ResponseBuilder<T> where T: Serialize {
 
         Ok(response)
     }
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TwitterResponseErrors {
+    errors: Vec<TwitterResponseError>
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TwitterResponseError {
+    value: String,
+    detail: String,
+    title: String,
+    resource_type: String,
+    parameter: String,
+    resource_id: String,
+    #[serde(rename = "type")]
+    res_type: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TwitterErrorArr {
+    pub errors: Vec<HashMap<String, String>>
 }
