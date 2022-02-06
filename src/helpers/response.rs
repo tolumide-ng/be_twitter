@@ -28,7 +28,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
     println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
-    // println!("THE PARTS {:#?}", parts);
+    println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
         println!("THE LOOPED ERROR SETS");
@@ -48,7 +48,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
         return Err(TError::BadStatus(parts.status))
     }
 
-    println!("THIS WAS A SUCCESS {:#?}", parts);
+    // println!("THIS WAS A SUCCESS {:#?}", parts);
 
 
     
@@ -101,26 +101,24 @@ impl<T> ResponseBuilder<T> where T: Serialize {
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TwitterResponseErrors {
-    errors: Vec<TwitterResponseError>
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TwitterResponseData {
+    data: Vec<HashMap<String, String>>
 }
 
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TwitterResponseError {
-    value: String,
-    detail: String,
-    title: String,
-    resource_type: String,
-    parameter: String,
-    resource_id: String,
-    #[serde(rename = "type")]
-    res_type: String,
-}
-
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct TwitterErrorArr {
-    pub errors: Vec<HashMap<String, String>>
+impl TwitterResponseData {
+    // Only use for responses whose vector (also called array) cotnains only one hashmap (also called objects)
+    pub fn into_one_dict(self) -> HashMap<String, String> {
+        let mut dict: HashMap<String, String> = HashMap::new();
+        let res_data = self.data;
+        for obj in self.data {
+            // dict.extend(obj.iter());
+            for key in obj.keys() {
+                dict.insert(key.into(), obj.get(key).unwrap().into());
+            }
+        };
+        return dict
+    }
 }
