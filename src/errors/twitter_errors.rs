@@ -1,8 +1,8 @@
+use std::collections::HashMap;
+
 use serde::{Serialize, Deserialize};
 
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TwitterResponseError {
-    error: String,
-    error_description: String,
+    pub errors: Vec<HashMap<String, String>>
 }

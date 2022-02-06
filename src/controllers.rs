@@ -14,3 +14,4 @@ pub use handle_redirect::handle_redirect;
 pub use revoke_token::revoke_token;
 pub use refresh_token::refresh_token;
 pub use user_lookup::user_lookup;
+pub use timeline::get_timeline;

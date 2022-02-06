@@ -1,8 +1,10 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
+
 
 use crate::errors::response::{TError, TwitterErrors};
 use crate::helpers::request::HyperClient;
@@ -26,7 +28,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let (parts, body) = res.into_parts();
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
-    println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
+    // println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
     // println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
@@ -47,7 +49,7 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
         return Err(TError::BadStatus(parts.status))
     }
 
-    println!("THIS WAS A SUCCESS {:#?}", parts);
+    // println!("THIS WAS A SUCCESS {:#?}", parts);
 
 
     
@@ -96,5 +98,55 @@ impl<T> ResponseBuilder<T> where T: Serialize {
         let response = Response::builder().status(code).body(body).unwrap();
 
         Ok(response)
+    }
+}
+
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TwitterResponseData {
+    data: Vec<HashMap<String, String>>
+}
+
+impl TwitterResponseData {
+    // Only use for responses whose vector (also called array) cotnains only one hashmap (also called objects)
+    pub fn into_one_dict(self) -> HashMap<String, String> {
+        let mut dict: HashMap<String, String> = HashMap::new();
+
+        for obj in &self.data {
+            // dict.extend(obj.iter());
+            for key in obj.keys() {
+                dict.insert(key.into(), obj.get(key).unwrap().into());
+            }
+        };
+        return dict
+    }
+
+    pub fn separate_tweets_from_rts(self, exclude_head: bool) -> HashMap<String, Vec<String>>{
+        let mut dict = HashMap::new();
+        let mut tweets = vec![];
+        let mut rts = vec![];
+
+        let mut start = 0;
+
+        if exclude_head {
+            start = 11;
+        }
+
+        for num in start..self.data.len() {
+            let tweet = &self.data[num];
+            let id = tweet.get("id").unwrap().clone();
+            if tweet.get("text").unwrap().starts_with("RT") {
+                rts.push(id);
+            } else {
+                tweets.push(id)
+            }
+        }
+
+        dict.insert("tweets".into(), tweets);
+        dict.insert("rts".into(), rts);
+
+        dict
     }
 }

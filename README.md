@@ -8,5 +8,7 @@ TODOS!
 - [] - Only Save post ids on redis
 - [] - Only save jwt tokens for local users on redis
 - [] - Migrate route management to routerify
+- [] - Refresh token after every 1hrs 45mins
+- [] - Migrate redis use cases to Postgres
 - [x] User lookup
 - [x] Tracked actions in the history table (if applicable)
