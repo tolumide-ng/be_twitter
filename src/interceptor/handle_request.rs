@@ -1,0 +1,3 @@
+// trait TwitterResponse {}
+
+// pub struct 
