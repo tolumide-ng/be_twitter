@@ -2,3 +2,4 @@
 .env
 ngrok.yml
 .vscode/
+.references

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use http::{Request, StatusCode, Method};
 use hyper::Body;
 use redis::{Client as RedisClient};
@@ -43,9 +41,6 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
 
             println!("PARSED \n\n {:#?} \n\n ", parsed);
 
-
-
-            // let 
         }
         Err(e) => {
             return ResponseBuilder::new("Internal Server Error".into(), Some(""), 500).reply();
