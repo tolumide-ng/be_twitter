@@ -110,5 +110,7 @@ pub enum TError {
 
 
 
-pub struct AppError(pub HashMap<String, String>);
+#[derive(Debug)]
+pub struct AppError(pub HashMap<String, String>, pub u16);
+
 
