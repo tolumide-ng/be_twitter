@@ -5,7 +5,7 @@ use hyper::Body;
 use redis::{Client as RedisClient};
 use serde_json::Value;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError};
+use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError};
 
 
 
@@ -13,8 +13,6 @@ use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, Respons
 pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, redis_client: RedisClient) 
  -> TResult<ApiBody>
 {
-    // let user_id = request.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
-    // let user_id = redis::cmd("SET").arg(&["tolumide_userid", &user_id]).query_async(&mut con).await?;
     let mut con = redis_client.get_async_connection().await?;
     
     let user_id: String = redis::cmd("GET").arg(&["tolumide_userid"]).query_async(&mut con).await?;
@@ -38,7 +36,16 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
                 return ResponseBuilder::new(detail.clone(), Some(""), 400).reply();
             }
 
-            let data: Data = serde_json::from_slice(&body)?;
+            let data: TwitterResponseData = serde_json::from_slice(&body)?;
+
+            println!("WHAT THE DATA LOOKS LIKE AFTER PARSING {:#?}", data);
+            let parsed = data.separate_tweets_from_rts(true);
+
+            println!("PARSED \n\n {:#?} \n\n ", parsed);
+
+
+
+            // let 
         }
         Err(e) => {
             return ResponseBuilder::new("Internal Server Error".into(), Some(""), 500).reply();
