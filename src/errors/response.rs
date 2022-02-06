@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use thiserror;
 use redis::RedisError;
 use url::ParseError;
-use std::{fmt::{self, Formatter}};
+use std::{fmt::{self, Formatter}, collections::HashMap};
 use hyper::{Error as HError};
 use serde_json;
 
@@ -107,4 +107,8 @@ pub enum TError {
 //        error_chain_fmt(self, f)
 //     }
 // }
+
+
+
+struct AppError(HashMap<String, String>);
 

@@ -1,8 +1,6 @@
-use std::{collections::HashMap};
 use http::{Method, StatusCode, Request};
 use hyper::Body;
 use redis::{Client as RedisClient};
-use serde::{Serialize, Deserialize};
 use serde_json::{Value};
 
 
@@ -51,6 +49,7 @@ pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redi
 
         }
         Err(e) => {
+            println!("THE ERRORS {:#?}", e);
             return ResponseBuilder::new("Internal Server Error".into(), Some(""), 500).reply();
         }
     }
