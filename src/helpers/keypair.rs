@@ -4,7 +4,7 @@ use hyper::{Method};
 #[derive(Debug, Clone)]
 pub struct KeyPair {
     pub key: Cow<'static, str>,
-    pub value: Cow<'static, str>,
+    pub secret: Cow<'static, str>,
 }
 
 impl KeyPair {
@@ -14,12 +14,12 @@ impl KeyPair {
         K: Into<Cow<'static, str>>,
         S: Into<Cow<'static, str>>,
     {
-        KeyPair { key: key.into(), value: secret.into() }
+        KeyPair { key: key.into(), secret: secret.into() }
     }
 
     // Create an empty KeyPair
     pub fn empty() -> KeyPair {
-        KeyPair { key: "".into(), value: "".into() }
+        KeyPair { key: "".into(), secret: "".into() }
     }
 }
 
