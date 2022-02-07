@@ -3,6 +3,7 @@ use http::Method;
 use hyper::{Body, Request};
 use redis::{Client as RedisClient};
 use futures::{stream, StreamExt};
+use serde_json::Value;
 use tokio;
 
 use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}}, middlewares::request_builder::RequestBuilder};
@@ -63,7 +64,9 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
 
                 let response = make_request(request, client).await.unwrap();
                 println!("THE HEADER {:#?}", response.0);
-                Ok(response.1)
+                // Ok(response.1);
+                // Ok(body)
+                response.1
                 // response.1.bytes().await
                 // HANDLE RESPONSE HERE ---- IT IS TIME TO CREATE THE INTERCEPTOR THAT HANDLES THE RESPONSE OF THE MAKE_REQUEST CALL
                 // let res = make_request(request, client);
@@ -73,9 +76,13 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     bodies
         .for_each(|res| async {
             match res {
-                Ok(Ok(b)) => {}
-                Ok(Err(e)) => {}
-                Err(e) => {}
+                Ok(body) => {
+                    let body: Value = serde_json::from_slice(&body).unwrap();
+                    println!("THE BODY {:#?}", body)
+                }
+                Err(e) => {
+                    eprintln!("ERROR {:#?}", e)
+                }
             }
         }).await;
 
