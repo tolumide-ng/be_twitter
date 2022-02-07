@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-
 use http::{Request, StatusCode, Method};
 use hyper::Body;
 use redis::{Client as RedisClient};
-use serde_json::Value;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError};
+use crate::{helpers::{request::HyperClient, 
+    response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseVecData}}, 
+    middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
+};
 
 
 
@@ -23,34 +23,17 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
         .with_query("max_results", "100")
         .with_access_token(access_token).build_request();
 
-    let res = make_request(req, hyper_client.clone()).await;
+    let res = TwitterInterceptor::intercept(make_request(req, hyper_client.clone()).await);
 
-    match res {
-        Ok(resp) => {
-            let (_header, body) = resp;
-            let response: Value = serde_json::from_slice(&body)?;
-
-            if response["errors"] != Value::Null {
-                let err: TwitterResponseError = serde_json::from_slice(&body)?;
-                let detail = err.errors[0].get("detail").unwrap();
-                return ResponseBuilder::new(detail.clone(), Some(""), 400).reply();
-            }
-
-            let data: TwitterResponseData = serde_json::from_slice(&body)?;
-
-            println!("WHAT THE DATA LOOKS LIKE AFTER PARSING {:#?}", data);
-            let parsed = data.separate_tweets_from_rts(true);
-
-            println!("PARSED \n\n {:#?} \n\n ", parsed);
-
-
-
-            // let 
-        }
-        Err(e) => {
-            return ResponseBuilder::new("Internal Server Error".into(), Some(""), 500).reply();
-        }
+    if let Err(e) = res {
+        return ResponseBuilder::new("Error".into(), Some(e.0), e.1).reply()
     }
+
+    let body: TwitterResponseVecData = serde_json::from_value(res.unwrap()).unwrap();
+
+    let parsed = body.separate_tweets_from_rts(true);
+
+    println!("PARSED \n\n {:#?} \n\n ", parsed);
 
     ResponseBuilder::new("Ok".into(), Some(""), StatusCode::OK.as_u16()).reply()
 }

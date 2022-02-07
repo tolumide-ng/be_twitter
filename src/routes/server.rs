@@ -7,7 +7,7 @@ use crate::helpers::response::{ApiBody};
 use crate::{helpers::response::TResult};
 use crate::controllers::{not_found, authorize_bot, 
     health_check, handle_redirect, revoke_token, refresh_token, user_lookup, 
-    get_timeline};
+    get_timeline, handle_delete};
 
 
 
@@ -25,6 +25,7 @@ pub async fn routes(
         (&Method::GET, "/refresh", _) => refresh_token(req, client, conn).await,
         (&Method::GET, "/user", x) => user_lookup(req, client, conn).await,
         (&Method::GET, "/timeline", x) => get_timeline(req, client, conn).await,
+        (&Method::POST, "/remove", _) => handle_delete(req, client, conn).await,
         _ => {
             not_found()
         }

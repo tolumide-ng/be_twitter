@@ -28,8 +28,8 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let (parts, body) = res.into_parts();
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
-    // println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
-    // println!("THE PARTS {:#?}", parts);
+    println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
+    println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
         println!("THE LOOPED ERROR SETS");
@@ -105,24 +105,33 @@ impl<T> ResponseBuilder<T> where T: Serialize {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TwitterResponseData {
-    data: Vec<HashMap<String, String>>
+pub struct TwitterResponseVecData {
+    data: Vec<HashMap<String, String>>,
 }
 
-impl TwitterResponseData {
-    // Only use for responses whose vector (also called array) cotnains only one hashmap (also called objects)
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TwitterResponseHashData {
+    data: HashMap<String, String>,
+}
+
+
+impl TwitterResponseHashData {
+        // Only use for responses whose vector (also called array) cotnains only one hashmap (also called objects)
     pub fn into_one_dict(self) -> HashMap<String, String> {
         let mut dict: HashMap<String, String> = HashMap::new();
 
-        for obj in &self.data {
-            // dict.extend(obj.iter());
-            for key in obj.keys() {
-                dict.insert(key.into(), obj.get(key).unwrap().into());
-            }
+        for key in self.data.keys() {
+            // dict.extend(self.data.iter());
+            dict.insert(key.into(), self.data.get(key).unwrap().into());
         };
         return dict
     }
+}
 
+
+
+impl TwitterResponseVecData {
     pub fn separate_tweets_from_rts(self, exclude_head: bool) -> HashMap<String, Vec<String>>{
         let mut dict = HashMap::new();
         let mut tweets = vec![];

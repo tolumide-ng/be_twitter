@@ -6,6 +6,8 @@ pub mod handle_redirect;
 mod revoke_token;
 mod refresh_token;
 mod user_lookup;
+mod handle_delete;
+
 
 pub use not_found::not_found;
 pub use authorize_bot::authorize_bot;
@@ -15,3 +17,4 @@ pub use revoke_token::revoke_token;
 pub use refresh_token::refresh_token;
 pub use user_lookup::user_lookup;
 pub use timeline::get_timeline;
+pub use handle_delete::handle_delete;
