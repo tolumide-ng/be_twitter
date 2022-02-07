@@ -1,19 +1,15 @@
 use std::{collections::HashMap, borrow::Cow};
 use hyper::{Method};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct KeyPair {
-    pub key: Cow<'static, str>,
-    pub secret: Cow<'static, str>,
+    pub key: &'static str,
+    pub secret: &'static str,
 }
 
 impl KeyPair {
     /// Creates KeyPair with the given key and secret.
-    pub fn new<K, S>(key: K, secret: S) -> KeyPair 
-    where
-        K: Into<Cow<'static, str>>,
-        S: Into<Cow<'static, str>>,
-    {
+    pub fn new<K, S>(key: &'static str, secret: &'static str) -> KeyPair {
         KeyPair { key: key.into(), secret: secret.into() }
     }
 

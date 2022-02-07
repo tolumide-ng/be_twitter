@@ -1,4 +1,5 @@
 use std::{time::SystemTime, collections::HashMap, borrow::Cow};
+use http::Method;
 use urlencoding::encode;
 use uuid::Uuid;
 
@@ -64,10 +65,11 @@ pub struct OAuth {
     timestamp: u64,
     token: Option<KeyPair>,
     addons: OAuthAddons,
+    method: String,
 }
 
 impl OAuth {
-    pub fn new(consumer: KeyPair, token: Option<KeyPair>, addons: OAuthAddons) -> Self {
+    pub fn new(consumer: KeyPair, token: Option<KeyPair>, addons: OAuthAddons, method: Method,) -> Self {
         let timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
             Ok(d) => d.as_secs(),
             Err(e) => panic!("SystemTime before UNIX EPOCH {}", e)
@@ -79,14 +81,15 @@ impl OAuth {
             timestamp,
             token,
             addons,
+            method: method.to_string().to_uppercase(),
         }
     }
 
-    pub fn generate_signature(self, params: Option<&Params>) {
+    pub fn generate_signature(self, target_uri: &'static str) {
         // make hashmap with keys and val
 
         let params = Params::new()
-            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k))
+            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k)) // experiment to see if it works if this isn't included
             .add_param("oauth_consumer_key", self.consumer.key)
             .add_param("oauth_nonce", self.nonce)
             .add_param("oauth_signature_method", "HMAC-SHA1")
@@ -100,9 +103,23 @@ impl OAuth {
             .collect();
 
         encoded_params.sort();
-        let output_str = encoded_params.join("&");
+        let params_string = encoded_params.join("&");
 
-        // create signature base_string
+        // Create signature base_string
+        let base_string = format!("{}&{}&{}", 
+            self.method, urlencoding::encode(target_uri), 
+            urlencoding::encode(&params_string)
+        );
 
+        println!("THE BASEIC STRING:::: {}", base_string);
+
+        // Get a signing key
+        let secret = match self.token {
+            Some(pair) => {pair.secret}
+            None => {""}
+        };
+
+        let signing_key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(secret));
+        
     }
 }
