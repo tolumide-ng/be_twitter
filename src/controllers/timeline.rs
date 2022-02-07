@@ -1,9 +1,11 @@
 use http::{Request, StatusCode, Method};
 use hyper::Body;
 use redis::{Client as RedisClient};
-use serde_json::Value;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError, interceptor::handle_request::TwitterInterceptor};
+use crate::{helpers::{request::HyperClient, 
+    response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseVecData}}, 
+    middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
+};
 
 
 
@@ -27,7 +29,9 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
         return ResponseBuilder::new("Error".into(), Some(e.0), e.1).reply()
     }
 
-    let parsed = res.unwrap().separate_tweets_from_rts(true);
+    let body: TwitterResponseVecData = serde_json::from_value(res.unwrap()).unwrap();
+
+    let parsed = body.separate_tweets_from_rts(true);
 
     println!("PARSED \n\n {:#?} \n\n ", parsed);
 

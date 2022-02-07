@@ -7,8 +7,8 @@ use serde_json::{Value};
 use crate::{helpers::{
     request::HyperClient, 
     response::{
-        ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseData}
-    }, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError, interceptor::handle_request::TwitterInterceptor
+        ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}
+    }, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
 };
 
 
@@ -29,8 +29,8 @@ pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redi
         return ResponseBuilder::new("Error".into(), Some(e.0), e.1).reply();
     }
 
-    let data = res.unwrap();
-    let user = data.into_one_dict();
+    let body: TwitterResponseHashData = serde_json::from_value(res.unwrap()).unwrap();
+    let user = body.into_one_dict();
     let user_id = user.get("id").unwrap();
 
     redis::cmd("SET").arg(&["tolumide_userid", &user_id]).query_async(&mut con).await?;

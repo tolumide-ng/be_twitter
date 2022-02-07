@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
-    helpers::response::{TResult, THeaders, TwitterResponseData}, 
+    helpers::response::{TResult, THeaders}, 
     errors::{twitter_errors::TwitterResponseError, response::AppError}
 };
 
