@@ -4,3 +4,4 @@ pub mod response;
 pub mod keypair;
 pub mod request;
 pub mod keyval;
+pub mod signature;
