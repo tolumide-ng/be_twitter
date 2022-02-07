@@ -28,8 +28,8 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
     let (parts, body) = res.into_parts();
     let body = hyper::body::to_bytes(body).await?.to_vec();
 
-    // println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
-    // println!("THE PARTS {:#?}", parts);
+    println!("WHAT THE ERROR IS LIKE \n\n\n {:#?} \n\n\n", String::from_utf8_lossy(&body));
+    println!("THE PARTS {:#?}", parts);
     
     if let Ok(errors) = serde_json::from_slice::<TwitterErrors>(&body) {
         println!("THE LOOPED ERROR SETS");
