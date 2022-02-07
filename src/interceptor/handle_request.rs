@@ -8,7 +8,7 @@ use crate::{
 
 // trait TwitterResponse {}
 
-pub struct TwitterInterceptor();
+pub struct TwitterInterceptor;
 
 impl TwitterInterceptor {
     pub fn intercept(res: TResult<(THeaders, Vec<u8>)>) -> Result<TwitterResponseData, AppError> { 

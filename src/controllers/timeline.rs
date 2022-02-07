@@ -3,7 +3,7 @@ use hyper::Body;
 use redis::{Client as RedisClient};
 use serde_json::Value;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError, interceptor::handle_request::TwitterInterceptor};
+use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}}, middlewares::request_builder::RequestBuilder, errors::twitter_errors::TwitterResponseError, interceptor::handle_request::TwitterInterceptor};
 
 
 
