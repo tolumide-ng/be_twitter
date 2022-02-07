@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fmt::Debug;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
@@ -11,7 +13,7 @@ use crate::{
 pub struct TwitterInterceptor;
 
 impl TwitterInterceptor {
-    pub fn intercept(res: TResult<(THeaders, Vec<u8>)>) -> Result<TwitterResponseData, AppError> { 
+    pub fn intercept(res: TResult<(THeaders, Vec<u8>)>) -> Result<Value, AppError> { 
         let mut obj = HashMap::new();
 
         match res {
@@ -26,7 +28,7 @@ impl TwitterInterceptor {
                     return Err(AppError(obj, 400));
                 }
 
-                let data: TwitterResponseData = serde_json::from_slice(&body).unwrap();
+                let data: Value = serde_json::from_slice(&body).unwrap();
                 return Ok(data);
 
             }

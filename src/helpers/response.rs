@@ -109,6 +109,8 @@ pub struct TwitterResponseData {
     data: Vec<HashMap<String, String>>
 }
 
+
+
 impl TwitterResponseData {
     // Only use for responses whose vector (also called array) cotnains only one hashmap (also called objects)
     pub fn into_one_dict(self) -> HashMap<String, String> {
