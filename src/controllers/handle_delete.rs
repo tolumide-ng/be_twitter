@@ -19,10 +19,16 @@ impl PostIds {
 
         match s.get("ids") {
             Some(ids) => {
-                if ids.len() < 1 || ids.len() > 10 {
+                let duplicates = ids.iter()
+                    .find(|x| ids.iter().filter(|y| x == y).count() >= 2);
+
+                let empty_string = ids.iter().find(|x| x.len() < 1);
+
+                if ids.len() < 1 || ids.len() > 10 || duplicates.is_some() || empty_string.is_some() {
                     // detail = "Ids must contains atleast one post id"
-                    panic!("Ids must contain atleast one and a maximum of 10 post Ids (type String)")
+                    panic!("Ids must contain atleast one and a maximum of 10 post Ids (type String) and be unqiue")
                 }
+
 
                 return Self(ids.clone())
             }
