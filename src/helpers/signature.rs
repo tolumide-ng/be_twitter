@@ -4,7 +4,7 @@ use hmac::{Hmac, Mac};
 use sha1::Sha1;
 use uuid::Uuid;
 
-use crate::helpers::keypair::KeyPair;
+use crate::{helpers::keypair::KeyPair};
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct Params(HashMap<Cow<'static, str>, Cow<'static, str>>);
@@ -55,10 +55,24 @@ impl OAuthAddons {
 }
 
 
-pub struct SignedParams(HashMap<Cow<'static, str>, Cow<'static, str>>);
+pub struct SignedParams{
+    pub params: Vec<(&'static str, String)>
+}
+
+impl std::fmt::Display for SignedParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let params_str = self.params.iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        write!(f, "{}", params_str)
+    }
+}
 
 
-// impl SignedHeader {
+
+// impl SignedParams {
 //     fn get_header(&self) -> String {
 //         let oauth_str = self.params
 //             .iter()
@@ -100,13 +114,15 @@ impl OAuth {
     pub fn generate_signature(self, target_uri: &'static str) -> SignedParams {
         // make hashmap with keys and val
 
+        let token = self.token.clone();
+
         let params = Params::new()
             .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k)) // experiment to see if it works if this isn't included
-            .add_param("oauth_consumer_key", self.consumer.key)
+            .add_param("oauth_consumer_key", self.consumer.key.clone())
             .add_param("oauth_nonce", self.nonce.clone())
             .add_param("oauth_signature_method", "HMAC-SHA1")
             .add_param("oauth_timestamp", self.timestamp.clone())
-            .add_opt_param("oauth_token", self.token.map(|k| k.key))
+            .add_opt_param("oauth_token", token.clone().map(|k| k.key.clone()))
             .add_param("oauth_version", "1.0");
 
         let mut encoded_params: Vec<String> = params
@@ -126,12 +142,12 @@ impl OAuth {
         println!("THE BASEIC STRING:::: {}", base_string);
 
         // Get a signing key
-        let secret = match self.token {
+        let secret = match token {
             Some(pair) => {pair.secret}
-            None => {""}
+            None => {String::from("")}
         };
 
-        let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(secret));
+        let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(&secret));
 
         // Calculate the signature
         type HmacSha1 = Hmac::<Sha1>;
@@ -139,28 +155,32 @@ impl OAuth {
         mac.update(base_string.as_bytes());
         
         let signed_key = base64::encode(mac.finalize().into_bytes());
-        let mut all_params = HashMap::new();
-        all_params.insert("oauth_consumer_key", self.consumer.key);
-        all_params.insert("oauth_nonce", &self.nonce);
-        all_params.insert("oauth_signature", &signed_key);
-        all_params.insert("oauth_signature_method", "HMAC-SHA1");
-        all_params.insert("oauth_timestamp", &self.timestamp);
-        all_params.insert("oauth_version", "1.0");
+
+        let mut all_params = vec![
+            ("oauth_consumer_key".into(), self.consumer.key),
+            ("oauth_nonce".into(), self.nonce),
+            ("oauth_signature".into(), signed_key),
+            ("oauth_signature_method".into(), "HMAC-SHA1".to_string()),
+            ("oauth_timestamp".into(), self.timestamp),
+            ("oauth_version".into(), "1.0".into()),
+        ];
 
         match &self.addons {
             OAuthAddons::Callback(c) => {
-                all_params.insert("oauth_callback", c);
+                all_params.push(("oauth_callback".into(), c.into()));
             }
             OAuthAddons::Verifier(v) => {
-                all_params.insert("oauth_verifier", v);
+                all_params.push(("oauth_verifier".into(), v.into()));
             }
             OAuthAddons::None => {}
         }
 
-        if let Some(token) = &self.token {
-            all_params.insert("token", token.secret);
+        if let Some(token) = self.token {
+            all_params.push(("token".into(), token.secret.clone()));
         }
 
-        SignedParams(all_params)
+        SignedParams {
+            params: all_params
+        }
     }
 }

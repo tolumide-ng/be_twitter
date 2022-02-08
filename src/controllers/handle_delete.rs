@@ -66,7 +66,7 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
 
             tokio::spawn(async move {
                 let request = RequestBuilder::new(Method::POST, format!("https://api.twitter.com/1.1/statuses/destroy/{}.json", id))
-                    .with_access_token(token).build_request();
+                    .with_access_token("Bearer", token).build_request();
 
                 println!("THE REQUEST {:#?}", request);
 
@@ -99,5 +99,5 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
 
     
     // let req = RequestBuilder::new(Method::POST, format!("https://api.twitter.com/1.1/statuses/destroy/{}.json"))
-    return ResponseBuilder::new("Internal Server Error".into(), Some(""), 500).reply();
+    return ResponseBuilder::new("Ok".into(), Some(""), 200).reply();
 }

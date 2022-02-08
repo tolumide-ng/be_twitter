@@ -20,7 +20,7 @@ pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redi
     let access_token = redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?;
 
     let req = RequestBuilder::new(Method::GET, format!("https://api.twitter.com/2/users/by/username/{}", username))
-        .with_access_token(access_token).build_request();
+        .with_access_token("Bearer", access_token).build_request();
 
     let res= TwitterInterceptor::intercept(make_request(req, hyper_client.clone()).await);
 
