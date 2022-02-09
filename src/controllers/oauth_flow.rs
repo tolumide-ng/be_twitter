@@ -17,20 +17,13 @@ pub async fn request_token(request: Request<Body>,
     redis_client: RedisClient
 ) -> TResult<ApiBody> {
     let con = redis_client.get_async_connection().await?;
-    // todo() pass env variables directly to all controllers as function params
     let SettingsVars{api_key, api_key_secret, oauth1_callback, ..} = SettingsVars::new();
     let consumer = KeyPair::new(api_key, api_key_secret);
-    // let cb_url = urlencoding::encode(redirect_uri.clone());
-
-    println!("))))))))))))))))))))))))))))))))))))))))))))) the redirect uri {:#?} (((((((((((((((((((((((((((((((((((((((((((((((((((((((((", oauth1_callback);
-
     let callback = OAuthAddons::Callback(oauth1_callback.clone());
 
     let target_url = "https://api.twitter.com/oauth/request_token";
 
     let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url);
-
-    println!("THE SIGNATURE {:#?}", signature.to_string());
     let content_type = "application/x-www-form-urlencoded";
 
      let request = RequestBuilder::new(Method::POST, target_url.into())
@@ -39,21 +32,15 @@ pub async fn request_token(request: Request<Body>,
         .with_body(Body::empty(), content_type)
         .build_request();
 
-    println!("\n\n THE REQUEST PAGE {:#?} \n\n", request);
-
-    let response_body = Response::builder().status(307)
-        .header("Location", request.uri().to_string())
-        .body(Body::empty()).unwrap();
-
-    let res = TwitterInterceptor::intercept(make_request(request, hyper_client).await);
+    let res = make_request(request, hyper_client).await;
 
     if let Err(e) = res {
-        eprintln!("::>>>>>>><<<<<<<<<<<<:: {:#?}", e);
-
-        return ResponseBuilder::new("Error".into(), Some(""), 400).reply()
+        println!("DOCUMENTING THE ISSUE!!!!! {:#?}", e);
+        return ResponseBuilder::new("Error".into(), Some("Could not setup the user"), 403).reply()
     }
 
-    let body: TwitterResponseVecData = serde_json::from_value(res.unwrap()).unwrap();
+    let (_header, body) = res.unwrap();
+     let body = String::from_utf8_lossy(&body).to_string();
 
     // let body = String::from_utf8_lossy(&body);
     println!("
@@ -65,6 +52,10 @@ pub async fn request_token(request: Request<Body>,
     *******************************************************
     \n\n
     ", body);
+
+    let frags: Vec<&str> = body.split("&").collect();
+
+    println!("THE COLLECTED FRAGMENTS::::::::: {:#?}", frags);
 
     // Ok(response_body)
 
