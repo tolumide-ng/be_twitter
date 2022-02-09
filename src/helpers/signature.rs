@@ -5,7 +5,6 @@ use sha1::Sha1;
 use uuid::Uuid;
 
 use crate::{helpers::keypair::KeyPair};
-use crate::helpers::utils::percent_encode;
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct Params(HashMap<Cow<'static, str>, Cow<'static, str>>);
@@ -63,7 +62,7 @@ pub struct SignedParams{
 impl std::fmt::Display for SignedParams {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let params_str = self.params.iter()
-            .map(|(k, v)| format!(r#"{}="{}""#, percent_encode(k), percent_encode(v)))
+            .map(|(k, v)| format!(r#"{}="{}""#, urlencoding::encode(k), urlencoding::encode(v)))
             .collect::<Vec<String>>()
             .join(", ");
 
@@ -132,7 +131,7 @@ impl OAuth {
 
         let mut query: Vec<String> = params
             .iter()
-            .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
             .collect();
         query.sort();
 
@@ -142,9 +141,9 @@ impl OAuth {
         // Create signature base_string
         let base_string = format!(
             "{}&{}&{}", 
-            percent_encode(&self.method), 
-            percent_encode(target_uri), 
-            percent_encode(&params_string)
+            urlencoding::encode(&self.method), 
+            urlencoding::encode(target_uri), 
+            urlencoding::encode(&params_string)
         );
 
         println!("\nTHE BASEIC STRING:::: {}", base_string);
@@ -155,7 +154,7 @@ impl OAuth {
             None => {String::from("")}
         };
 
-        let key = format!("{}&{}", percent_encode(&self.consumer.secret), percent_encode(&secret));
+        let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(&secret));
 
         // Calculate the signature
         type HmacSha1 = Hmac::<Sha1>;
@@ -175,7 +174,7 @@ impl OAuth {
 
         match &self.addons {
             OAuthAddons::Callback(c) => {
-                all_params.push(("oauth_callback".into(), percent_encode(c).to_string()));
+                all_params.push(("oauth_callback".into(), c.into()));
             }
             OAuthAddons::Verifier(v) => {
                 all_params.push(("oauth_verifier".into(), v.into()));

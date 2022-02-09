@@ -7,7 +7,7 @@ use crate::{
     helpers::{
         request::HyperClient, response::{
             TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseVecData}, 
-        signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal, utils::percent_encode
+        signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
     }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
 };
 
@@ -22,10 +22,12 @@ pub async fn request_token(request: Request<Body>,
     let SettingsVars{api_key, api_key_secret, redirect_uri, ..} = SettingsVars::new();
     let consumer = KeyPair::new(api_key, api_key_secret);
     // let cb_url = urlencoding::encode(redirect_uri.clone());
+
+    println!("))))))))))))))))))))))))))))))))))))))))))))) the redirect uri {:#?} (((((((((((((((((((((((((((((((((((((((((((((((((((((((((", redirect_uri);
+
     let callback = OAuthAddons::Callback(redirect_uri.clone());
 
     let target_url = "https://api.twitter.com/oauth/request_token";
-    // let target_url = "https://api.twitter.com/1.1/statuses/update.json";
 
     let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url);
 
@@ -33,9 +35,9 @@ pub async fn request_token(request: Request<Body>,
     let content_type = "application/x-www-form-urlencoded";
 
      let request = RequestBuilder::new(Method::POST, target_url.into())
-        .with_query("oauth_callback", &percent_encode(&redirect_uri).to_string())
+        .with_query("oauth_callback", &urlencoding::encode(&redirect_uri))
         .with_access_token("OAuth", signature.to_string())
-        // .with_body(Body::empty(), content_type)
+        .with_body(Body::empty(), content_type)
         .build_request();
 
     println!("\n\n THE REQUEST PAGE {:#?} \n\n", request);

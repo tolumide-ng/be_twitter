@@ -7,7 +7,6 @@ use crate::{helpers::{request::HyperClient, keyval::KeyVal, response::{make_requ
 
 pub async fn refresh_token(_req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let SettingsVars {client_id, client_secret, ..} = SettingsVars::new();
-    println!("LEVEL ONE");
 
     let mut con = redis_client.get_async_connection().await.unwrap();
     let content = "application/x-www-form-urlencoded";
