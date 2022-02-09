@@ -20,7 +20,8 @@ pub async fn routes(
     match (req.method(), req.uri().path(), req.uri().query()) {
         (&Method::GET, "/", _) => health_check(),
         (&Method::GET, "/enable", _) => authorize_bot(client, conn).await,
-        (&Method::GET, "/auth", _) => handle_redirect(req, client, conn).await,
+        (&Method::GET, "/oauth2/redirect", _) => handle_redirect(req, client, conn).await,
+        (&Method::GET, "/oauth1/callback", _) => handle_redirect(req, client, conn).await,
         (&Method::POST, "/revoke", _) => revoke_token(req, client, conn).await,
         (&Method::GET, "/refresh", _) => refresh_token(req, client, conn).await,
         (&Method::GET, "/user", x) => user_lookup(req, client, conn).await,

@@ -1,7 +1,6 @@
 use http::{Request, StatusCode, Method, Response};
 use hyper::Body;
 use redis::{Client as RedisClient};
-use serde_json::Value;
 
 use crate::{
     helpers::{
@@ -19,13 +18,13 @@ pub async fn request_token(request: Request<Body>,
 ) -> TResult<ApiBody> {
     let con = redis_client.get_async_connection().await?;
     // todo() pass env variables directly to all controllers as function params
-    let SettingsVars{api_key, api_key_secret, redirect_uri, ..} = SettingsVars::new();
+    let SettingsVars{api_key, api_key_secret, oauth1_callback, ..} = SettingsVars::new();
     let consumer = KeyPair::new(api_key, api_key_secret);
     // let cb_url = urlencoding::encode(redirect_uri.clone());
 
-    println!("))))))))))))))))))))))))))))))))))))))))))))) the redirect uri {:#?} (((((((((((((((((((((((((((((((((((((((((((((((((((((((((", redirect_uri);
+    println!("))))))))))))))))))))))))))))))))))))))))))))) the redirect uri {:#?} (((((((((((((((((((((((((((((((((((((((((((((((((((((((((", oauth1_callback);
 
-    let callback = OAuthAddons::Callback(redirect_uri.clone());
+    let callback = OAuthAddons::Callback(oauth1_callback.clone());
 
     let target_url = "https://api.twitter.com/oauth/request_token";
 
@@ -35,7 +34,7 @@ pub async fn request_token(request: Request<Body>,
     let content_type = "application/x-www-form-urlencoded";
 
      let request = RequestBuilder::new(Method::POST, target_url.into())
-        .with_query("oauth_callback", &urlencoding::encode(&redirect_uri))
+        .with_query("oauth_callback", &urlencoding::encode(&oauth1_callback))
         .with_access_token("OAuth", signature.to_string())
         .with_body(Body::empty(), content_type)
         .build_request();
