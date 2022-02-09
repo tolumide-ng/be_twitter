@@ -5,6 +5,7 @@ use sha1::Sha1;
 use uuid::Uuid;
 
 use crate::{helpers::keypair::KeyPair};
+use crate::helpers::utils::percent_encode;
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct Params(HashMap<Cow<'static, str>, Cow<'static, str>>);
@@ -56,13 +57,13 @@ impl OAuthAddons {
 
 
 pub struct SignedParams{
-    pub params: Vec<(&'static str, String)>
+    pub params: Vec<(String, String)>
 }
 
 impl std::fmt::Display for SignedParams {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let params_str = self.params.iter()
-            .map(|(k, v)| format!("{}={}", k, v))
+            .map(|(k, v)| format!(r#"{}="{}""#, percent_encode(k), percent_encode(v)))
             .collect::<Vec<String>>()
             .join(", ");
 
@@ -101,9 +102,12 @@ impl OAuth {
             Err(e) => panic!("SystemTime before UNIX EPOCH {}", e)
         };
 
+        let nonce = Uuid::new_v4().to_string().replace("-", ""); 
+        
+
         Self {
             consumer,
-            nonce: Uuid::new_v4().to_string(),
+            nonce,
             timestamp,
             token,
             addons,
@@ -117,29 +121,33 @@ impl OAuth {
         let token = self.token.clone();
 
         let params = Params::new()
-            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k)) // experiment to see if it works if this isn't included
             .add_param("oauth_consumer_key", self.consumer.key.clone())
             .add_param("oauth_nonce", self.nonce.clone())
             .add_param("oauth_signature_method", "HMAC-SHA1")
             .add_param("oauth_timestamp", self.timestamp.clone())
+            .add_param("oauth_version", "1.0")
             .add_opt_param("oauth_token", token.clone().map(|k| k.key.clone()))
-            .add_param("oauth_version", "1.0");
+            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k))
+            .add_opt_param("oauth_verifier", self.addons.with_verifier().map(|k| k)); // experiment to see if it works if this isn't included
 
-        let mut encoded_params: Vec<String> = params
+        let mut query: Vec<String> = params
             .iter()
-            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
+            .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
             .collect();
+        query.sort();
 
-        encoded_params.sort();
-        let params_string = encoded_params.join("&");
+        println!("::::::::::::::::::::::::: {:#?} :::::::::::::::::::::::::::", query);
+        let params_string = query.join("&");
 
         // Create signature base_string
-        let base_string = format!("{}&{}&{}", 
-            self.method, urlencoding::encode(target_uri), 
-            urlencoding::encode(&params_string)
+        let base_string = format!(
+            "{}&{}&{}", 
+            percent_encode(&self.method), 
+            percent_encode(target_uri), 
+            percent_encode(&params_string)
         );
 
-        println!("THE BASEIC STRING:::: {}", base_string);
+        println!("\nTHE BASEIC STRING:::: {}", base_string);
 
         // Get a signing key
         let secret = match token {
@@ -147,7 +155,7 @@ impl OAuth {
             None => {String::from("")}
         };
 
-        let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(&secret));
+        let key = format!("{}&{}", percent_encode(&self.consumer.secret), percent_encode(&secret));
 
         // Calculate the signature
         type HmacSha1 = Hmac::<Sha1>;
@@ -157,7 +165,7 @@ impl OAuth {
         let signed_key = base64::encode(mac.finalize().into_bytes());
 
         let mut all_params = vec![
-            ("oauth_consumer_key".into(), self.consumer.key),
+            ("oauth_consumer_key".to_string(), self.consumer.key),
             ("oauth_nonce".into(), self.nonce),
             ("oauth_signature".into(), signed_key),
             ("oauth_signature_method".into(), "HMAC-SHA1".to_string()),
@@ -167,7 +175,7 @@ impl OAuth {
 
         match &self.addons {
             OAuthAddons::Callback(c) => {
-                all_params.push(("oauth_callback".into(), c.into()));
+                all_params.push(("oauth_callback".into(), percent_encode(c).to_string()));
             }
             OAuthAddons::Verifier(v) => {
                 all_params.push(("oauth_verifier".into(), v.into()));
@@ -178,6 +186,8 @@ impl OAuth {
         if let Some(token) = self.token {
             all_params.push(("token".into(), token.secret.clone()));
         }
+
+        all_params.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
         SignedParams {
             params: all_params

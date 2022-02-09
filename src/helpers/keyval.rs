@@ -5,6 +5,7 @@ use url::{Url};
 
 use crate::{helpers::response::TResult, errors::response::TError};
 use crate::controllers::handle_redirect::AccessToken;
+use crate::helpers::utils::percent_encode;
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct KeyVal(HashMap<Cow<'static, str>, Cow<'static, str>>);
@@ -60,7 +61,7 @@ impl KeyVal {
 
     pub fn to_urlencode(&self) -> String {
         self.iter()
-            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
+            .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
             .collect::<Vec<_>>().join("&")
     }
 
