@@ -94,27 +94,22 @@ impl KeyVal {
         return false;
     }
 
-    pub fn verify_present(&self, names: Vec<String>) -> TResult<&Self> {
+    pub fn verify_present(&self, names: Vec<String>) -> Option<&Self> {
         let keys = self.keys().cloned().map(|k| k.to_string()).collect::<Vec<String>>();
-        let mut err: String = "".to_string();
+        let mut err = false;
 
         for index in 0..names.len() {
             if !keys.contains(&names[index]) {
-                let mut separator = ",";
-
-                if index == names.len() - 1 {
-                    separator = ""
-                }
-                err.push_str(&format!("{}{} ", names[index], separator));
+                err = true;
 
             }
         }
 
-        if err.len() > 0 {
-            return Err(TError::InvalidCredentialError(err));
+        if err {
+            return None
         }
-
-        Ok(self)
+        
+        Some(&self)
     }
 
     // pub fn get_from(self, name: String) -> String {
