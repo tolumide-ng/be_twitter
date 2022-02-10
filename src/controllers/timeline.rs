@@ -21,7 +21,7 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
     let req = RequestBuilder::new
         (Method::GET, format!("https://api.twitter.com/2/users/{}/tweets", user_id))
         .with_query("max_results", "100")
-        .with_access_token(access_token).build_request();
+        .with_access_token("Bearer", access_token).build_request();
 
     let res = TwitterInterceptor::intercept(make_request(req, hyper_client.clone()).await);
 

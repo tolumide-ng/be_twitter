@@ -7,6 +7,7 @@ mod revoke_token;
 mod refresh_token;
 mod user_lookup;
 mod handle_delete;
+mod oauth_flow;
 
 
 pub use not_found::not_found;
@@ -18,3 +19,5 @@ pub use refresh_token::refresh_token;
 pub use user_lookup::user_lookup;
 pub use timeline::get_timeline;
 pub use handle_delete::handle_delete;
+pub use oauth_flow::request_token;
+pub use oauth_flow::handle_redirect_v1;

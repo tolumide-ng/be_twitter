@@ -15,7 +15,7 @@ use crate::middlewares::request_builder::RequestBuilder;
 
 
 pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<ApiBody> {
-    let SettingsVars {client_id, redirect_uri, state, ..} = SettingsVars::new();
+    let SettingsVars {client_id, oauth2_callback, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
     let mut con = client.get_async_connection().await.unwrap();
     
@@ -34,7 +34,7 @@ pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<Api
         .add_list_keyval(vec![
             ("response_type".to_string(), "code".to_string()),
             ("client_id".to_string(), client_id),
-            ("redirect_uri".to_string(), redirect_uri),
+            ("redirect_uri".to_string(), oauth2_callback),
             ("scope".to_string(), Scope::with_scopes(scopes)),
             ("state".to_string(), state),
             ("code_challenge".to_string(), pkce),
