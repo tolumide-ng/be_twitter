@@ -58,6 +58,29 @@ impl KeyVal {
         Ok(dic)
     }
 
+    pub fn string_to_keyval(s: String) -> Option<Self> {
+        // let valid = s.split("");
+        let ampersand: Vec<&str> = s.matches("&").collect();
+        let equals_sign: Vec<&str> = s.matches("=").collect();
+
+        if ampersand.len() + 1 != equals_sign.len() {
+            return None
+        }
+
+        let mut dic = Self::new();
+
+        let params: Vec<&str> = s.split("&").collect();
+
+        for param in params {
+            // let pair_string = pair.to_string();
+            let k_v = param.split("=").collect::<Vec<_>>();
+            dic = dic.add_keyval(k_v[0].into(), k_v[1].into());
+        }
+
+        Some(dic)
+
+    }
+
     pub fn to_urlencode(&self) -> String {
         self.iter()
             .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
@@ -74,10 +97,50 @@ impl KeyVal {
             return Ok(at)
         }
 
-        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken"))
+        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken".into()))
     }
     
-    // pub fn to_query_params(&self) -> String {
-    //     self.iter().map(|(k, v)| forma)
+
+    pub fn validate(&self, name: String, value: String) -> bool {
+        if let Some(obtained_value) = &self.get(name.as_str()) {
+            if obtained_value.to_string() == value {
+                // return Ok("akld".into())
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    pub fn verify_present(&self, names: Vec<String>) -> Option<&Self> {
+        let keys = self.keys().cloned().map(|k| k.to_string()).collect::<Vec<String>>();
+        let mut err = false;
+
+        for index in 0..names.len() {
+            if !keys.contains(&names[index]) {
+                err = true;
+
+            }
+        }
+
+        if err {
+            return None
+        }
+        
+        Some(&self)
+    }
+
+    // pub fn get_from(self, name: String) -> String {
+    //     return self.get(name.as_str()).unwrap()
+    // }
+
+    // pub fn validate_multiple(&self, values: Vec<String>) {
+    //     let mut errors: Vec<String> = vec![];
+
+    //     for value in values {
+    //         // if let Some(current_value)
+    //     }
     // }
 }

@@ -49,14 +49,11 @@ impl RequestBuilder {
         }
     }
 
-    pub fn with_header(self, header_dict: Option<KeyVal>) -> Self {
-        if let Some(_) = header_dict {
-            return Self {
-                header: header_dict,
-                ..self
-            }
+    pub fn with_header(self, header_dict: KeyVal) -> Self {
+        return Self {
+            header: Some(header_dict),
+            ..self
         }
-        self
     }
 
     pub fn get_uri(&self) -> String {
