@@ -9,7 +9,7 @@ use crate::{
         request::HyperClient, response::{
             TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder
+    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
 };
 
 
@@ -70,6 +70,9 @@ pub async fn request_token(request: Request<Body>,
                 .add_query_params(query_dict)
                 .build_request();
 
+
+            println!("\n\n\n THE TARGET REDIRECT REQUEST {:#?} \n\n\n", request);
+
             let redirect_to = Response::builder().status(302)
                 .header("Location", request.uri().to_string())
                 .body(Body::from(request.uri().to_string())).unwrap();
@@ -82,44 +85,3 @@ pub async fn request_token(request: Request<Body>,
 
 }
 
-
-pub async fn handle_redirect_v1(req: Request<hyper::Body>, _hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
-    let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{state, ..} = SettingsVars::new();
-
-    println!("EVERYTHING ABOUT THE REQUEST TO THIS ENDPOINT {:#?}", req);
-
-
-    let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
-    let query_params = KeyVal::query_params_to_keyval(req.uri())?;
-    
-    match query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]) {
-        Ok(k) => {
-            if k.validate("oauth_token".into(),oauth_token) {
-                let verifier = k.get("oauth_verifier").unwrap();
-                redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
-            }
-
-        }
-        Err(e) => {
-            return ResponseBuilder::new("Bad Request".into(), Some("Invalid request"), StatusCode::BAD_REQUEST.as_u16()).reply();
-        }
-    };
-        // .validate("oauth_token".into(),oauth_token);
-
-    // if let Err(e) = query_params {
-    //     return ResponseBuilder::new("Bad Request".into(), Some("OAuth token does not match"), StatusCode::BAD_REQUEST.as_u16()).reply();
-    // }
-
-    // let verifier = query_params.unwrap().get("oauth_verifier");
-
-    
-    // let oauth_token = query_params.get("oauth_token").unwrap();
-    // let ab = query_params.validate("oauth_token".into(),oauth_token);
-   
-
-    // Make request to POST the access token
-    // access_token(hyper_client.clone(), redis_client, query_params.code).await?;
-
-    ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply()
-}

@@ -94,7 +94,7 @@ impl KeyVal {
         return false;
     }
 
-    pub fn verify_present(self, names: Vec<String>) -> TResult<Self> {
+    pub fn verify_present(&self, names: Vec<String>) -> TResult<&Self> {
         let keys = self.keys().cloned().map(|k| k.to_string()).collect::<Vec<String>>();
         let mut err: String = "".to_string();
 

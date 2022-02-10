@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder
+    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
 };
 
 
@@ -68,13 +68,55 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
 
 pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
-    let SettingsVars{state, ..} = SettingsVars::new();
+    let mut con = redis_client.get_async_connection().await?;
+    let SettingsVars{state, api_key, ..} = SettingsVars::new();
 
-    let query_params = KeyVal::query_params_to_keyval(req.uri())?
-        .to_access_token()?.validate_state(state)?;
+    println!("EVERYTHING ABOUT THE REQUEST TO THIS ENDPOINT {:#?}", req);
 
-    // Make request to POST the access token
-    access_token(hyper_client.clone(), redis_client, query_params.code).await?;
+    let query_params = KeyVal::query_params_to_keyval(req.uri())?;
 
-    ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply()
+    let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
+
+    match is_v1_callback {
+         Ok(k) => {
+            let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
+            if k.validate("oauth_token".into(),oauth_token.clone()) {
+                let verifier = k.get("oauth_verifier").unwrap();
+                redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
+
+                let header = KeyVal::new().add_list_keyval(vec![
+                    ("oauth_consumer_key".into(), api_key),
+                    ("oauth_token".into(), oauth_token),
+                    ("oauth_verifier".into(), verifier.to_string()),
+                ]);
+
+                let req = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/access_token".into())
+                    .with_header(header).build_request();
+
+                let res = TwitterInterceptor::intercept(make_request(req, hyper_client.clone()).await);
+
+                println!("::::::: THE RESPONSE OBRAINED ::::::: {:#?}", res);
+
+                return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
+            }
+
+        }
+        Err(e) => {
+            // maybe it is a v2 callback
+            let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
+
+            if let Ok(dict) = is_v2_callback {
+                if query_params.validate("state".into(), state) {
+                    let code = dict.get("code").unwrap().to_string();
+                    access_token(hyper_client.clone(), redis_client, code).await?;
+
+                    return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
+                }
+            }
+        }
+    }
+    
+    ResponseBuilder::new("Bad request".into(), Some(""), StatusCode::BAD_REQUEST.as_u16()).reply()
+
+
 }
