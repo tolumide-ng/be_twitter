@@ -67,15 +67,15 @@ impl KeyVal {
             return None
         }
 
-        let dic = Self::new();
+        let mut dic = Self::new();
 
         let params: Vec<&str> = s.split("&").collect();
 
-        s.split("&").collect::<Vec<&str>>()
-            .iter().for_each(|param| {
-                let k_v = param.split("=").collect::<Vec<_>>();
-                dic = dic.add_keyval(k_v[0].into(), k_v[1].into());
-            });
+        for param in params {
+            // let pair_string = pair.to_string();
+            let k_v = param.split("=").collect::<Vec<_>>();
+            dic = dic.add_keyval(k_v[0].into(), k_v[1].into());
+        }
 
         Some(dic)
 
@@ -100,9 +100,6 @@ impl KeyVal {
         Err(TError::InvalidCredentialError("State or Code in missen in AccessToken".into()))
     }
     
-    // pub fn to_query_params(&self) -> String {
-    //     self.iter().map(|(k, v)| forma)
-    // }
 
     pub fn validate(&self, name: String, value: String) -> bool {
         if let Some(obtained_value) = &self.get(name.as_str()) {

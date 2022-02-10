@@ -56,7 +56,6 @@ pub async fn request_token(request: Request<Body>,
     // this is all to make readability easier when we get to persisting these information
     oauth_credentials.iter().for_each(|a| { map.insert(a[0].clone(), a[1].clone()); });
 
-    println!("THE DC {:#?}", oauth_credentials);
     if let Some(val) = map.get("oauth_callback_confirmed") {
         if val == "true" {
             redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
@@ -69,9 +68,6 @@ pub async fn request_token(request: Request<Body>,
             let request = RequestBuilder::new(Method::GET, "https://api.twitter.com/oauth/authorize".into())
                 .add_query_params(query_dict)
                 .build_request();
-
-
-            println!("\n\n\n THE TARGET REDIRECT REQUEST {:#?} \n\n\n", request);
 
             let redirect_to = Response::builder().status(302)
                 .header("Location", request.uri().to_string())

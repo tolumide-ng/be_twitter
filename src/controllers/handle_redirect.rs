@@ -70,34 +70,22 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
     let SettingsVars{state, api_key, ..} = SettingsVars::new();
-
-    println!("EVERYTHING ABOUT THE REQUEST TO THIS ENDPOINT {:#?}", req);
-
+    
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
-
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
 
     match is_v1_callback {
          Some(k) => {
-             println!("THIS IS A V1 REQUEST-----");
             let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
             if k.validate("oauth_token".into(),oauth_token.clone()) {
                 let verifier = k.get("oauth_verifier").unwrap();
                 redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
-
-                // let header = KeyVal::new().add_list_keyval(vec![
-                //     ("oauth_consumer_key".into(), api_key),
-                //     ("oauth_token".into(), oauth_token),
-                //     ("oauth_verifier".into(), verifier.to_string()),
-                // ]);
 
                 let req = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/access_token".into())
                     .with_query("oauth_consumer_key", &api_key)
                     .with_query("oauth_token", &oauth_token)
                     .with_query("oauth_verifier", verifier)
                     .build_request();
-
-                println!("[[[[[[[[[[[[[[[[[[[----------------------]]]]]]]]]]]]]]]]]]]]]]]]] {:#?}", req);
 
                 let res = make_request(req, hyper_client.clone()).await;
 
@@ -118,7 +106,6 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
 
         }
         None => {
-             println!("((((((((((((((((_______________))))))))))))))))))-----");
             // maybe it is a v2 callback
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
 
@@ -132,6 +119,11 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
             }
         }
     }
+
+    if query_params.verify_present(vec!["denied".into()]).is_some() {
+        return ResponseBuilder::new("Unauthorized".into(), Some("Permission denied"), StatusCode::UNAUTHORIZED.as_u16()).reply()
+    }
+
     
     ResponseBuilder::new("Bad request".into(), Some(""), StatusCode::BAD_REQUEST.as_u16()).reply()
 
