@@ -58,6 +58,29 @@ impl KeyVal {
         Ok(dic)
     }
 
+    pub fn string_to_keyval(s: String) -> Option<Self> {
+        // let valid = s.split("");
+        let ampersand: Vec<&str> = s.matches("&").collect();
+        let equals_sign: Vec<&str> = s.matches("=").collect();
+
+        if ampersand.len() + 1 != equals_sign.len() {
+            return None
+        }
+
+        let dic = Self::new();
+
+        let params: Vec<&str> = s.split("&").collect();
+
+        s.split("&").collect::<Vec<&str>>()
+            .iter().for_each(|param| {
+                let k_v = param.split("=").collect::<Vec<_>>();
+                dic = dic.add_keyval(k_v[0].into(), k_v[1].into());
+            });
+
+        Some(dic)
+
+    }
+
     pub fn to_urlencode(&self) -> String {
         self.iter()
             .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))

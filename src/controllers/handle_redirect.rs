@@ -79,29 +79,46 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
 
     match is_v1_callback {
          Some(k) => {
+             println!("THIS IS A V1 REQUEST-----");
             let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
             if k.validate("oauth_token".into(),oauth_token.clone()) {
                 let verifier = k.get("oauth_verifier").unwrap();
                 redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
 
-                let header = KeyVal::new().add_list_keyval(vec![
-                    ("oauth_consumer_key".into(), api_key),
-                    ("oauth_token".into(), oauth_token),
-                    ("oauth_verifier".into(), verifier.to_string()),
-                ]);
+                // let header = KeyVal::new().add_list_keyval(vec![
+                //     ("oauth_consumer_key".into(), api_key),
+                //     ("oauth_token".into(), oauth_token),
+                //     ("oauth_verifier".into(), verifier.to_string()),
+                // ]);
 
                 let req = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/access_token".into())
-                    .with_header(header).build_request();
+                    .with_query("oauth_consumer_key", &api_key)
+                    .with_query("oauth_token", &oauth_token)
+                    .with_query("oauth_verifier", verifier)
+                    .build_request();
 
-                let res = TwitterInterceptor::intercept(make_request(req, hyper_client.clone()).await);
+                println!("[[[[[[[[[[[[[[[[[[[----------------------]]]]]]]]]]]]]]]]]]]]]]]]] {:#?}", req);
 
-                println!("::::::: THE RESPONSE OBRAINED ::::::: {:#?}", res);
+                let res = make_request(req, hyper_client.clone()).await;
 
-                return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
+                if let Ok((_header, body)) = res {
+                    let body_string = String::from_utf8_lossy(&body).to_string();
+                    let params = KeyVal::string_to_keyval(body_string);
+
+                    if let Some(map) = params {
+                        redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
+                        redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut con).await?;
+                        redis::cmd("SET").arg(&["user_id", map.get("user_id").unwrap()]).query_async(&mut con).await?;
+                        
+                        return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
+                    }
+                }
+
             }
 
         }
         None => {
+             println!("((((((((((((((((_______________))))))))))))))))))-----");
             // maybe it is a v2 callback
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
 
