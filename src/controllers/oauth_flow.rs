@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use http::{Request, StatusCode, Method};
+use http::{Request, StatusCode, Method, Response};
 use hyper::Body;
 use redis::{Client as RedisClient};
 
@@ -61,8 +61,20 @@ pub async fn request_token(request: Request<Body>,
         if val == "true" {
             redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
             redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut con).await?;
+
+            let query_dict = KeyVal::new().add_list_keyval(vec![
+                ("oauth_token".to_string(), map.get("oauth_token").unwrap().into())
+            ]);
             
-            return ResponseBuilder::new("Ok".into(), Some(""), 200).reply();
+            let request = RequestBuilder::new(Method::GET, "https://api.twitter.com/oauth/authorize".into())
+                .add_query_params(query_dict)
+                .build_request();
+
+            let redirect_to = Response::builder().status(302)
+                .header("Location", request.uri().to_string())
+                .body(Body::from(request.uri().to_string())).unwrap();
+
+            return Ok(redirect_to)
         }
     }
 
