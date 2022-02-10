@@ -1,6 +1,6 @@
-use std::{collections::HashMap, borrow::Cow};
+use std::{collections::HashMap};
 
-use http::{Request, StatusCode, Method, Response};
+use http::{Request, Method, Response};
 use hyper::Body;
 use redis::{Client as RedisClient};
 
@@ -9,7 +9,7 @@ use crate::{
         request::HyperClient, response::{
             TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
+    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder,
 };
 
 
@@ -19,16 +19,16 @@ pub async fn request_token(request: Request<Body>,
     redis_client: RedisClient
 ) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{api_key, api_key_secret, oauth1_callback, ..} = SettingsVars::new();
+    let SettingsVars{api_key, api_key_secret, callback_url, ..} = SettingsVars::new();
     let consumer = KeyPair::new(api_key, api_key_secret);
-    let callback = OAuthAddons::Callback(oauth1_callback.clone());
+    let callback = OAuthAddons::Callback(callback_url.clone());
 
     let target_url = "https://api.twitter.com/oauth/request_token";
     let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url);
     let content_type = "application/x-www-form-urlencoded";
 
      let request = RequestBuilder::new(Method::POST, target_url.into())
-        .with_query("oauth_callback", &urlencoding::encode(&oauth1_callback))
+        .with_query("oauth_callback", &urlencoding::encode(&callback_url))
         .with_access_token("OAuth", signature.to_string())
         .with_body(Body::empty(), content_type)
         .build_request();

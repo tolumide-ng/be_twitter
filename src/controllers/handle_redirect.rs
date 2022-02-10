@@ -35,7 +35,7 @@ struct AppAccess {
 }
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
-    let SettingsVars{client_id, oauth2_callback, client_secret, ..} = SettingsVars::new();
+    let SettingsVars{client_id, callback_url, client_secret, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
 
@@ -43,7 +43,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), "authorization_code".into()),
         ("client_id".to_string(), client_id.clone()),
-        ("redirect_uri".to_string(), oauth2_callback),
+        ("redirect_uri".to_string(), callback_url),
         ("code_verifier".to_string(), redis::cmd("GET").arg(&["tolumide_test_pkce"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
