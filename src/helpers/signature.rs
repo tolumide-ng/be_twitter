@@ -71,19 +71,6 @@ impl std::fmt::Display for SignedParams {
 }
 
 
-
-// impl SignedParams {
-//     fn get_header(&self) -> String {
-//         let oauth_str = self.params
-//             .iter()
-//             .map(|(k, v)| format!("{}=\"{}\"", k, urlencoding::encode(v)))
-//             .collect::<Vec<String>>()
-//             .join(", ");
-
-//         format!("OAuth {}", oauth_str)
-//     }
-// }
-
 #[derive(Debug)]
 pub struct OAuth {
     consumer: KeyPair,
@@ -135,18 +122,13 @@ impl OAuth {
             .collect();
         query.sort();
 
-        println!("::::::::::::::::::::::::: {:#?} :::::::::::::::::::::::::::", query);
         let params_string = query.join("&");
 
         // Create signature base_string
         let base_string = format!(
-            "{}&{}&{}", 
-            urlencoding::encode(&self.method), 
-            urlencoding::encode(target_uri), 
-            urlencoding::encode(&params_string)
+            "{}&{}&{}", urlencoding::encode(&self.method), 
+            urlencoding::encode(target_uri), urlencoding::encode(&params_string)
         );
-
-        println!("\nTHE BASEIC STRING:::: {}", base_string);
 
         // Get a signing key
         let secret = match token {
