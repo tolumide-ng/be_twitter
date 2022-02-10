@@ -74,10 +74,58 @@ impl KeyVal {
             return Ok(at)
         }
 
-        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken"))
+        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken".into()))
     }
     
     // pub fn to_query_params(&self) -> String {
     //     self.iter().map(|(k, v)| forma)
+    // }
+
+    pub fn validate(&self, name: String, value: String) -> bool {
+        if let Some(obtained_value) = &self.get(name.as_str()) {
+            if obtained_value.to_string() == value {
+                // return Ok("akld".into())
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    pub fn verify_present(self, names: Vec<String>) -> TResult<Self> {
+        let keys = self.keys().cloned().map(|k| k.to_string()).collect::<Vec<String>>();
+        let mut err: String = "".to_string();
+
+        for index in 0..names.len() {
+            if !keys.contains(&names[index]) {
+                let mut separator = ",";
+
+                if index == names.len() - 1 {
+                    separator = ""
+                }
+                err.push_str(&format!("{}{} ", names[index], separator));
+
+            }
+        }
+
+        if err.len() > 0 {
+            return Err(TError::InvalidCredentialError(err));
+        }
+
+        Ok(self)
+    }
+
+    // pub fn get_from(self, name: String) -> String {
+    //     return self.get(name.as_str()).unwrap()
+    // }
+
+    // pub fn validate_multiple(&self, values: Vec<String>) {
+    //     let mut errors: Vec<String> = vec![];
+
+    //     for value in values {
+    //         // if let Some(current_value)
+    //     }
     // }
 }

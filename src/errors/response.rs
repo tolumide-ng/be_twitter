@@ -82,7 +82,7 @@ pub enum TError {
     #[error("Json Deserialization error: {0}")]
     DeserializeError(#[from] serde_json::Error),
     #[error("Values do not match")]
-    InvalidCredentialError(&'static str),
+    InvalidCredentialError(String),
     #[error("Invalid Status code {}", 0)]
     InvalidStatusCode(#[from] InvalidStatusCode),
     #[error("Rate Limit exceeded, please try again in")]

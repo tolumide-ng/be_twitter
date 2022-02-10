@@ -12,3 +12,4 @@ TODOS!
 - [ ] Migrate redis use cases to Postgres
 - [x] User lookup
 - [x] Tracked actions in the history table (if applicable)
+- [ ] Implement app authentication and authorization
