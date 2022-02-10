@@ -94,7 +94,7 @@ impl RequestBuilder {
         }
     }
 
-    // combine with_basic_auth, with_access_token, and with_oauth_token
+    // combine with_basic_auth, with_access_token, and with_oauth_token - Rename when combined to -with_keys
     pub fn with_basic_auth(self, id: String, secret: String) -> Self {
         let auth_header = base64::encode(format!("{}:{}", id, secret));
         let header_value = format!("Basic {}", &auth_header);
