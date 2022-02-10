@@ -78,7 +78,7 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
 
     match is_v1_callback {
-         Ok(k) => {
+         Some(k) => {
             let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
             if k.validate("oauth_token".into(),oauth_token.clone()) {
                 let verifier = k.get("oauth_verifier").unwrap();
@@ -101,11 +101,11 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
             }
 
         }
-        Err(e) => {
+        None => {
             // maybe it is a v2 callback
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
 
-            if let Ok(dict) = is_v2_callback {
+            if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
                     access_token(hyper_client.clone(), redis_client, code).await?;
