@@ -65,7 +65,7 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
             let token = access_token.clone();
 
             tokio::spawn(async move {
-                let request = RequestBuilder::new(Method::POST, format!("https://api.twitter.com/1.1/statuses/destroy/{}.json", id))
+                let request = RequestBuilder::new(Method::DELETE, format!("https://api.twitter.com/2/tweets/{}", id))
                     .with_access_token("Bearer", token).build_request();
 
                 println!("THE REQUEST {:#?}", request);
