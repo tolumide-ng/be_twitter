@@ -37,4 +37,6 @@ impl TwitterInterceptor {
             }
         }
     }
+
+    pub fn handle_error(res: TResult<anyhow::Error>) {}
 }

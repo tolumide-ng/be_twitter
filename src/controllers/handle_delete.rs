@@ -10,37 +10,48 @@ use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, Respons
 
 type Ids = HashMap<String, Vec<String>>;
 // type ObjectStr = HashMap<String, String>;
-struct PostIds(Vec<String>);
+#[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
+struct PostIds(Ids);
+
+// struct PostIdss(HashMap<String, Vec<String>>);
+
+// impl PostIdss {
+//     pub fn parse(s: Ids) -> Self {}
+// }
 
 
+// FIND A BETTER WAY TO HANDLE THIS PARSING, SO THE CODE IS MORE READABLE AND EASIER TO FOLLOW
 impl PostIds {
     pub fn parse(s: Ids) -> Self {
-        // let mut detail = "";
+        let received_keys = s.keys().cloned().collect::<Vec<String>>();
+        let expected_keys = ["rts", "tweets"];
 
-        match s.get("ids") {
-            Some(ids) => {
+        if received_keys.contains(&"keys".to_string()) && received_keys.contains(&"tweets".to_string()) {
+            let mut total = s.get("rts").unwrap().len() + s.get("tweets").unwrap().len();
+
+            if total > 50 {
+                panic!("Total tweets and rts cannot be more than 50")
+            }
+
+            for key in expected_keys {
+                let ids = s.get(key).unwrap();
+
                 let duplicates = ids.iter()
                     .find(|x| ids.iter().filter(|y| x == y).count() >= 2);
 
                 let empty_string = ids.iter().find(|x| x.len() < 1);
 
-                if ids.len() < 1 || ids.len() > 10 || duplicates.is_some() || empty_string.is_some() {
+                if duplicates.is_some() || empty_string.is_some() {
                     // detail = "Ids must contains atleast one post id"
-                    panic!("Ids must contain atleast one and a maximum of 10 post Ids (type String) and be unqiue")
+                    panic!("{} must be an array of ids (string type) or an empty array", key)
                 }
 
 
-                return Self(ids.clone())
-            }
-            None => {
-                // detail = "Object must contain an array of string (post ids)"
-                panic!("Object must contain an array of string (post ids)")
+                return Self(s)
             }
         }
-        // let mut obj: ObjectStr = HashMap::new();
-        // obj.insert("errors".into(), detail.into());
 
-        // Err(obj)
+        panic!("request object must contain rts and tweets with an array of string as values")
     }
 }
 
@@ -54,9 +65,8 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     let body = request.into_body();
     let body = hyper::body::to_bytes(body).await?.to_owned();
     let body: Ids = serde_json::from_slice(&body)?;
-    println!("THE REQUEST BODY {:#?}", body);
 
-    let post_ids = PostIds::parse(body).0;
+    let post_ids = PostIds::parse(body).keys();
     let parallel_requests = post_ids.len();
 
     let bodies = stream::iter(post_ids)
