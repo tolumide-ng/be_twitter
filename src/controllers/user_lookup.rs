@@ -17,7 +17,7 @@ pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redi
     let username = request.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
     let mut con = redis_client.get_async_connection().await?;
 
-    let access_token = redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?;
+    let access_token = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let req = RequestBuilder::new(Method::GET, format!("https://api.twitter.com/2/users/by/username/{}", username))
         .with_access_token("Bearer", access_token).build_request();

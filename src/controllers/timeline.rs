@@ -16,7 +16,7 @@ pub async fn get_timeline(request: Request<Body>, hyper_client: HyperClient, red
     let mut con = redis_client.get_async_connection().await?;
     
     let user_id: String = redis::cmd("GET").arg(&["tolumide_userid"]).query_async(&mut con).await?;
-    let access_token = redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?;
+    let access_token = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let req = RequestBuilder::new
         (Method::GET, format!("https://api.twitter.com/2/users/{}/tweets", user_id))

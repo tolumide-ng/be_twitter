@@ -25,7 +25,7 @@ pub async fn revoke_token(
     let mut con = redis_client.get_async_connection().await.unwrap();
 
     let req_body = KeyVal::new().add_list_keyval(vec![
-        ("token".into(), redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?),
+        ("token".into(), redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?),
         ("client_id".into(), client_id.clone()),
         ("token_type_hint".into(), "access_token".into()),
     ]).to_urlencode();

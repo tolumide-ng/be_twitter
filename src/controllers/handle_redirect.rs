@@ -58,9 +58,9 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let body: AppAccess = serde_json::from_slice(&body).unwrap();
 
-    redis::cmd("SET").arg(&["tolumide_test_access", &body.access_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["tolumide_refresh_token", &body.refresh_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["tolumide_token_type", &body.token_type]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["access_token", &body.access_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["refresh_token", &body.refresh_token]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["token_type", &body.token_type]).query_async(&mut con).await?;
 
     Ok(())
 }

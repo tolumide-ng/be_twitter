@@ -48,7 +48,7 @@ impl PostIds {
 // rename this module to destory which then contains destory RTs and destory Posts
 pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
-    let access_token: String = redis::cmd("GET").arg(&["tolumide_test_access"]).query_async(&mut con).await?;
+    let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     // req body for the ids must be a vector of strings(id of tweets)
     let body = request.into_body();
