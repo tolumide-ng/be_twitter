@@ -35,7 +35,7 @@ struct AppAccess {
 }
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
-    let SettingsVars{client_id, callback_url, client_secret, ..} = SettingsVars::new();
+    let SettingsVars{client_id, callback_url, client_secret, twitter_v2, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
 
@@ -49,7 +49,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let content_type = "application/x-www-form-urlencoded";
 
-    let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/2/oauth2/token".into())
+    let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
