@@ -1,4 +1,3 @@
-use anyhow::Context;
 use http::{StatusCode};
 use hyper::{Request, Method};
 use redis::{Client as RedisClient};
@@ -17,7 +16,7 @@ pub async fn refresh_token(_req: Request<hyper::Body>, hyper_client: HyperClient
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("grant_type".into(), "refresh_token".into()),
         ("client_id".into(), client_id.clone()),
-        ("refresh_token".into(), redis::cmd("GET").arg(&["tolumide_test_refresh"]).query_async(&mut con).await?)
+        ("refresh_token".into(), redis::cmd("GET").arg(&["refresh_token"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
     println!("LEVEL THREE {:#?}", req_body);
@@ -28,10 +27,22 @@ pub async fn refresh_token(_req: Request<hyper::Body>, hyper_client: HyperClient
 
     let res = make_request(request, hyper_client.clone()).await;
 
-    if let Err(e) = res {
-        return ResponseBuilder::new("Error connecting to your Twitter account".into(), Some(""), 400).reply();
-    }
+    if let Ok((_header, body)) = res {
+        let body_string = String::from_utf8_lossy(&body).to_string();
+        let params = KeyVal::string_to_keyval(body_string);
 
-    ResponseBuilder::new("Refresh token obtained".into(), Some(""), StatusCode::OK.as_u16()).reply()
+        if let Some(map) = params {
+            if map.verify_present(vec!["access_token".into(), "refresh_token".into()]).is_some() {
+                redis::cmd("SET").arg(&["access_token", map.get("access_token").unwrap()]).query_async(&mut con).await?;
+                redis::cmd("SET").arg(&["refresh_token", map.get("refresh_token").unwrap()]).query_async(&mut con).await?;
+            }
+
+            return ResponseBuilder::new("Refresh token obtained".into(), Some(""), StatusCode::OK.as_u16()).reply();
+        }
+    }
+    
+    
+    
+    return ResponseBuilder::new("Error connecting to your Twitter account".into(), Some(""), 400).reply();
 
 }
