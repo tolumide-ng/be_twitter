@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io::Read};
+use std::{collections::HashMap};
 use http::Method;
 use hyper::{Body, Request};
 use redis::{Client as RedisClient};
@@ -10,7 +10,7 @@ use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, Respons
 
 type Ids = HashMap<String, Vec<String>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 enum TweetType {
     Tweets,
     Rts,
@@ -25,7 +25,7 @@ impl std::fmt::Display for TweetType {
     }
 }
 
-// type ObjectStr = HashMap<String, String>;
+
 #[derive(Debug, Clone)]
 struct PostIds(Vec<(String, TweetType)>);
 
@@ -37,10 +37,11 @@ impl PostIds {
         let expected_keys = [TweetType::Rts, TweetType::Tweets];
 
         if received_keys.contains(&TweetType::Rts.to_string()) && received_keys.contains(&&TweetType::Tweets.to_string()) {
-            let mut total = s.get(&TweetType::Rts.to_string()).unwrap().len() + s.get(&TweetType::Tweets.to_string()).unwrap().len();
+            let total_rts = s.get(&TweetType::Rts.to_string()).unwrap().len();
+            let total_tweets = s.get(&TweetType::Tweets.to_string()).unwrap().len();
 
-            if total > 50 {
-                panic!("Total tweets and rts cannot be more than 50")
+            if total_rts> 50 || total_tweets > 50 {
+                panic!("Total tweets or rts cannot be more than 50")
             }
 
             let mut all_ids: Vec<(String, TweetType)> = vec![];
@@ -54,13 +55,11 @@ impl PostIds {
                 let empty_string = ids.iter().find(|x| x.len() < 1);
 
                 if duplicates.is_some() || empty_string.is_some() {
-                    // detail = "Ids must contains atleast one post id"
                     panic!("{} must be an array of ids (string type) or an empty array", key)
                 }
 
-                // all_ids.push(());
                 let ids = s.get(&key.to_string()).unwrap()
-                    .iter().map(|k| (*k, key)).collect::<Vec<(String, TweetType)>>();
+                    .iter().map(|k| (k.clone(), key)).collect::<Vec<(String, TweetType)>>();
 
                 all_ids.extend(ids);
 
@@ -73,6 +72,8 @@ impl PostIds {
         panic!("request object must contain rts and tweets with an array of string as values")
     }
 }
+
+struct TweetInfo {}
 
 
 // rename this module to destory which then contains destory RTs and destory Posts
@@ -93,22 +94,20 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
             let client = hyper_client.clone();
             let token = access_token.clone();
 
-            // let mut api_id 
+            let mut api_path = "tweets";
+            
+            if id.1 == TweetType::Rts {
+                api_path = "statuses/unretweet";
+            }
 
             tokio::spawn(async move {
-                let request = RequestBuilder::new(Method::DELETE, format!("/tweets/{}", id))
+                let request = RequestBuilder::new(Method::DELETE, format!("/{}/{}", api_path, id.0))
                     .with_access_token("Bearer", token).build_request();
 
                 println!("THE REQUEST {:#?}", request);
 
                 let response = make_request(request, client).await.unwrap();
-                println!("THE HEADER {:#?}", response.0);
-                // Ok(response.1);
-                // Ok(body)
                 response.1
-                // response.1.bytes().await
-                // HANDLE RESPONSE HERE ---- IT IS TIME TO CREATE THE INTERCEPTOR THAT HANDLES THE RESPONSE OF THE MAKE_REQUEST CALL
-                // let res = make_request(request, client);
             })
         }).buffer_unordered(parallel_requests);
 
