@@ -4,9 +4,10 @@ use std::collections::HashMap;
 use http::{Request, HeaderMap, HeaderValue, StatusCode};
 use hyper::{Response, Body};
 use serde::{Serialize, Deserialize};
+use serde_json::Value;
 
 
-use crate::errors::response::{TError, TwitterErrors};
+use crate::errors::response::{TError, TwitterErrors, AppError};
 use crate::helpers::request::HyperClient;
 
 // pub type ApiResponse = http::Result<Response<Body>>;
@@ -159,3 +160,6 @@ impl TwitterResponseVecData {
         dict
     }
 }
+
+
+

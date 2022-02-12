@@ -6,7 +6,30 @@ use crate::{
     errors::{twitter_errors::TwitterResponseError, response::AppError}
 };
 
-// trait TwitterResponse {}
+
+#[derive(Debug)]
+pub struct V2Tokens {
+    access_token: String,
+    refresh_token: String,
+}
+
+pub enum V2TokensType {
+    Access,
+    Refresh
+}
+
+impl V2Tokens {
+    pub fn new(access_token: String, refresh_token: String) -> Self {
+        Self { access_token, refresh_token }
+    }
+
+    pub fn get(&self, token: V2TokensType) -> String {
+        match token {
+            V2TokensType::Access => self.access_token,
+            V2TokensType::Refresh => self.refresh_token
+        }
+    }
+}
 
 pub struct Interceptor;
 
@@ -38,5 +61,24 @@ impl Interceptor {
         }
     }
 
-    pub fn handle_error(res: TResult<anyhow::Error>) {}
+    pub fn v2_tokens(map: Result<Value, AppError>) -> Option<V2Tokens> {
+        if let Ok(body) = map {
+            let map: HashMap<String, Value> = serde_json::from_value(body).unwrap();
+            
+            let has_access_token = map.get("access_token");
+            let has_refresh_token = map.get("refresh_token");
+
+            if has_access_token.is_some() && has_refresh_token.is_some() {
+                let a_t = map.get("access_token").unwrap().clone();
+                let r_t = map.get("refresh_token").unwrap().clone();
+                let access_token: String = serde_json::from_value(a_t).unwrap();
+                let refresh_token: String = serde_json::from_value(r_t).unwrap();
+                
+                let tokens = V2Tokens::new(access_token, refresh_token);
+                return Some(tokens)
+            }
+        }
+        
+        return None
+    }
 }

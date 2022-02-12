@@ -8,25 +8,9 @@ use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor
+    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}
 };
 
-
-#[derive(Debug, Clone)]
-pub struct AccessToken {
-    pub state: String,
-    pub  code: String,
-}
-
-impl AccessToken {
-    pub fn validate_state(self, local_state: String) -> TResult<Self> {
-        if self.state != local_state {
-            return Err(TError::InvalidCredentialError("The state value obtained from the redirect uri does not match the local one".into()));
-        }
-
-        Ok(self)
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AppAccess {
@@ -56,31 +40,15 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    let (_header, body) = make_request(request, hyper_client.clone()).await?;
+    let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
-    // println!("WHAT DOES THIS ACTUALLY LOOK LIKE!!!!! {:#?}", String::from_utf8_lossy(&body));
+    if let Some(map) = Interceptor::v2_tokens(res) {
+        redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
+        redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
+        return Ok(())
+    }
 
-    // if let Ok(_head, body) = res {
-        let body: HashMap<String, Value> = serde_json::from_slice(&body).unwrap();
-        let has_access_token = body.get("access_token");
-        let has_refresh_token = body.get("refresh_token");
-
-        if has_access_token.is_some() && has_refresh_token.is_some() {
-            // let body_string = String::from_utf8_lossy(&body).to_string();
-            println!("THE BODY STRING WITH AN OBJ!!!!!!! {:#?}", body);
-            println!("!!!!!!!!!!!!!!!!!!!!!!VERIFIED!!!!!!!!!!!!!!!!!!!!!!");
-
-
-            let a_t = body.get("access_token").unwrap().clone();
-            let r_t = body.get("refresh_token").unwrap().clone();
-            let access_token: String = serde_json::from_value(a_t).unwrap();
-            let refresh_token: String = serde_json::from_value(r_t).unwrap();
-            redis::cmd("SET").arg(&["access_token", &access_token]).query_async(&mut con).await?;
-            redis::cmd("SET").arg(&["refresh_token", &refresh_token]).query_async(&mut con).await?;
-            return Ok(())
-        }
-
-        return Err(TError::InvalidCredentialError("Required keys are not present".into()))
+    return Err(TError::InvalidCredentialError("Required keys are not present".into()))
 }
 
 
