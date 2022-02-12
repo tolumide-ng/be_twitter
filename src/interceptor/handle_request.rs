@@ -8,9 +8,9 @@ use crate::{
 
 // trait TwitterResponse {}
 
-pub struct TwitterInterceptor;
+pub struct Interceptor;
 
-impl TwitterInterceptor {
+impl Interceptor {
     pub fn intercept(res: TResult<(THeaders, Vec<u8>)>) -> Result<Value, AppError> { 
         let mut obj = HashMap::new();
 

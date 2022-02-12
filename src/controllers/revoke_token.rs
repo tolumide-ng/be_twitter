@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     request::HyperClient, keyval::KeyVal, 
     response::{TResult, ApiBody, make_request, ResponseBuilder}}, 
-    setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
+    setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor
 };
 
 
@@ -36,7 +36,7 @@ pub async fn revoke_token(
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    let res = TwitterInterceptor::intercept(make_request(request, hyper_client.clone()).await);
+    let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
     if let Err(e) = res {
         return ResponseBuilder::new("Error".into(), Some(e.0), e.1).reply()
