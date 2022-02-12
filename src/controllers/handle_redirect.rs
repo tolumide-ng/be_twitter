@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use serde_json::Value;
 use http::Method;
 use hyper::{StatusCode, Request};
 use redis::{Client as RedisClient};

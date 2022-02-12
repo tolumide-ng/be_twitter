@@ -3,8 +3,8 @@ use derive_more;
 use hyper::{Uri};
 use url::{Url};
 
-use crate::{helpers::response::TResult, errors::response::TError};
-use crate::controllers::handle_redirect::AccessToken;
+use crate::{helpers::response::TResult};
+
 
 #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
 pub struct KeyVal(HashMap<Cow<'static, str>, Cow<'static, str>>);
@@ -85,19 +85,6 @@ impl KeyVal {
         self.iter()
             .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
             .collect::<Vec<_>>().join("&")
-    }
-
-    pub fn to_access_token(&self) -> TResult<AccessToken> {
-        if self.contains_key("state") && self.contains_key("code") {
-            let at = AccessToken {
-                state: self.get("state").unwrap().to_string(),
-                code: self.get("code").unwrap().to_string()
-            };
-
-            return Ok(at)
-        }
-
-        Err(TError::InvalidCredentialError("State or Code in missen in AccessToken".into()))
     }
     
 

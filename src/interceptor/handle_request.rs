@@ -25,8 +25,8 @@ impl V2Tokens {
 
     pub fn get(&self, token: V2TokensType) -> String {
         match token {
-            V2TokensType::Access => self.access_token,
-            V2TokensType::Refresh => self.refresh_token
+            V2TokensType::Access => self.access_token.clone(),
+            V2TokensType::Refresh => self.refresh_token.clone(),
         }
     }
 }
