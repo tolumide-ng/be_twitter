@@ -16,7 +16,6 @@ struct ApiResponse {
     revoked: bool,
 }
 
-// _req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, ..} = app_state;
     let SettingsVars{client_id, client_secret, twitter_v2, ..} = SettingsVars::new();

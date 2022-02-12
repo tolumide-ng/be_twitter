@@ -3,7 +3,7 @@ use hyper::{StatusCode};
 use redis::{Client as RedisClient};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
-    request::{HyperClient}, keyval::KeyVal}, 
+    request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
     setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState
 };
 
@@ -15,7 +15,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("code".into(), auth_code.clone()),
-        ("grant_type".to_string(), "authorization_code".into()),
+        ("grant_type".to_string(), GrantType::Authorization.to_string()),
         ("client_id".to_string(), client_id.clone()),
         ("redirect_uri".to_string(), callback_url),
         ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)

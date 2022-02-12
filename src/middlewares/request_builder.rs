@@ -7,11 +7,9 @@ use crate::helpers::keyval::KeyVal;
 pub struct RequestBuilder {
     base_uri: String,
     method: Method,
-    // params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
     header: Option<KeyVal>,
-    // addon: OAuthAddOn,
 }
 
 impl RequestBuilder {
@@ -104,6 +102,8 @@ impl RequestBuilder {
         let header_key = "Authorization".into();
         self.update_header(header_key, header_value)
     }
+
+    // pub fn with_keys(self, auth_type: T, credentials: String) {}
 
     // pub fn with_oauth_token(self, oauth_token: )
 

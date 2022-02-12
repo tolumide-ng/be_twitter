@@ -1,30 +1,27 @@
-use http::{Method, StatusCode, Request};
-use hyper::Body;
-use redis::{Client as RedisClient};
-
+use hyper::{Method, StatusCode};
 
 use crate::{helpers::{
-    request::HyperClient, 
     response::{
         ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}
-    }, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor, setup::variables::SettingsVars
+    }, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor, setup::variables::SettingsVars, app::server::AppState
 };
 
 
-// use this endpoint to verify the validity of the username when they want to request for their timeline
-pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
+// use this endpoint to verify the validity of the username when they want to request for their timeline when using OAuth2.0
+pub async fn user_lookup(app_state: AppState) -> TResult<ApiBody> {
     // todo!() move this to params once route management is migrated to routerify
-    let SettingsVars {twitter_v2, ..} = SettingsVars::new();
+    let AppState{redis, req, hyper, env_vars, ..} = app_state;
+    let SettingsVars {twitter_v2, ..} = env_vars;
 
-    let username = request.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
-    let mut con = redis_client.get_async_connection().await?;
+    let username = req.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
+    let mut con = redis.get_async_connection().await?;
 
     let access_token = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let req = RequestBuilder::new(Method::GET, format!("{}/users/by/username/{}", twitter_v2, username))
         .with_access_token("Bearer", access_token).build_request();
 
-    let res= Interceptor::intercept(make_request(req, hyper_client.clone()).await);
+    let res= Interceptor::intercept(make_request(req, hyper.clone()).await);
 
     if let Err(e) = res {
         return ResponseBuilder::new("Error".into(), Some(e.0), e.1).reply();
@@ -34,6 +31,6 @@ pub async fn user_lookup(request: Request<Body>, hyper_client: HyperClient, redi
     let user = body.into_one_dict();
     let user_id = user.get("id").unwrap();
 
-    redis::cmd("SET").arg(&["tolumide_userid", &user_id]).query_async(&mut con).await?;
+    redis::cmd("SET").arg(&["userid", &user_id]).query_async(&mut con).await?;
     ResponseBuilder::new("Ok".into(), Some(""), StatusCode::OK.as_u16()).reply()
 }

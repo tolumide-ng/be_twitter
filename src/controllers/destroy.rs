@@ -1,12 +1,18 @@
 use std::{collections::HashMap};
-use http::Method;
-use hyper::{Body, Request};
-use redis::{Client as RedisClient};
+use hyper::{Body, Request, Method};
 use futures::{stream, StreamExt};
 use serde_json::Value;
 use tokio;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}, signature::{OAuth, OAuthAddons}, keypair::KeyPair}, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars};
+use crate::{
+    helpers::{
+        response::{
+            TResult, ApiBody, ResponseBuilder, make_request
+        }, signature::{
+            OAuth, OAuthAddons
+        }, keypair::KeyPair
+    }, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars, app::server::AppState
+};
 
 type Ids = HashMap<String, Vec<String>>;
 
@@ -26,6 +32,8 @@ impl std::fmt::Display for TweetType {
 }
 
 
+const MAX_SINGLE_DELETES: usize = 50;
+
 #[derive(Debug, Clone)]
 struct PostIds(Vec<(String, TweetType)>);
 
@@ -40,7 +48,7 @@ impl PostIds {
             let total_rts = s.get(&TweetType::Rts.to_string()).unwrap().len();
             let total_tweets = s.get(&TweetType::Tweets.to_string()).unwrap().len();
 
-            if total_rts> 50 || total_tweets > 50 {
+            if total_rts> MAX_SINGLE_DELETES || total_tweets > MAX_SINGLE_DELETES {
                 panic!("Total tweets or rts cannot be more than 50")
             }
 
@@ -54,8 +62,10 @@ impl PostIds {
 
                 let empty_string = ids.iter().find(|x| x.len() < 1);
 
-                if duplicates.is_some() || empty_string.is_some() {
-                    panic!("{} must be an array of ids (string type) or an empty array", key)
+                let not_number = ids.iter().find(|id| id.parse::<u64>().is_err());
+
+                if duplicates.is_some() || empty_string.is_some() || not_number.is_some() {
+                    panic!("{} must be an array of ids or an empty array", key)
                 }
 
                 let ids = s.get(&key.to_string()).unwrap()
@@ -73,16 +83,16 @@ impl PostIds {
     }
 }
 
-struct TweetInfo {}
-
 
 // rename this module to destory which then contains destory RTs and destory Posts
-pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
-    let mut con = redis_client.get_async_connection().await?;
+pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
+    let AppState {redis, req, hyper, ..} = app_state;
+
+    let mut con = redis.get_async_connection().await?;
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     // req body for the ids must be a vector of strings(id of tweets)
-    let req_body = request.into_body();
+    let req_body = req.into_body();
     let  byte_body = hyper::body::to_bytes(req_body).await?.to_owned();
     let body: Ids = serde_json::from_slice(&byte_body)?;
 
@@ -90,9 +100,6 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     let parallel_requests = post_ids.len();
 
     let SettingsVars {twitter_v2, api_key, api_key_secret, twitter_v1, ..} = SettingsVars::new();
-    // api_key = oauth_consumer_key
-    // api_key_secret = oauth_consumer_ecret
-    // let oauth_verifier = redis::cmd("GET").arg(&["oauth_verifier"]).query_async(&mut con).await.unwrap();
     let oauth_token_key: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await.unwrap();
     let oauth_token_secret = redis::cmd("GET").arg(&["oauth_token_secret"]).query_async(&mut con).await.unwrap();
     // let oauth_consumer_key = redis::cmd("GET").arg(&["oauth_consumer_key"]).query_async(&mut con).await.unwrap();
@@ -106,7 +113,7 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     
     let bodies = stream::iter(post_ids)
     .map(|id: (String, TweetType)| {
-        let client = hyper_client.clone();
+        let client = hyper.clone();
         let token = access_token.clone();
         
         let v2 = twitter_v2.clone();
@@ -151,10 +158,5 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
             }
         }).await;
 
-
-
-
-    
-    // let req = RequestBuilder::new(Method::POST, format!("https://api.twitter.com/1.1/statuses/destroy/{}.json"))
     return ResponseBuilder::new("Ok".into(), Some(""), 200).reply();
 }
