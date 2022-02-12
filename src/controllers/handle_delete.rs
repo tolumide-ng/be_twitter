@@ -6,7 +6,7 @@ use futures::{stream, StreamExt};
 use serde_json::Value;
 use tokio;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}}, middlewares::request_builder::RequestBuilder};
+use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}, signature::{OAuth, OAuthAddons, SignedParams}, keypair::KeyPair}, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars};
 
 type Ids = HashMap<String, Vec<String>>;
 
@@ -89,24 +89,64 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     let post_ids = PostIds::parse(body).0;
     let parallel_requests = post_ids.len();
 
+    let SettingsVars {twitter_v2, api_key, api_key_secret, twitter_v1, ..} = SettingsVars::new();
+    // api_key = oauth_consumer_key
+    // api_key_secret = oauth_consumer_ecret
+    let oauth_verifier = redis::cmd("GET").arg(&["oauth_verifier"]).query_async(&mut con).await.unwrap();
+    let oauth_token_key: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await.unwrap();
+    let oauth_token_secret = redis::cmd("GET").arg(&["oauth_token_secret"]).query_async(&mut con).await.unwrap();
+    let oauth_token = KeyPair::new(oauth_token_key.clone(),oauth_token_secret);
+    // let oauth_consumer_key = redis::cmd("GET").arg(&["oauth_consumer_key"]).query_async(&mut con).await.unwrap();
+
+    
+    let consumer = KeyPair::new(api_key, api_key_secret);
+    let verifier = OAuthAddons::Verifier(oauth_verifier);
+
+
+    
     let bodies = stream::iter(post_ids)
-        .map(|id: (String, TweetType)| {
-            let client = hyper_client.clone();
-            let token = access_token.clone();
-
-            let mut api_path = "tweets";
-            
-            if id.1 == TweetType::Rts {
-                api_path = "statuses/unretweet";
+    .map(|id: (String, TweetType)| {
+        let client = hyper_client.clone();
+        let token = access_token.clone();
+        
+        let v2 = twitter_v2.clone();
+        let v1 = twitter_v1.clone();
+        let mut api_path = "tweets";
+        let mut request: Option<Request<Body>> = None;
+        
+        // At the moment, twitter uses OAuth1.0 and 2.0 for Delete Tweets while it only uses 1.0 Authentication for its Unretweets which is a v2 endpoint
+        // I really love the OAuth2.0 implementation but need backup code for OAuth1.0 (to handle undo retweets)
+        match id.1 {
+            TweetType::Tweets => {
+                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/{}/{}", v2, api_path, id.0))
+                    .with_access_token("Bearer", token).build_request());
             }
+            TweetType::Rts => {
+                api_path = "statuses/unretweet";
+                let base_uri = format!("{}/1.1/{}/{}.json", v1, api_path, id.0);
+                let mut signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), verifier.clone(), Method::DELETE).generate_signature(base_uri.clone());
+                signature.params.push(("oauth_token".into(), oauth_token_key.clone()));
 
-            tokio::spawn(async move {
-                let request = RequestBuilder::new(Method::DELETE, format!("/{}/{}", api_path, id.0))
-                    .with_access_token("Bearer", token).build_request();
+                let mut params = vec![];
+                for sig in signature.params {
+                    if sig.0 != "oauth_verifier" {
+                        params.push(sig)
+                    }
+                }
 
-                println!("THE REQUEST {:#?}", request);
+                let update_signature = SignedParams { params };
 
-                let response = make_request(request, client).await.unwrap();
+                // let op = SignedParams {params: signatire};
+                request = Some(RequestBuilder::new(Method::POST, base_uri)
+                    .with_access_token("OAuth", update_signature.to_string()).build_request());
+            }
+        };
+
+        tokio::spawn(async move {
+                println!("THE REQUEST {:#?}", &request);
+
+
+                let response = make_request(request.unwrap(), client).await.unwrap();
                 response.1
             })
         }).buffer_unordered(parallel_requests);

@@ -16,6 +16,7 @@ pub struct SettingsVars {
     pub api_key_secret: String,
     pub client_secret: String,
     pub twitter_v2: String,
+    pub twitter_v1: String,
 }
 
 impl SettingsVars {
@@ -25,7 +26,7 @@ impl SettingsVars {
 
         let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", 
         "CALLBACK_URL", "CLIENT_URL", "CLIENT_SECRET", "APP_ADDRESS", "API_KEY",
-        "API_KEY_SECRET", "REQUEST_URL", "TWITTER_V2"];
+        "API_KEY_SECRET", "REQUEST_URL", "TWITTER_V2", "TWITTER_V1"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {
@@ -46,7 +47,8 @@ impl SettingsVars {
             api_key: Self::get_var("API_KEY"),
             api_key_secret: Self::get_var("API_KEY_SECRET"),
             client_secret: Self::get_var("CLIENT_SECRET"),
-            twitter_v2: Self::get_var("TWITTER_V2")
+            twitter_v2: Self::get_var("TWITTER_V2"),
+            twitter_v1: Self::get_var("TWITTER_V1")
         }
     }
 

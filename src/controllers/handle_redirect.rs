@@ -52,7 +52,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
 pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{state, api_key, ..} = SettingsVars::new();
+    let SettingsVars{state, api_key, twitter_v1, ..} = SettingsVars::new();
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
@@ -64,7 +64,9 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
                 let verifier = k.get("oauth_verifier").unwrap();
                 redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
 
-                let req = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/access_token".into())
+                let target = format!("{}/oauth/access_token", twitter_v1);
+
+                let req = RequestBuilder::new(Method::POST, target)
                     .with_query("oauth_consumer_key", &api_key)
                     .with_query("oauth_token", &oauth_token)
                     .with_query("oauth_verifier", verifier)
