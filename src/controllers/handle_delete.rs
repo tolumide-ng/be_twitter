@@ -6,7 +6,7 @@ use futures::{stream, StreamExt};
 use serde_json::Value;
 use tokio;
 
-use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}, signature::{OAuth, OAuthAddons, SignedParams}, keypair::KeyPair}, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars};
+use crate::{helpers::{request::HyperClient, response::{TResult, ApiBody, ResponseBuilder, make_request}, signature::{OAuth, OAuthAddons}, keypair::KeyPair}, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars};
 
 type Ids = HashMap<String, Vec<String>>;
 
@@ -92,15 +92,15 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
     let SettingsVars {twitter_v2, api_key, api_key_secret, twitter_v1, ..} = SettingsVars::new();
     // api_key = oauth_consumer_key
     // api_key_secret = oauth_consumer_ecret
-    let oauth_verifier = redis::cmd("GET").arg(&["oauth_verifier"]).query_async(&mut con).await.unwrap();
+    // let oauth_verifier = redis::cmd("GET").arg(&["oauth_verifier"]).query_async(&mut con).await.unwrap();
     let oauth_token_key: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await.unwrap();
     let oauth_token_secret = redis::cmd("GET").arg(&["oauth_token_secret"]).query_async(&mut con).await.unwrap();
-    let oauth_token = KeyPair::new(oauth_token_key.clone(),oauth_token_secret);
     // let oauth_consumer_key = redis::cmd("GET").arg(&["oauth_consumer_key"]).query_async(&mut con).await.unwrap();
-
     
+    
+    let oauth_token = KeyPair::new(oauth_token_key.clone(), oauth_token_secret);
     let consumer = KeyPair::new(api_key, api_key_secret);
-    let verifier = OAuthAddons::Verifier(oauth_verifier);
+    // let verifier = OAuthAddons::Verifier(oauth_verifier);
 
 
     
@@ -124,28 +124,13 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
             TweetType::Rts => {
                 api_path = "statuses/unretweet";
                 let base_uri = format!("{}/1.1/{}/{}.json", v1, api_path, id.0);
-                let mut signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), verifier.clone(), Method::DELETE).generate_signature(base_uri.clone());
-                signature.params.push(("oauth_token".into(), oauth_token_key.clone()));
-
-                let mut params = vec![];
-                for sig in signature.params {
-                    if sig.0 != "oauth_verifier" {
-                        params.push(sig)
-                    }
-                }
-
-                let update_signature = SignedParams { params };
-
-                // let op = SignedParams {params: signatire};
+                let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_uri.clone());
                 request = Some(RequestBuilder::new(Method::POST, base_uri)
-                    .with_access_token("OAuth", update_signature.to_string()).build_request());
+                    .with_access_token("OAuth", signature.to_string()).build_request());
             }
         };
 
         tokio::spawn(async move {
-                println!("THE REQUEST {:#?}", &request);
-
-
                 let response = make_request(request.unwrap(), client).await.unwrap();
                 response.1
             })
@@ -156,9 +141,11 @@ pub async fn handle_delete(request: Request<Body>, hyper_client: HyperClient, re
             match res {
                 Ok(body) => {
                     let body: Value = serde_json::from_slice(&body).unwrap();
-                    println!("THE BODY {:#?}", body)
+                    // The success body in responsebuilder should include the deleted ids?
+                    // println!("THE BODY {:#?}", body)
                 }
                 Err(e) => {
+                    // includes failed ids in the responsebuilder body?
                     eprintln!("ERROR {:#?}", e)
                 }
             }

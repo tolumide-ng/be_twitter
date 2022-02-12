@@ -137,7 +137,7 @@ impl OAuth {
         };
 
         let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(&secret));
-
+        
         // Calculate the signature
         type HmacSha1 = Hmac::<Sha1>;
         let mut mac = HmacSha1::new_from_slice(key.as_bytes()).expect("Wrong key length");
@@ -165,7 +165,7 @@ impl OAuth {
         }
 
         if let Some(token) = self.token {
-            all_params.push(("token".into(), token.secret.clone()));
+            all_params.push(("oauth_token".into(), token.key.clone()));
         }
 
         all_params.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
