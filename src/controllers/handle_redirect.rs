@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use serde_json::Value;
 use http::Method;
 use hyper::{StatusCode, Request};
 use redis::{Client as RedisClient};
@@ -26,7 +29,7 @@ impl AccessToken {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct AppAccess {
+pub struct AppAccess {
     token_type: String,
     expires_in: i32,
     access_token: String,
@@ -44,7 +47,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         ("grant_type".to_string(), "authorization_code".into()),
         ("client_id".to_string(), client_id.clone()),
         ("redirect_uri".to_string(), callback_url),
-        ("code_verifier".to_string(), redis::cmd("GET").arg(&["tolumide_test_pkce"]).query_async(&mut con).await?)
+        ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
     let content_type = "application/x-www-form-urlencoded";
@@ -55,14 +58,29 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let (_header, body) = make_request(request, hyper_client.clone()).await?;
 
+    // println!("WHAT DOES THIS ACTUALLY LOOK LIKE!!!!! {:#?}", String::from_utf8_lossy(&body));
 
-    let body: AppAccess = serde_json::from_slice(&body).unwrap();
+    // if let Ok(_head, body) = res {
+        let body: HashMap<String, Value> = serde_json::from_slice(&body).unwrap();
+        let has_access_token = body.get("access_token");
+        let has_refresh_token = body.get("refresh_token");
 
-    redis::cmd("SET").arg(&["access_token", &body.access_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["refresh_token", &body.refresh_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["token_type", &body.token_type]).query_async(&mut con).await?;
+        if has_access_token.is_some() && has_refresh_token.is_some() {
+            // let body_string = String::from_utf8_lossy(&body).to_string();
+            println!("THE BODY STRING WITH AN OBJ!!!!!!! {:#?}", body);
+            println!("!!!!!!!!!!!!!!!!!!!!!!VERIFIED!!!!!!!!!!!!!!!!!!!!!!");
 
-    Ok(())
+
+            let a_t = body.get("access_token").unwrap().clone();
+            let r_t = body.get("refresh_token").unwrap().clone();
+            let access_token: String = serde_json::from_value(a_t).unwrap();
+            let refresh_token: String = serde_json::from_value(r_t).unwrap();
+            redis::cmd("SET").arg(&["access_token", &access_token]).query_async(&mut con).await?;
+            redis::cmd("SET").arg(&["refresh_token", &refresh_token]).query_async(&mut con).await?;
+            return Ok(())
+        }
+
+        return Err(TError::InvalidCredentialError("Required keys are not present".into()))
 }
 
 
