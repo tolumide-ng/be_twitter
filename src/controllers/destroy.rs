@@ -67,6 +67,7 @@ impl PostIds {
                 if duplicates.is_some() || empty_string.is_some() || not_number.is_some() {
                     panic!("{} must be an array of ids or an empty array", key)
                 }
+                // Consider verifying that the string is a valid number when parsed - all twitter ids are numbers
 
                 let ids = s.get(&key.to_string()).unwrap()
                     .iter().map(|k| (k.clone(), key)).collect::<Vec<(String, TweetType)>>();
