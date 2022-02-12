@@ -1,4 +1,6 @@
-use hyper::{Method, StatusCode};
+use http::Request;
+use hyper::{Method, StatusCode, Body};
+use routerify::prelude::*;
 
 use crate::{helpers::{
     response::{ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}}, 
@@ -8,9 +10,11 @@ use crate::{helpers::{
 
 
 // use this endpoint to verify the validity of the username when they want to request for their timeline when using OAuth2.0
-pub async fn user_lookup(app_state: AppState) -> TResult<ApiBody> {
+pub async fn user_lookup(req: Request<Body>) -> TResult<ApiBody> {
+
+    let app_state = req.data::<AppState>().unwrap();
     // todo!() move this to params once route management is migrated to routerify
-    let AppState{redis, req, hyper, env_vars, ..} = app_state;
+    let AppState{redis, hyper, env_vars, ..} = app_state;
     let SettingsVars {twitter_v2, ..} = env_vars;
 
     let username = req.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];

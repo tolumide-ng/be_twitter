@@ -3,7 +3,7 @@ use hyper::{Request, Body, Method};
 
 use crate::app::server::AppState;
 use redis::{Client as RedisClient};
-use routerify::Router;
+use routerify::{Router, Middleware};
 
 
 use crate::errors::response::TError;
@@ -41,6 +41,7 @@ use crate::controllers::{not_found, authorize_bot,
 // }
 
 
+
 pub fn router(state: AppState) -> Router<Body, TError> {
     Router::builder()
         // Specify the state data which will be available to every route handlers,
@@ -48,6 +49,8 @@ pub fn router(state: AppState) -> Router<Body, TError> {
         .data(state)
         // .middleware(Middleware::pre(logger))
         .get("/", health_check)
+        .get("/oauth/callback", handle_redirect)
+        // .get("/enable", authorize_bot)
         .any(not_found)
         // .err_handler_with_info(error_handler)
         .build()

@@ -1,5 +1,6 @@
 use std::{collections::HashMap};
 use hyper::{Body, Request, Method};
+use routerify::prelude::*;
 use futures::{stream, StreamExt};
 use serde_json::Value;
 use tokio;
@@ -86,14 +87,17 @@ impl PostIds {
 
 
 // rename this module to destory which then contains destory RTs and destory Posts
-pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, req, hyper, ..} = app_state;
+pub async fn handle_delete(req: Request<Body>) -> TResult<ApiBody> {
+
+    let AppState {redis, hyper, ..} = req.data::<AppState>().unwrap();
 
     let mut con = redis.get_async_connection().await?;
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
+    let req_body = &req.into_body();
+
     // req body for the ids must be a vector of strings(id of tweets)
-    let req_body = req.into_body();
+    // let req_body = req.into_body();
     let  byte_body = hyper::body::to_bytes(req_body).await?.to_owned();
     let body: Ids = serde_json::from_slice(&byte_body)?;
 

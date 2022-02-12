@@ -1,4 +1,4 @@
-use hyper::{Method, Body, Response};
+use hyper::{Method, Body, Response, Request};
 use redis::{AsyncCommands};
 
 use crate::app::server::AppState;
@@ -9,6 +9,8 @@ use crate::helpers::{
     scope::Scope,
     keyval::KeyVal,
 };
+
+
 use crate::setup::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
