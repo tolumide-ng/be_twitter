@@ -101,7 +101,7 @@ impl OAuth {
         }
     }
 
-    pub fn generate_signature(self, target_uri: &'static str) -> SignedParams {
+    pub fn generate_signature(self, target_uri: String) -> SignedParams {
         // make hashmap with keys and val
 
         let token = self.token.clone();
@@ -127,7 +127,7 @@ impl OAuth {
         // Create signature base_string
         let base_string = format!(
             "{}&{}&{}", urlencoding::encode(&self.method), 
-            urlencoding::encode(target_uri), urlencoding::encode(&params_string)
+            urlencoding::encode(&target_uri), urlencoding::encode(&params_string)
         );
 
         // Get a signing key
@@ -137,7 +137,7 @@ impl OAuth {
         };
 
         let key = format!("{}&{}", urlencoding::encode(&self.consumer.secret), urlencoding::encode(&secret));
-
+        
         // Calculate the signature
         type HmacSha1 = Hmac::<Sha1>;
         let mut mac = HmacSha1::new_from_slice(key.as_bytes()).expect("Wrong key length");
@@ -165,7 +165,7 @@ impl OAuth {
         }
 
         if let Some(token) = self.token {
-            all_params.push(("token".into(), token.secret.clone()));
+            all_params.push(("oauth_token".into(), token.key.clone()));
         }
 
         all_params.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());

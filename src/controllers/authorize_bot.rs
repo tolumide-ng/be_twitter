@@ -25,10 +25,8 @@ pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<Api
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
     
-    con.set("tolumide_test_pkce", &pkce).await?;
-    redis::cmd("SET").arg(&["tolumide_testing_pkce", &pkce]).query_async(&mut con).await?;
-    
-
+    con.set("pkce", &pkce).await?;
+    // redis::cmd("SET").arg(&["pkce", &pkce]).query_async(&mut con).await?;
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![

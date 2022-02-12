@@ -19,15 +19,15 @@ pub async fn request_token(request: Request<Body>,
     redis_client: RedisClient
 ) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{api_key, api_key_secret, callback_url, ..} = SettingsVars::new();
+    let SettingsVars{api_key, api_key_secret, callback_url, twitter_v1, ..} = SettingsVars::new();
     let consumer = KeyPair::new(api_key, api_key_secret);
     let callback = OAuthAddons::Callback(callback_url.clone());
 
-    let target_url = "https://api.twitter.com/oauth/request_token";
-    let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url);
+    let target_url = format!("{}/oauth/request_token", twitter_v1);
+    let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url.clone());
     let content_type = "application/x-www-form-urlencoded";
 
-     let request = RequestBuilder::new(Method::POST, target_url.into())
+     let request = RequestBuilder::new(Method::POST, target_url)
         .with_query("oauth_callback", &urlencoding::encode(&callback_url))
         .with_access_token("OAuth", signature.to_string())
         .with_body(Body::empty(), content_type)

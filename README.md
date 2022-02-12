@@ -14,3 +14,4 @@ TODOS!
 - [x] Tracked actions in the history table (if applicable)
 - [ ] Implement app authentication and authorization
 - [ ] Separate v2 controllers into different folder
+- [ ] Send arguments to route controllers as a struct containing http_client, db_client, env_vars (we don't have to call SettingsVars::new() in each controller everytime)

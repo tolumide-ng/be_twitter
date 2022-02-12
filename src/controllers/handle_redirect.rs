@@ -5,28 +5,12 @@ use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::TwitterInterceptor
+    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}
 };
 
 
-#[derive(Debug, Clone)]
-pub struct AccessToken {
-    pub state: String,
-    pub  code: String,
-}
-
-impl AccessToken {
-    pub fn validate_state(self, local_state: String) -> TResult<Self> {
-        if self.state != local_state {
-            return Err(TError::InvalidCredentialError("The state value obtained from the redirect uri does not match the local one".into()));
-        }
-
-        Ok(self)
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-struct AppAccess {
+pub struct AppAccess {
     token_type: String,
     expires_in: i32,
     access_token: String,
@@ -35,7 +19,7 @@ struct AppAccess {
 }
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
-    let SettingsVars{client_id, callback_url, client_secret, ..} = SettingsVars::new();
+    let SettingsVars{client_id, callback_url, client_secret, twitter_v2, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
 
@@ -44,32 +28,31 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         ("grant_type".to_string(), "authorization_code".into()),
         ("client_id".to_string(), client_id.clone()),
         ("redirect_uri".to_string(), callback_url),
-        ("code_verifier".to_string(), redis::cmd("GET").arg(&["tolumide_test_pkce"]).query_async(&mut con).await?)
+        ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
     let content_type = "application/x-www-form-urlencoded";
 
-    let request = RequestBuilder::new(Method::POST, "https://api.twitter.com/2/oauth2/token".into())
+    let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
         .with_basic_auth(client_id, client_secret)
         .with_body(req_body, content_type).build_request();
 
-    let (_header, body) = make_request(request, hyper_client.clone()).await?;
+    let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
+    if let Some(map) = Interceptor::v2_tokens(res) {
+        redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
+        redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
+        return Ok(())
+    }
 
-    let body: AppAccess = serde_json::from_slice(&body).unwrap();
-
-    redis::cmd("SET").arg(&["tolumide_test_access", &body.access_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["tolumide_refresh_token", &body.refresh_token]).query_async(&mut con).await?;
-    redis::cmd("SET").arg(&["tolumide_token_type", &body.token_type]).query_async(&mut con).await?;
-
-    Ok(())
+    return Err(TError::InvalidCredentialError("Required keys are not present".into()))
 }
 
 
 
 pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
     let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{state, api_key, ..} = SettingsVars::new();
+    let SettingsVars{state, api_key, twitter_v1, ..} = SettingsVars::new();
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
@@ -81,7 +64,9 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
                 let verifier = k.get("oauth_verifier").unwrap();
                 redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
 
-                let req = RequestBuilder::new(Method::POST, "https://api.twitter.com/oauth/access_token".into())
+                let target = format!("{}/oauth/access_token", twitter_v1);
+
+                let req = RequestBuilder::new(Method::POST, target)
                     .with_query("oauth_consumer_key", &api_key)
                     .with_query("oauth_token", &oauth_token)
                     .with_query("oauth_verifier", verifier)
