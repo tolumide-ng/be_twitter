@@ -1,22 +1,12 @@
 use http::Method;
-use hyper::{StatusCode, Request};
+use hyper::{StatusCode};
 use redis::{Client as RedisClient};
-use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}
+    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState
 };
 
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AppAccess {
-    token_type: String,
-    expires_in: i32,
-    access_token: String,
-    scope: String,
-    refresh_token: String,
-}
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_v2, ..} = SettingsVars::new();
@@ -49,10 +39,13 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 }
 
 
+// req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
+pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
 
-pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient) -> TResult<ApiBody> {
-    let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{state, api_key, twitter_v1, ..} = SettingsVars::new();
+    let AppState {redis, hyper, req, env_vars} = app_state;
+    let SettingsVars{state, api_key, twitter_v1, ..} = env_vars;
+
+    let mut con = redis.get_async_connection().await?;
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
@@ -72,7 +65,7 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
                     .with_query("oauth_verifier", verifier)
                     .build_request();
 
-                let res = make_request(req, hyper_client.clone()).await;
+                let res = make_request(req, hyper.clone()).await;
 
                 if let Ok((_header, body)) = res {
                     let body_string = String::from_utf8_lossy(&body).to_string();
@@ -97,7 +90,7 @@ pub async fn handle_redirect(req: Request<hyper::Body>, hyper_client: HyperClien
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper_client.clone(), redis_client, code).await?;
+                    access_token(hyper.clone(), redis, code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }

@@ -3,7 +3,7 @@ use std::env;
 
 use crate::helpers::gen_pkce::Pkce;
 
-
+#[derive(Debug, Clone)]
 pub struct SettingsVars {
     pub client_id: String,
     pub response_type: String,
@@ -18,6 +18,7 @@ pub struct SettingsVars {
     pub twitter_v2: String,
     pub twitter_v1: String,
 }
+
 
 impl SettingsVars {
 
