@@ -30,7 +30,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
         .add_list_keyval(vec![
             ("response_type".to_string(), "code".to_string()),
             ("client_id".to_string(), client_id),
-            ("redirect_uri".to_string(), callback_url),
+            ("redirect_url".to_string(), callback_url),
             ("scope".to_string(), Scope::with_scopes(scopes)),
             ("state".to_string(), state),
             ("code_challenge".to_string(), pkce),

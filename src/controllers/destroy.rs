@@ -129,9 +129,9 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
             }
             TweetType::Rts => {
                 api_path = "statuses/unretweet";
-                let base_uri = format!("{}/1.1/{}/{}.json", twitter_url, api_path, id.0);
-                let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_uri.clone());
-                request = Some(RequestBuilder::new(Method::POST, base_uri)
+                let base_url = format!("{}/1.1/{}/{}.json", twitter_url, api_path, id.0);
+                let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_url.clone());
+                request = Some(RequestBuilder::new(Method::POST, base_url)
                     .with_auth(AuthType::OAuth, signature.to_string()).build_request());
             }
         };

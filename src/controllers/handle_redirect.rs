@@ -17,7 +17,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), GrantType::Authorization.to_string()),
         ("client_id".to_string(), client_id.clone()),
-        ("redirect_uri".to_string(), callback_url),
+        ("redirect_url".to_string(), callback_url),
         ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
