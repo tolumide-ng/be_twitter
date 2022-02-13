@@ -9,6 +9,7 @@ pub enum Scope {
     ReadFollows,
     OfflineAccess,
     WriteLike,
+    ReadLike,
 }
 
 impl fmt::Display for Scope {
@@ -23,6 +24,7 @@ impl fmt::Display for Scope {
             Self::WriteFollows => String::from("follows.write"),
             Self::OfflineAccess => String::from("offline.access"),
             Self::WriteLike => String::from("like.write"),
+            Self::ReadLike => String::from("like.read"),
         };
 
         write!(f, "{}", scope_str)

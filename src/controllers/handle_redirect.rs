@@ -17,7 +17,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), GrantType::Authorization.to_string()),
         ("client_id".to_string(), client_id.clone()),
-        ("redirect_url".to_string(), callback_url),
+        ("redirect_uri".to_string(), callback_url),
         ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)
     ]).to_urlencode();
 
@@ -41,6 +41,8 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
+
+    println!("I AM NOW ON THE HANDLE REDIRECT ENDPOINT");
 
     let AppState {redis, hyper, req, env_vars} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
@@ -85,7 +87,10 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
         }
         None => {
             // maybe it is a v2 callback
+            println!("MANS SHOULD BE HERE INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
+
+            println!("IS IT A V2 CALLBACK>???????? {:#?}", is_v1_callback);
 
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {

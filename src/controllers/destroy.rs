@@ -17,9 +17,10 @@ use crate::{
 type Ids = HashMap<String, Vec<String>>;
 
 #[derive(Clone, Debug, PartialEq, Copy)]
-enum TweetType {
+pub enum TweetType {
     Tweets,
     Rts,
+    Likes,
 }
 
 impl std::fmt::Display for TweetType {
@@ -27,6 +28,7 @@ impl std::fmt::Display for TweetType {
         match self {
             Self::Tweets => write!(f, "tweets"),
             Self::Rts => write!(f, "rts"),
+            Self::Likes => write!(f, "likes"),
         }
     }
 }
@@ -133,6 +135,9 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
                 let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_url.clone());
                 request = Some(RequestBuilder::new(Method::POST, base_url)
                     .with_auth(AuthType::OAuth, signature.to_string()).build_request());
+            }
+            TweetType::Likes => {
+                todo!()
             }
         };
 

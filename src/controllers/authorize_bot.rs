@@ -22,7 +22,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
+    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
     
     con.set("pkce", &pkce).await?;
 
@@ -30,7 +30,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
         .add_list_keyval(vec![
             ("response_type".to_string(), "code".to_string()),
             ("client_id".to_string(), client_id),
-            ("redirect_url".to_string(), callback_url),
+            ("redirect_uri".to_string(), callback_url),
             ("scope".to_string(), Scope::with_scopes(scopes)),
             ("state".to_string(), state),
             ("code_challenge".to_string(), pkce),
@@ -40,6 +40,8 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize".into())
         .add_query_params(query_params)
         .build_request();
+
+    println!("THE REQUEST {:#?}", request);
 
     let response_body= Response::builder().status(302)
         .header("Location", request.uri().to_string())
