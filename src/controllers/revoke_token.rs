@@ -15,7 +15,7 @@ struct ApiResponse {
 
 pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
-    let SettingsVars{client_id, client_secret, twitter_v2, ..} = env_vars;
+    let SettingsVars{client_id, client_secret, twitter_url, ..} = env_vars;
     let mut con = redis.get_async_connection().await.unwrap();
 
     let req_body = KeyVal::new().add_list_keyval(vec![
@@ -26,7 +26,7 @@ pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
 
     let content_type = "application/x-www-form-urlencoded";
 
-    let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/revoke", twitter_v2))
+    let request = RequestBuilder::new(Method::POST, format!("{}/2/oauth2/revoke", twitter_url))
         .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content_type).build_request();
 

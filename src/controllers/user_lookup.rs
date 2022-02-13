@@ -11,14 +11,14 @@ use crate::{helpers::{
 pub async fn user_lookup(app_state: AppState) -> TResult<ApiBody> {
     // todo!() move this to params once route management is migrated to routerify
     let AppState{redis, req, hyper, env_vars, ..} = app_state;
-    let SettingsVars {twitter_v2, ..} = env_vars;
+    let SettingsVars {twitter_url, ..} = env_vars;
 
     let username = req.uri().query().unwrap().split("=").collect::<Vec<_>>()[1];
     let mut con = redis.get_async_connection().await?;
 
     let access_token = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
-    let req = RequestBuilder::new(Method::GET, format!("{}/users/by/username/{}", twitter_v2, username))
+    let req = RequestBuilder::new(Method::GET, format!("{}/2/users/by/username/{}", twitter_url, username))
         .with_auth(AuthType::Bearer, access_token).build_request();
 
     let res= Interceptor::intercept(make_request(req, hyper.clone()).await);

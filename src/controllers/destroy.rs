@@ -87,7 +87,7 @@ impl PostIds {
 // rename this module to destory which then contains destory RTs and destory Posts
 pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
     let AppState {env_vars, redis, req, hyper, ..} = app_state;
-    let SettingsVars { api_key, api_key_secret,twitter_v2, twitter_v1, .. } = env_vars;
+    let SettingsVars { api_key, api_key_secret,twitter_url, .. } = env_vars;
 
     let mut con = redis.get_async_connection().await?;
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
@@ -116,8 +116,7 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
         let client = hyper.clone();
         let token = access_token.clone();
         
-        let v2 = twitter_v2.clone();
-        let v1 = twitter_v1.clone();
+        let twitter_url = twitter_url.clone();
         let mut api_path = "tweets";
         let mut request: Option<Request<Body>> = None;
         
@@ -125,12 +124,12 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
         // I really love the OAuth2.0 implementation but need backup code for OAuth1.0 (to handle undo retweets)
         match id.1 {
             TweetType::Tweets => {
-                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/{}/{}", v2, api_path, id.0))
+                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/{}/{}", twitter_url, api_path, id.0))
                     .with_auth(AuthType::Bearer, token).build_request());
             }
             TweetType::Rts => {
                 api_path = "statuses/unretweet";
-                let base_uri = format!("{}/1.1/{}/{}.json", v1, api_path, id.0);
+                let base_uri = format!("{}/1.1/{}/{}.json", twitter_url, api_path, id.0);
                 let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_uri.clone());
                 request = Some(RequestBuilder::new(Method::POST, base_uri)
                     .with_auth(AuthType::OAuth, signature.to_string()).build_request());
