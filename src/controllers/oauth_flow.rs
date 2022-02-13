@@ -1,25 +1,20 @@
 use std::{collections::HashMap};
-
-use http::{Request, Method, Response};
-use hyper::Body;
-use redis::{Client as RedisClient};
+use hyper::{Method, Response, Body};
 
 use crate::{
     helpers::{
-        request::HyperClient, response::{
-            TResult, ApiBody, ResponseBuilder, make_request}, 
+        response::{TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder,
+    }, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, app::server::AppState,
 };
 
 
 
-pub async fn request_token(request: Request<Body>, 
-    hyper_client: HyperClient, 
-    redis_client: RedisClient
-) -> TResult<ApiBody> {
-    let mut con = redis_client.get_async_connection().await?;
-    let SettingsVars{api_key, api_key_secret, callback_url, twitter_v1, ..} = SettingsVars::new();
+pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
+    let AppState {redis, hyper, env_vars, ..} = app_state;
+    let mut con = redis.get_async_connection().await?;
+    let SettingsVars{api_key, api_key_secret, callback_url, twitter_v1, ..} = env_vars;
+
     let consumer = KeyPair::new(api_key, api_key_secret);
     let callback = OAuthAddons::Callback(callback_url.clone());
 
@@ -29,11 +24,11 @@ pub async fn request_token(request: Request<Body>,
 
      let request = RequestBuilder::new(Method::POST, target_url)
         .with_query("oauth_callback", &urlencoding::encode(&callback_url))
-        .with_access_token("OAuth", signature.to_string())
+        .with_auth(AuthType::OAuth, signature.to_string())
         .with_body(Body::empty(), content_type)
         .build_request();
 
-    let res = make_request(request, hyper_client).await;
+    let res = make_request(request, hyper).await;
 
     if let Err(e) = res {
         return ResponseBuilder::new("Error".into(), Some("Could not setup the user"), 403).reply()

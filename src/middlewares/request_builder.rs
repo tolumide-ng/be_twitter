@@ -7,12 +7,29 @@ use crate::helpers::keyval::KeyVal;
 pub struct RequestBuilder {
     base_uri: String,
     method: Method,
-    // params: Option<RequestParams>,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
     header: Option<KeyVal>,
-    // addon: OAuthAddOn,
 }
+
+pub enum ContentType {}
+
+
+#[derive(Debug, Clone, derive_more::Display, PartialEq)]
+pub enum AuthType {
+    #[display(fmt = "Bearer")]
+    Bearer,
+    #[display(fmt = "OAuth")]
+    OAuth,
+    #[display(fmt = "Basic")]
+    Basic,
+}
+
+// impl fmt::Display for AuthType {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+//     }
+// }
 
 impl RequestBuilder {
     pub fn new(method: Method, base_uri: String) -> Self {
@@ -91,16 +108,14 @@ impl RequestBuilder {
         }
     }
 
-    // combine with_basic_auth, with_access_token, and with_oauth_token - Rename when combined to -with_keys
-    pub fn with_basic_auth(self, id: String, secret: String) -> Self {
-        let auth_header = base64::encode(format!("{}:{}", id, secret));
-        let header_value = format!("Basic {}", &auth_header);
-        let header_key = "Authorization".into();
-        self.update_header(header_key, header_value)
-    }
+    pub fn with_auth(self, prepend: AuthType, credentials: String) -> Self {
+        let mut value = credentials;
+        
+        if prepend == AuthType::Basic {
+            value = base64::encode(value);
+        }
 
-    pub fn with_access_token(self, prepend: &'static str, access_token: String) -> Self {
-        let header_value = format!("{} {}", prepend, access_token);
+        let header_value = format!("{} {}", prepend, value);
         let header_key = "Authorization".into();
         self.update_header(header_key, header_value)
     }

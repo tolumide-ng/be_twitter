@@ -1,11 +1,10 @@
 use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
-use redis::{Client as RedisClient};
 
+use crate::app::server::AppState;
 use crate::helpers::response::ApiBody;
 use crate::helpers::{
     response::{TResult},
-    request::{HyperClient},
     gen_pkce::Pkce,
     scope::Scope,
     keyval::KeyVal,
@@ -14,10 +13,10 @@ use crate::setup::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 
-pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<ApiBody> {
+pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let SettingsVars {client_id, callback_url, state, ..} = SettingsVars::new();
     // store this pkce value in redis for the specific user associated by email
-    let mut con = client.get_async_connection().await.unwrap();
+    let mut con = app_state.redis.get_async_connection().await.unwrap();
     
     
     
@@ -26,7 +25,6 @@ pub async fn authorize_bot(req: HyperClient, client: RedisClient) -> TResult<Api
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
     
     con.set("pkce", &pkce).await?;
-    // redis::cmd("SET").arg(&["pkce", &pkce]).query_async(&mut con).await?;
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![

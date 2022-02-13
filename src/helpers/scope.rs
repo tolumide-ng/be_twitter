@@ -1,10 +1,5 @@
 use core::fmt;
 
-pub enum AuthType {
-    User,
-    App,
-}
-
 pub enum Scope {
     ReadTweet,
     WriteTweet,
