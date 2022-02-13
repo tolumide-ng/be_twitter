@@ -1,6 +1,6 @@
-use http::Method;
-use hyper::{StatusCode};
+use hyper::{StatusCode, Body, Method, Request};
 use redis::{Client as RedisClient};
+use routerify::prelude::*;
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
@@ -40,9 +40,9 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
-pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
+pub async fn handle_redirect(req: Request<Body>) -> TResult<ApiBody> {
 
-    let AppState {redis, hyper, req, env_vars} = app_state;
+    let AppState {redis, hyper, env_vars} = req.data::<AppState>().unwrap();
     let SettingsVars{state, api_key, twitter_v1, ..} = env_vars;
 
     let mut con = redis.get_async_connection().await?;
@@ -88,9 +88,9 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
 
             if let Some(dict) = is_v2_callback {
-                if query_params.validate("state".into(), state) {
+                if query_params.validate("state".into(), state.clone()) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper.clone(), redis, code).await?;
+                    access_token(hyper.clone(), redis.clone(), code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }
