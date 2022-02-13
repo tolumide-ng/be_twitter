@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 use http::{Request, HeaderMap, HeaderValue, StatusCode};
@@ -7,7 +6,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::Value;
 
 
-use crate::errors::response::{TError, TwitterErrors, AppError};
+use crate::errors::response::{TError, TwitterErrors};
 use crate::helpers::request::HyperClient;
 
 // pub type ApiResponse = http::Result<Response<Body>>;
@@ -59,21 +58,21 @@ pub async fn make_request(request: Request<Body>, client: HyperClient) -> TResul
 
 
 
-#[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
-pub struct Errors(HashMap<&'static str, &'static str>);
+// #[derive(Debug, derive_more::Deref, derive_more::DerefMut, derive_more::From, Clone, Default)]
+// pub struct Errors(HashMap<&'static str, &'static str>);
 
-impl Errors {
-    pub fn new(mut self, errs: &[(TError, &'static str)]) -> Self {
-        // let map = self;
-        for err in errs {
-            // let ab = err.0.into();
-            // let ab = format!("{:#?}", errs[0].0);
-            // self.insert(&ab, err.1);
-            println!("the error {:#?}", err);
-        }
-        self
-    }
-}
+// impl Errors {
+//     pub fn new(mut self, errs: &[(TError, &'static str)]) -> Self {
+//         // let map = self;
+//         for err in errs {
+//             // let ab = err.0.into();
+//             // let ab = format!("{:#?}", errs[0].0);
+//             // self.insert(&ab, err.1);
+//             println!("the error {:#?}", err);
+//         }
+//         self
+//     }
+// }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct ResponseBuilder<T: Serialize> {
@@ -106,8 +105,9 @@ impl<T> ResponseBuilder<T> where T: Serialize {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TwitterResponseVecData {
+pub struct TwitterResponseData {
     data: Vec<HashMap<String, String>>,
+    meta: HashMap<String, Value>
 }
 
 
@@ -132,8 +132,8 @@ impl TwitterResponseHashData {
 
 
 
-impl TwitterResponseVecData {
-    pub fn separate_tweets_from_rts(self, exclude_head: bool) -> HashMap<String, Vec<String>>{
+impl TwitterResponseData {
+    pub fn separate_tweets_from_rts(&self, exclude_head: bool) -> HashMap<String, Vec<String>>{
         let mut dict = HashMap::new();
         let mut tweets = vec![];
         let mut rts = vec![];
@@ -158,6 +158,19 @@ impl TwitterResponseVecData {
         dict.insert("rts".into(), rts);
 
         dict
+    }
+
+    pub fn parse_metadata(&self) -> HashMap<String, String> {
+        let keys = self.meta.keys().cloned().collect::<Vec<String>>();
+        let map = keys.iter()
+            .map(|k,| (k.to_string(), self.meta.get(k).unwrap().to_string())).collect::<HashMap<_, _>>();
+        
+        return map;
+    }
+
+    // Gets ids from a vector of dictionaries containing "id" and "text"
+    pub fn get_ids(&self) -> Vec<String> {
+        self.data.iter().map(|map| map.get("id").unwrap().clone()).collect::<Vec<_>>()
     }
 }
 
