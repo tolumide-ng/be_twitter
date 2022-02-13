@@ -9,7 +9,7 @@ pub struct SettingsVars {
     pub response_type: String,
     pub base_url: String,
     pub callback_url: String,
-    pub code_challenge: Pkce,
+    pub code_challenge: String,
     pub state: String,
     pub app_address: String,
     pub api_key: String,
@@ -18,7 +18,6 @@ pub struct SettingsVars {
     pub twitter_v2: String,
     pub twitter_v1: String,
 }
-
 
 impl SettingsVars {
 
@@ -42,7 +41,7 @@ impl SettingsVars {
             response_type: Self::get_var("RESPONSE_TYPE"),
             base_url: Self::get_var("BASE_URL"),
             callback_url: Self::get_var("CALLBACK_URL"),
-            code_challenge: Pkce::new(),
+            code_challenge: Pkce::new().to_string(),
             state: Self::get_var("STATE_CODE"),
             app_address: Self::get_var("APP_ADDRESS"),
             api_key: Self::get_var("API_KEY"),
