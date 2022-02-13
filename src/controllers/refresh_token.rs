@@ -1,6 +1,6 @@
 use hyper::{Method, StatusCode};
 
-use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody, ResponseBuilder}, commons::GrantType}, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState};
+use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody, ResponseBuilder}, commons::GrantType}, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState};
 
 pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
@@ -21,7 +21,7 @@ pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
     println!("LEVEL THREE {:#?}", req_body);
 
     let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
-        .with_basic_auth(client_id, client_secret)
+        .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content).build_request();
 
         // expected contents - token_type, access_token, scope, expires_in, refresh

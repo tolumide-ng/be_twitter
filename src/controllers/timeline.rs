@@ -2,7 +2,7 @@ use hyper::{StatusCode, Method};
 
 use crate::{
     helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseVecData}}, 
-    middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor, setup::variables::SettingsVars, app::server::AppState
+    middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::Interceptor, setup::variables::SettingsVars, app::server::AppState
 };
 
 
@@ -20,7 +20,7 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     let request = RequestBuilder::new
         (Method::GET, format!("{}/users/{}/tweets", twitter_v2, user_id))
         .with_query("max_results", MAX_TWEETS)
-        .with_access_token("Bearer", access_token).build_request();
+        .with_auth(AuthType::Bearer, access_token).build_request();
 
     let res = Interceptor::intercept(make_request(request, hyper).await);
 

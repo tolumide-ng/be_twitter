@@ -4,7 +4,7 @@ use redis::{Client as RedisClient};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::RequestBuilder, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState
+    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState
 };
 
 
@@ -24,7 +24,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
     let content_type = "application/x-www-form-urlencoded";
 
     let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
-        .with_basic_auth(client_id, client_secret)
+        .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content_type).build_request();
 
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);

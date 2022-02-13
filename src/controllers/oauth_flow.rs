@@ -5,7 +5,7 @@ use crate::{
     helpers::{
         response::{TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, app::server::AppState,
+    }, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, app::server::AppState,
 };
 
 
@@ -24,7 +24,7 @@ pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
 
      let request = RequestBuilder::new(Method::POST, target_url)
         .with_query("oauth_callback", &urlencoding::encode(&callback_url))
-        .with_access_token("OAuth", signature.to_string())
+        .with_auth(AuthType::OAuth, signature.to_string())
         .with_body(Body::empty(), content_type)
         .build_request();
 

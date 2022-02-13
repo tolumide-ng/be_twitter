@@ -11,7 +11,7 @@ use crate::{
         }, signature::{
             OAuth, OAuthAddons
         }, keypair::KeyPair
-    }, middlewares::request_builder::RequestBuilder, setup::variables::SettingsVars, app::server::AppState
+    }, middlewares::request_builder::{RequestBuilder, AuthType}, setup::variables::SettingsVars, app::server::AppState
 };
 
 type Ids = HashMap<String, Vec<String>>;
@@ -126,14 +126,14 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
         match id.1 {
             TweetType::Tweets => {
                 request = Some(RequestBuilder::new(Method::DELETE, format!("{}/{}/{}", v2, api_path, id.0))
-                    .with_access_token("Bearer", token).build_request());
+                    .with_auth(AuthType::Bearer, token).build_request());
             }
             TweetType::Rts => {
                 api_path = "statuses/unretweet";
                 let base_uri = format!("{}/1.1/{}/{}.json", v1, api_path, id.0);
                 let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_uri.clone());
                 request = Some(RequestBuilder::new(Method::POST, base_uri)
-                    .with_access_token("OAuth", signature.to_string()).build_request());
+                    .with_auth(AuthType::OAuth, signature.to_string()).build_request());
             }
         };
 

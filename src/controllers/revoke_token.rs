@@ -1,12 +1,9 @@
-use http::{StatusCode, Method};
-use hyper::{Request};
-use redis::{Client as RedisClient};
+use hyper::{StatusCode, Method};
 use serde::{Serialize, Deserialize};
 
 use crate::{helpers::{
-    request::HyperClient, keyval::KeyVal, 
-    response::{TResult, ApiBody, make_request, ResponseBuilder}}, 
-    setup::variables::SettingsVars, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor, app::server::AppState
+    keyval::KeyVal, response::{TResult, ApiBody, make_request, ResponseBuilder}}, 
+    setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::Interceptor, app::server::AppState
 };
 
 
@@ -30,7 +27,7 @@ pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
     let content_type = "application/x-www-form-urlencoded";
 
     let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/revoke", twitter_v2))
-        .with_basic_auth(client_id, client_secret)
+        .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content_type).build_request();
 
     let res = Interceptor::intercept(make_request(request, hyper).await);

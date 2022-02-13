@@ -1,9 +1,9 @@
 use hyper::{Method, StatusCode};
 
 use crate::{helpers::{
-    response::{
-        ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}
-    }, middlewares::request_builder::RequestBuilder, interceptor::handle_request::Interceptor, setup::variables::SettingsVars, app::server::AppState
+    response::{ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}}, 
+    middlewares::request_builder::{RequestBuilder, AuthType}, 
+    interceptor::handle_request::Interceptor, setup::variables::SettingsVars, app::server::AppState
 };
 
 
@@ -19,7 +19,7 @@ pub async fn user_lookup(app_state: AppState) -> TResult<ApiBody> {
     let access_token = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let req = RequestBuilder::new(Method::GET, format!("{}/users/by/username/{}", twitter_v2, username))
-        .with_access_token("Bearer", access_token).build_request();
+        .with_auth(AuthType::Bearer, access_token).build_request();
 
     let res= Interceptor::intercept(make_request(req, hyper.clone()).await);
 
