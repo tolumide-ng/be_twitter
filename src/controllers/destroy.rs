@@ -86,7 +86,8 @@ impl PostIds {
 
 // rename this module to destory which then contains destory RTs and destory Posts
 pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, req, hyper, ..} = app_state;
+    let AppState {env_vars, redis, req, hyper, ..} = app_state;
+    let SettingsVars { api_key, api_key_secret,twitter_v2, twitter_v1, .. } = env_vars;
 
     let mut con = redis.get_async_connection().await?;
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
@@ -99,7 +100,6 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
     let post_ids = PostIds::parse(body).0;
     let parallel_requests = post_ids.len();
 
-    let SettingsVars {twitter_v2, api_key, api_key_secret, twitter_v1, ..} = SettingsVars::new();
     let oauth_token_key: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await.unwrap();
     let oauth_token_secret = redis::cmd("GET").arg(&["oauth_token_secret"]).query_async(&mut con).await.unwrap();
     // let oauth_consumer_key = redis::cmd("GET").arg(&["oauth_consumer_key"]).query_async(&mut con).await.unwrap();

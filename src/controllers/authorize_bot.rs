@@ -14,7 +14,7 @@ use crate::middlewares::request_builder::RequestBuilder;
 
 
 pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
-    let SettingsVars {client_id, callback_url, state, ..} = SettingsVars::new();
+    let SettingsVars {client_id, callback_url, state, ..} = app_state.env_vars;
     // store this pkce value in redis for the specific user associated by email
     let mut con = app_state.redis.get_async_connection().await.unwrap();
     

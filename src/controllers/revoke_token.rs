@@ -14,8 +14,8 @@ struct ApiResponse {
 }
 
 pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, ..} = app_state;
-    let SettingsVars{client_id, client_secret, twitter_v2, ..} = SettingsVars::new();
+    let AppState {redis, hyper, env_vars, ..} = app_state;
+    let SettingsVars{client_id, client_secret, twitter_v2, ..} = env_vars;
     let mut con = redis.get_async_connection().await.unwrap();
 
     let req_body = KeyVal::new().add_list_keyval(vec![
