@@ -14,15 +14,14 @@ use crate::middlewares::request_builder::RequestBuilder;
 
 
 pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
-    let SettingsVars {client_id, callback_url, state, ..} = SettingsVars::new();
+    let SettingsVars {client_id, callback_url, state, ..} = app_state.env_vars;
     // store this pkce value in redis for the specific user associated by email
     let mut con = app_state.redis.get_async_connection().await.unwrap();
     
     
-    
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike];
+    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike, Scope::WriteUsers];
     
     con.set("pkce", &pkce).await?;
 
@@ -40,6 +39,8 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let request = RequestBuilder::new(Method::GET, "https://twitter.com/i/oauth2/authorize".into())
         .add_query_params(query_params)
         .build_request();
+
+    println!("THE REQUEST {:#?}", request);
 
     let response_body= Response::builder().status(302)
         .header("Location", request.uri().to_string())

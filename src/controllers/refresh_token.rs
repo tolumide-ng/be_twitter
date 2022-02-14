@@ -4,7 +4,7 @@ use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody,
 
 pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
-    let SettingsVars {client_id, client_secret, twitter_v2, ..} = env_vars;
+    let SettingsVars {client_id, client_secret, twitter_url, ..} = env_vars;
 
     let mut con = redis.get_async_connection().await.unwrap();
     let content = "application/x-www-form-urlencoded";
@@ -20,7 +20,7 @@ pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
 
     println!("LEVEL THREE {:#?}", req_body);
 
-    let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
+    let request = RequestBuilder::new(Method::POST, format!("{}/2/oauth2/token", twitter_url))
         .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content).build_request();
 

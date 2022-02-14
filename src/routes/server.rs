@@ -17,7 +17,7 @@ pub async fn routes(
     let req = &state.req;
 
     match (req.method(), req.uri().path(), req.uri().query()) {
-        (&Method::GET, "/", _) => health_check(),
+        (&Method::GET, "/", _) => health_check().await,
         (&Method::GET, "/enable", _) => authorize_bot(state).await,
         (&Method::GET, "/oauth/callback", x) => handle_redirect(state).await,
         (&Method::POST, "/revoke", _) => revoke_token(state).await,

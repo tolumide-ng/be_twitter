@@ -13,12 +13,12 @@ use crate::{
 pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
     let mut con = redis.get_async_connection().await?;
-    let SettingsVars{api_key, api_key_secret, callback_url, twitter_v1, ..} = env_vars;
+    let SettingsVars{api_key, api_key_secret, callback_url, twitter_url, ..} = env_vars;
 
     let consumer = KeyPair::new(api_key, api_key_secret);
     let callback = OAuthAddons::Callback(callback_url.clone());
 
-    let target_url = format!("{}/oauth/request_token", twitter_v1);
+    let target_url = format!("{}/oauth/request_token", twitter_url);
     let signature = OAuth::new(consumer, None, callback, Method::POST).generate_signature(target_url.clone());
     let content_type = "application/x-www-form-urlencoded";
 

@@ -15,3 +15,4 @@ TODOS!
 - [ ] Implement app authentication and authorization
 - [ ] Separate v2 controllers into different folder
 - [ ] Send arguments to route controllers as a struct containing http_client, db_client, env_vars (we don't have to call SettingsVars::new() in each controller everytime)
+- [ ] Test scenarios where user doesn't have tweets, rts, and likes (how does get_timeline react in these cases)

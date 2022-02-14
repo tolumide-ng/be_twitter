@@ -9,7 +9,7 @@ use crate::{helpers::{
 
 
 async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
-    let SettingsVars{client_id, callback_url, client_secret, twitter_v2, ..} = SettingsVars::new();
+    let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
 
@@ -23,7 +23,7 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
     let content_type = "application/x-www-form-urlencoded";
 
-    let request = RequestBuilder::new(Method::POST, format!("{}/oauth2/token", twitter_v2))
+    let request = RequestBuilder::new(Method::POST, format!("{}/2/oauth2/token", twitter_url))
         .with_auth(AuthType::Basic, format!("{}:{}", client_id, client_secret))
         .with_body(req_body, content_type).build_request();
 
@@ -42,8 +42,10 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
 
+    println!("I AM NOW ON THE HANDLE REDIRECT ENDPOINT");
+
     let AppState {redis, hyper, req, env_vars} = app_state;
-    let SettingsVars{state, api_key, twitter_v1, ..} = env_vars;
+    let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
 
     let mut con = redis.get_async_connection().await?;
     
@@ -57,7 +59,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
                 let verifier = k.get("oauth_verifier").unwrap();
                 redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
 
-                let target = format!("{}/oauth/access_token", twitter_v1);
+                let target = format!("{}/oauth/access_token", twitter_url);
 
                 let req = RequestBuilder::new(Method::POST, target)
                     .with_query("oauth_consumer_key", &api_key)
@@ -85,7 +87,10 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
         }
         None => {
             // maybe it is a v2 callback
+            println!("MANS SHOULD BE HERE INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
+
+            println!("IS IT A V2 CALLBACK>???????? {:#?}", is_v1_callback);
 
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {

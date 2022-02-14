@@ -5,7 +5,7 @@ use hyper::{Body, Request, Method};
 use crate::helpers::keyval::KeyVal;
 
 pub struct RequestBuilder {
-    base_uri: String,
+    base_url: String,
     method: Method,
     query: Option<String>,
     body: Option<(Body, &'static str)>,
@@ -32,9 +32,9 @@ pub enum AuthType {
 // }
 
 impl RequestBuilder {
-    pub fn new(method: Method, base_uri: String) -> Self {
+    pub fn new(method: Method, base_url: String) -> Self {
         Self {
-            base_uri,
+            base_url,
             method,
             query: None,
             body: None,
@@ -74,10 +74,10 @@ impl RequestBuilder {
     }
 
     pub fn get_uri(&self) -> String {
-        let base_uri = self.base_uri.to_string();
+        let base_url = self.base_url.to_string();
         match &self.query {
-            Some(query) => format!("{}?{}", base_uri, query),
-            None => base_uri
+            Some(query) => format!("{}?{}", base_url, query),
+            None => base_url
         }
     }
 

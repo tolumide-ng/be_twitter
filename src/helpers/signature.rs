@@ -101,7 +101,7 @@ impl OAuth {
         }
     }
 
-    pub fn generate_signature(self, target_uri: String) -> SignedParams {
+    pub fn generate_signature(self, target_url: String) -> SignedParams {
         // make hashmap with keys and val
 
         let token = self.token.clone();
@@ -127,7 +127,7 @@ impl OAuth {
         // Create signature base_string
         let base_string = format!(
             "{}&{}&{}", urlencoding::encode(&self.method), 
-            urlencoding::encode(&target_uri), urlencoding::encode(&params_string)
+            urlencoding::encode(&target_url), urlencoding::encode(&params_string)
         );
 
         // Get a signing key
