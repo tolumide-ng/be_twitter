@@ -18,7 +18,7 @@ enum TimelineBody {
 }
 
 
-const MAX_TWEETS: &'static str = "5";
+const MAX_TWEETS: &'static str = "100";
 
 pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
@@ -49,7 +49,6 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
             }
         };
 
-        println!("REQUESTS-----------------------");
 
         tokio::spawn(async move {
             let response = Interceptor::intercept(make_request(req, client).await);
