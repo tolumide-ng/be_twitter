@@ -25,8 +25,7 @@ pub async fn routes(
         (&Method::GET, "/user", x) => user_lookup(state).await,
         (&Method::GET, "/timeline", x) => get_timeline(state).await,
         (&Method::POST, "/remove", _) => handle_delete(state).await,
-        (&Method::GET, "/oauth1/request", _) => request_token(state).await,
-        (&Method::GET, "/oauth1/", _) => request_token(state).await,
+        (&Method::GET, "/oauth1", _) => request_token(state).await,
         _ => {
             not_found(state).await
         }
