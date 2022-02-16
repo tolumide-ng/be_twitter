@@ -76,7 +76,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
                     if let Some(map) = params {
                         redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
                         redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut con).await?;
-                        redis::cmd("SET").arg(&["user_id", map.get("user_id").unwrap()]).query_async(&mut con).await?;
+                        redis::cmd("SET").arg(&["userid", map.get("user_id").unwrap()]).query_async(&mut con).await?;
                         
                         return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                     }
