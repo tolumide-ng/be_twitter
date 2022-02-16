@@ -1,4 +1,4 @@
-use hyper::{Request, Body, Method};
+use hyper::{Method};
 
 use crate::app::server::AppState;
 use crate::helpers::response::{ApiBody};

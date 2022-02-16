@@ -60,7 +60,7 @@ pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
                 ("oauth_token".to_string(), map.get("oauth_token").unwrap().into())
             ]);
             
-            let request = RequestBuilder::new(Method::GET, "https://api.twitter.com/oauth/authorize".into())
+            let request = RequestBuilder::new(Method::GET, format!("{}/oauth/authorize", twitter_url))
                 .add_query_params(query_dict)
                 .build_request();
 
