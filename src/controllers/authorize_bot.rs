@@ -21,7 +21,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike, Scope::WriteUsers];
+    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
     
     con.set("pkce", &pkce).await?;
 

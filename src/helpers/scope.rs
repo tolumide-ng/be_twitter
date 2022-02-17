@@ -7,8 +7,6 @@ pub enum Scope {
     WriteTweet,
     #[display(fmt = "users.read")]
     ReadUsers,
-    #[display(fmt = "users.write")]
-    WriteUsers,
     #[display(fmt = "follows.write")]
     WriteFollows,
     #[display(fmt = "follows.read")]
