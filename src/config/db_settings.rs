@@ -1,6 +1,8 @@
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
+// sqlx::migrate!().run(<&your_pool OR &mut your_connection>).await?;
+
 #[derive(serde::Deserialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
