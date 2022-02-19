@@ -36,6 +36,7 @@ pub struct SettingsVars {
     pub db_username: String,
     pub db_password: String,
     pub db_name: String,
+    pub db_url: String,
 }
 
 impl SettingsVars {
@@ -46,7 +47,7 @@ impl SettingsVars {
         let variables = vec!["STATE_CODE", "RESPONSE_TYPE", "BASE_URL", 
         "CALLBACK_URL", "CLIENT_URL", "CLIENT_SECRET", "APP_ADDRESS", "API_KEY",
         "API_KEY_SECRET", "REQUEST_URL", "TWITTER_API", "APP_ENV", "DB_HOST", 
-        "DB_PORT", "DB_USERNAME", "DB_PASSWORD", "DB_NAME"];
+        "DB_PORT", "DB_USERNAME", "DB_PASSWORD", "DB_NAME", "DATABASE_URL"];
         
         // Confirm that all required environment variables are provided
         for variable in variables {
@@ -74,6 +75,7 @@ impl SettingsVars {
             db_username: Self::get_var("DB_USERNAME"),
             db_password: Self::get_var("DB_PASSWORD"),
             db_name: Self::get_var("DB_NAME"),
+            db_url: Self::get_var("DATABASE_URL"),
         }
     }
 
