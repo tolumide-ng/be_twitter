@@ -3,7 +3,7 @@ use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
 // sqlx::migrate!().run(<&your_pool OR &mut your_connection>).await?;
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug)]
 pub struct DatabaseSettings {
     pub username: String,
     pub password: String,

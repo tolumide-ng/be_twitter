@@ -5,7 +5,7 @@ use crate::{
     helpers::{
         response::{TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, startup::server::AppState,
+    }, configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, startup::server::AppState,
 };
 
 

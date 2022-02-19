@@ -1,9 +1,10 @@
 use dotenv::dotenv;
+use serde::Deserialize;
 use std::env;
 
 use crate::helpers::gen_pkce::Pkce;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct SettingsVars {
     pub client_id: String,
     pub response_type: String,

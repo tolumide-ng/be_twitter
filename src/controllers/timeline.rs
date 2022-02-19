@@ -6,7 +6,7 @@ use tokio;
 
 use crate::{
     helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, 
-    middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::Interceptor, setup::variables::SettingsVars, startup::server::AppState
+    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState
 };
 
 use super::destroy::TweetType;

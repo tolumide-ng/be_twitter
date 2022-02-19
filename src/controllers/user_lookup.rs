@@ -3,7 +3,7 @@ use hyper::{Method, StatusCode};
 use crate::{helpers::{
     response::{ResponseBuilder, TResult, ApiBody, make_request, TwitterResponseHashData}}, 
     middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptor::handle_request::Interceptor, setup::variables::SettingsVars, startup::server::AppState
+    interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState
 };
 
 

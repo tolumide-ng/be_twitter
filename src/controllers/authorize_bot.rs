@@ -9,7 +9,7 @@ use crate::helpers::{
     scope::Scope,
     keyval::KeyVal,
 };
-use crate::setup::{variables::SettingsVars};
+use crate::configurations::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 

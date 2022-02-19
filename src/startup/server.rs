@@ -2,6 +2,8 @@ use http::Request;
 use hyper::{Server, Client, Body};
 use hyper::service::{make_service_fn, service_fn};
 use hyper_tls::HttpsConnector;
+use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use std::time::Duration;
 use std::{net::SocketAddr};
@@ -10,9 +12,9 @@ use redis::{Client as RedisClient};
 
 use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
-use crate::setup::variables::SettingsVars;
+use crate::configurations::variables::SettingsVars;
 
-use super::timeout::TimeoutLayer;
+// use super::timeout::TimeoutLayer;
 
 type GenericError = hyper::Error;
 
@@ -58,7 +60,7 @@ pub async fn server() {
         let svc = ServiceBuilder::new()
             .timeout(Duration::new(5, 0))
             .service(svc);
-            
+
         async {
             Ok::<_, GenericError>(svc)
         }
@@ -69,4 +71,11 @@ pub async fn server() {
     if let Err(e) = server.await {
         eprintln!("server error: {}", e)
     }
+}
+
+
+pub fn get_pool(db_uri: &'static str) -> PgPool {
+    PgPoolOptions::new()
+        .connect_timeout(Duration::from_secs(2))
+        .connect_lazy(db_uri);
 }

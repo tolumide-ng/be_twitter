@@ -1,6 +1,7 @@
 use hyper::{Method, StatusCode};
 
-use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody, ResponseBuilder}, commons::GrantType}, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::{Interceptor, V2TokensType}, startup::server::AppState};
+use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody, ResponseBuilder}, commons::GrantType}, 
+configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState};
 
 pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
     let AppState {redis, hyper, env_vars, ..} = app_state;
