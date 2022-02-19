@@ -18,3 +18,4 @@ TODOS!
 - [ ] Test scenarios where user doesn't have tweets, rts, and likes (how does get_timeline react in these cases)
 - [ ] Migrate to Cargo workspaces
 - [ ] Add tests CI and code-coverage
+- [ ] Abstract the sqlx calls into reusable methods (macros?)

@@ -45,7 +45,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
 
     println!("I AM NOW ON THE HANDLE REDIRECT ENDPOINT");
 
-    let AppState {redis, hyper, req, env_vars} = app_state;
+    let AppState {redis, hyper, req, env_vars, ..} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
 
     let mut con = redis.get_async_connection().await?;

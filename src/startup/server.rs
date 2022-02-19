@@ -2,7 +2,7 @@ use http::Request;
 use hyper::{Server, Client, Body};
 use hyper::service::{make_service_fn, service_fn};
 use hyper_tls::HttpsConnector;
-use sqlx::PgPool;
+use sqlx::{PgPool, Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use tower::ServiceBuilder;
 use std::time::Duration;
@@ -10,6 +10,7 @@ use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
+use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
 use crate::configurations::variables::SettingsVars;
@@ -24,11 +25,12 @@ pub struct AppState {
     pub hyper: HyperClient,
     pub req: Request<Body>,
     pub env_vars: SettingsVars,
+    pub db_pool: Pool<Postgres>,
 }
 
 impl AppState {
-    fn new(env_vars: SettingsVars, req: Request<Body>, hyper: HyperClient, redis: RedisClient) -> Self {
-        Self { redis, hyper, req, env_vars}
+    fn new(env_vars: SettingsVars, req: Request<Body>, hyper: HyperClient, redis: RedisClient, db_pool: Pool<Postgres>) -> Self {
+        Self { redis, hyper, req, env_vars, db_pool}
     }
 }
 
@@ -41,15 +43,18 @@ pub async fn server() {
     let hyper_client = hyper_pool.clone();
     let redis_client= RedisClient::open("redis://127.0.0.1/").expect("Redis connection failed");
     let env_vars = SettingsVars::new();
+    let db_pool = get_pool(DatabaseSettings::new(env_vars.clone()));
 
     
     let service = make_service_fn(move|_| {
         let redis = redis_client.clone();
         let client = hyper_client.clone();
         let vars = env_vars.clone();
+        let db_pool = db_pool.clone();
 
         let svc= service_fn(move |req| {
-                let state = AppState::new(vars.clone(), req, client.to_owned(), redis.to_owned());
+                let state = AppState::new(vars.clone(), 
+                    req, client.to_owned(), redis.to_owned(), db_pool.to_owned());
                 routes(state)
             });
 
@@ -58,7 +63,7 @@ pub async fn server() {
         //     .service(svc).inner;
         
         let svc = ServiceBuilder::new()
-            .timeout(Duration::new(5, 0))
+            .timeout(Duration::new(45, 0))
             .service(svc);
 
         async {
@@ -74,8 +79,8 @@ pub async fn server() {
 }
 
 
-pub fn get_pool(db_uri: &'static str) -> PgPool {
+pub fn get_pool(config: DatabaseSettings) -> PgPool {
     PgPoolOptions::new()
         .connect_timeout(Duration::from_secs(2))
-        .connect_lazy(db_uri);
+        .connect_lazy_with(config.with_db())
 }
