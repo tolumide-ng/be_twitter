@@ -6,11 +6,11 @@ use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
     configurations::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState
+    interceptors::handle_request::{Interceptor}, startup::server::AppState
 };
 
 
-async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, _db_client: Pool<Postgres>, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
@@ -31,7 +31,7 @@ async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redi
 
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
-    if let Some(map) = Interceptor::v2_tokens(res) {
+    if let Some(_map) = Interceptor::v2_tokens(res) {
         // authentication service user_id would be used to insert here
         // sqlx::query(r#"INSERT INTO auth_two(pkce) VALUES ($1)"#)
         //     .execute(&db_client.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();

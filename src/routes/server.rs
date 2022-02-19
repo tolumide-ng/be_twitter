@@ -19,11 +19,11 @@ pub async fn routes(
     match (req.method(), req.uri().path(), req.uri().query()) {
         (&Method::GET, "/", _) => health_check().await,
         (&Method::GET, "/enable", _) => authorize_bot(state).await,
-        (&Method::GET, "/oauth/callback", x) => handle_redirect(state).await,
+        (&Method::GET, "/oauth/callback", _x) => handle_redirect(state).await,
         (&Method::POST, "/revoke", _) => revoke_token(state).await,
         (&Method::GET, "/refresh", _) => refresh_token(state).await,
-        (&Method::GET, "/user", x) => user_lookup(state).await,
-        (&Method::GET, "/timeline", x) => get_timeline(state).await,
+        (&Method::GET, "/user", _x) => user_lookup(state).await,
+        (&Method::GET, "/timeline", _x) => get_timeline(state).await,
         (&Method::POST, "/remove", _) => handle_delete(state).await,
         (&Method::GET, "/oauth1", _) => request_token(state).await,
         _ => {

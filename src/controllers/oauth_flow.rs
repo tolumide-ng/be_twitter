@@ -30,7 +30,7 @@ pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
 
     let res = make_request(request, hyper).await;
 
-    if let Err(e) = res {
+    if let Err(_e) = res {
         return ResponseBuilder::new("Error".into(), Some("Could not setup the user"), 403).reply()
     }
 
