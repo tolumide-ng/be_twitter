@@ -6,3 +6,4 @@ pub mod routes;
 pub mod middlewares;
 pub mod interceptors;
 pub mod configurations;
+pub mod base_repository;
