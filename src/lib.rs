@@ -1,4 +1,4 @@
-pub mod app;
+pub mod startup;
 pub mod controllers;
 mod errors;
 pub mod helpers;

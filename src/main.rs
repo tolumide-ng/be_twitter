@@ -1,7 +1,7 @@
-use twitar::app::server::server;
+use twitar::startup::server::server;
 
 
 #[tokio::main]
 async fn main() {
-    server().await
+    server().await;
 }

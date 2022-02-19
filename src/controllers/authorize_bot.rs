@@ -1,7 +1,7 @@
 use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
 
-use crate::app::server::AppState;
+use crate::startup::server::AppState;
 use crate::helpers::response::ApiBody;
 use crate::helpers::{
     response::{TResult},

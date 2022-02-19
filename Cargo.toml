@@ -37,6 +37,7 @@ derive_more = "0.99.17"
 thiserror = "1.0.30"
 anyhow = "1.0.53"
 serde-aux = "3.0.1"
+tower = { version = "0.4.12", features=["retry", "limit", "timeout"] }
 
 
 [dependencies.sqlx]

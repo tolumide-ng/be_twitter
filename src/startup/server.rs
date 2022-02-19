@@ -2,6 +2,8 @@ use http::Request;
 use hyper::{Server, Client, Body};
 use hyper::service::{make_service_fn, service_fn};
 use hyper_tls::HttpsConnector;
+use tower::ServiceBuilder;
+use std::time::Duration;
 use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
@@ -9,6 +11,8 @@ use redis::{Client as RedisClient};
 use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
 use crate::setup::variables::SettingsVars;
+
+use super::timeout::TimeoutLayer;
 
 type GenericError = hyper::Error;
 
@@ -35,19 +39,28 @@ pub async fn server() {
     let hyper_client = hyper_pool.clone();
     let redis_client= RedisClient::open("redis://127.0.0.1/").expect("Redis connection failed");
     let env_vars = SettingsVars::new();
-    // let hyper_client = redis_client.get_async_connection().await.un
-    // let mgr = ConnectionManager::new(redis_client).await.unwrap();
+
     
     let service = make_service_fn(move|_| {
         let redis = redis_client.clone();
         let client = hyper_client.clone();
         let vars = env_vars.clone();
-        
-        async {
-            Ok::<_, GenericError>(service_fn(move |req| {
+
+        let svc= service_fn(move |req| {
                 let state = AppState::new(vars.clone(), req, client.to_owned(), redis.to_owned());
                 routes(state)
-            }))
+            });
+
+        // let svc = ServiceBuilder::new()
+        //     .layer(TimeoutLayer::new(Duration::new(60, 0)))
+        //     .service(svc).inner;
+        
+        let svc = ServiceBuilder::new()
+            .timeout(Duration::new(5, 0))
+            .service(svc);
+            
+        async {
+            Ok::<_, GenericError>(svc)
         }
     });
 
