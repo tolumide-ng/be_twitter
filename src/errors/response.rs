@@ -95,6 +95,10 @@ pub enum TError {
     UnexpectedError(#[from] anyhow::Error),
     #[error("{0}")]
     ValidationError(String),
+    #[error("SQLX Error")]
+    StoreTokenError(#[from] sqlx::Error),
+    // #[error("")]
+    // PStoreTokenError(#[from] ())
 }
 
 

@@ -22,6 +22,9 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let pkce = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
+
+//    let ab = sqlx::query!(r#"INSERT INTO auth_two(user_id, pkce) VALUES ($1, $2)"#, "", "")
+//         .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
     
     con.set("pkce", &pkce).await?;
 
