@@ -33,7 +33,6 @@ impl Params {
 #[derive(Debug, Clone)]
 pub enum OAuthAddons {
     Callback(String),
-    Verifier(String),
     None,
 }
 
@@ -42,13 +41,6 @@ impl OAuthAddons {
     pub fn with_callback(&self) -> Option<String> {
         match self {
             Self::Callback(url) => Some(url.to_string()),
-            _ => None,
-        }
-    }
-
-    pub fn with_verifier(&self) -> Option<String> {
-        match self {
-            Self::Verifier(v) => Some(v.to_string()),
             _ => None,
         }
     }
@@ -113,8 +105,7 @@ impl OAuth {
             .add_param("oauth_timestamp", self.timestamp.clone())
             .add_param("oauth_version", "1.0")
             .add_opt_param("oauth_token", token.clone().map(|k| k.key.clone()))
-            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k))
-            .add_opt_param("oauth_verifier", self.addons.with_verifier().map(|k| k)); // experiment to see if it works if this isn't included
+            .add_opt_param("oauth_callback", self.addons.with_callback().map(|k| k));
 
         let mut query: Vec<String> = params
             .iter()
@@ -157,9 +148,6 @@ impl OAuth {
         match &self.addons {
             OAuthAddons::Callback(c) => {
                 all_params.push(("oauth_callback".into(), c.into()));
-            }
-            OAuthAddons::Verifier(v) => {
-                all_params.push(("oauth_verifier".into(), v.into()));
             }
             OAuthAddons::None => {}
         }

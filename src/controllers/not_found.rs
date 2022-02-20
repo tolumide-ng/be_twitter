@@ -1,6 +1,6 @@
 use hyper::{StatusCode};
 
-use crate::{helpers::response::{TResult, ApiBody, ResponseBuilder}, app::server::AppState};
+use crate::{helpers::response::{TResult, ApiBody, ResponseBuilder}, startup::server::AppState};
 
 
 pub async fn not_found (_state: AppState) -> TResult<ApiBody> {

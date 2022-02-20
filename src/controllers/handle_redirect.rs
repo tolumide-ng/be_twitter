@@ -1,24 +1,27 @@
 use http::Method;
 use hyper::{StatusCode};
 use redis::{Client as RedisClient};
+use sqlx::{Pool, Postgres};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
-    setup::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, interceptor::handle_request::{Interceptor, V2TokensType}, app::server::AppState
+    configurations::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, 
+    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState
 };
 
 
-async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
     let mut con = redis_client.get_async_connection().await.unwrap();
 
+    let pkce: String = redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?;
 
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), GrantType::Authorization.to_string()),
         ("client_id".to_string(), client_id.clone()),
         ("redirect_uri".to_string(), callback_url),
-        ("code_verifier".to_string(), redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?)
+        ("code_verifier".to_string(), pkce.clone())
     ]).to_urlencode();
 
     let content_type = "application/x-www-form-urlencoded";
@@ -30,6 +33,17 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
     if let Some(map) = Interceptor::v2_tokens(res) {
+        // authentication service user_id would be used to insert here
+        // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
+        // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
+        // sqlx::query!(r#"UPDATE auth_two
+        //     SET access_token=$1, refresh_token=$2
+        //     WHERE pkce=$3"#, 
+        //     &map.get(V2TokensType::Access), &map.get(V2TokensType::Refresh), pkce)
+        //     .execute(&db_client).await.map_err(|e| { 
+        //         // tracing here later
+        //         eprintln!("ERROR ADDING ACCESS TOKEN {:#?}", e)}).unwrap();
+
         redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
         redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
         return Ok(())
@@ -41,11 +55,10 @@ async fn access_token(hyper_client: HyperClient, redis_client: RedisClient, auth
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
-
-    println!("I AM NOW ON THE HANDLE REDIRECT ENDPOINT");
-
-    let AppState {redis, hyper, req, env_vars} = app_state;
+    let AppState {redis, hyper, req, env_vars, ..} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
+
+    
 
     let mut con = redis.get_async_connection().await?;
     
@@ -76,7 +89,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
                     if let Some(map) = params {
                         redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
                         redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut con).await?;
-                        redis::cmd("SET").arg(&["user_id", map.get("user_id").unwrap()]).query_async(&mut con).await?;
+                        redis::cmd("SET").arg(&["userid", map.get("user_id").unwrap()]).query_async(&mut con).await?;
                         
                         return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                     }
@@ -87,15 +100,12 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
         }
         None => {
             // maybe it is a v2 callback
-            println!("MANS SHOULD BE HERE INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
-
-            println!("IS IT A V2 CALLBACK>???????? {:#?}", is_v1_callback);
 
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper.clone(), redis, code).await?;
+                    access_token(hyper.clone(), app_state.db_pool, redis, code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }

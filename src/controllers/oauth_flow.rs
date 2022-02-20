@@ -5,7 +5,7 @@ use crate::{
     helpers::{
         response::{TResult, ApiBody, ResponseBuilder, make_request}, 
         signature::{OAuth, OAuthAddons}, keypair::KeyPair, keyval::KeyVal,
-    }, setup::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, app::server::AppState,
+    }, configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, startup::server::AppState,
 };
 
 
@@ -30,7 +30,7 @@ pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
 
     let res = make_request(request, hyper).await;
 
-    if let Err(e) = res {
+    if let Err(_e) = res {
         return ResponseBuilder::new("Error".into(), Some("Could not setup the user"), 403).reply()
     }
 
@@ -60,7 +60,7 @@ pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
                 ("oauth_token".to_string(), map.get("oauth_token").unwrap().into())
             ]);
             
-            let request = RequestBuilder::new(Method::GET, "https://api.twitter.com/oauth/authorize".into())
+            let request = RequestBuilder::new(Method::GET, format!("{}/oauth/authorize", twitter_url))
                 .add_query_params(query_dict)
                 .build_request();
 

@@ -1,7 +1,8 @@
 use std::fmt;
 use pkce;
 
-#[derive(Debug, Clone, derive_more::From)]
+#[derive(Debug, Clone, derive_more::From, derive_more::Display)]
+#[display(fmt = self.0)]
 pub struct Pkce(String);
 
 impl Pkce {
@@ -24,8 +25,8 @@ impl Pkce {
 
 
 
-impl fmt::Display for Pkce {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
+// impl fmt::Display for Pkce {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         write!(f, "{}", self.0)
+//     }
+// }

@@ -1,7 +1,5 @@
-use std::{collections::HashMap};
-use hyper::{Uri, Client, client::HttpConnector};
+use hyper::{Client, client::HttpConnector};
 use hyper_tls::HttpsConnector;
-use url::Url;
 
 
 pub type HyperClient = Client<HttpsConnector<HttpConnector>>;

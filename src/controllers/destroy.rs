@@ -11,7 +11,7 @@ use crate::{
         }, signature::{
             OAuth, OAuthAddons
         }, keypair::KeyPair
-    }, middlewares::request_builder::{RequestBuilder, AuthType}, setup::variables::SettingsVars, app::server::AppState
+    }, middlewares::request_builder::{RequestBuilder, AuthType}, configurations::variables::SettingsVars, startup::server::AppState
 };
 
 type Ids = HashMap<String, Vec<String>>;

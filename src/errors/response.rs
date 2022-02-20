@@ -1,10 +1,9 @@
-use http::StatusCode;
 use http::status::InvalidStatusCode;
 use serde::{Deserialize, Serialize};
 use thiserror;
 use redis::RedisError;
 use url::ParseError;
-use std::{fmt::{self, Formatter}, collections::HashMap, borrow::Cow};
+use std::{fmt::{self, Formatter}, collections::HashMap};
 use hyper::{Error as HError};
 use serde_json;
 
@@ -95,6 +94,10 @@ pub enum TError {
     UnexpectedError(#[from] anyhow::Error),
     #[error("{0}")]
     ValidationError(String),
+    #[error("SQLX Error")]
+    StoreTokenError(#[from] sqlx::Error),
+    // #[error("")]
+    // PStoreTokenError(#[from] ())
 }
 
 

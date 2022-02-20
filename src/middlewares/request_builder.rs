@@ -1,5 +1,5 @@
 use std::{fmt};
-use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http::header::{CONTENT_TYPE};
 use hyper::{Body, Request, Method};
 
 use crate::helpers::keyval::KeyVal;
@@ -24,12 +24,6 @@ pub enum AuthType {
     #[display(fmt = "Basic")]
     Basic,
 }
-
-// impl fmt::Display for AuthType {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        
-//     }
-// }
 
 impl RequestBuilder {
     pub fn new(method: Method, base_url: String) -> Self {

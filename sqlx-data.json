@@ -1,0 +1,15 @@
+{
+  "db": "PostgreSQL",
+  "0800f283b2e4d898b10b8be8d9ae3e3f07781df7a87e6efb8763ceb1551afc1d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar"
+        ]
+      }
+    },
+    "query": "INSERT INTO auth_two (pkce) VALUES ($1)"
+  }
+}

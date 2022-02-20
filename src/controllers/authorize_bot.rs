@@ -1,7 +1,7 @@
 use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
 
-use crate::app::server::AppState;
+use crate::startup::server::AppState;
 use crate::helpers::response::ApiBody;
 use crate::helpers::{
     response::{TResult},
@@ -9,7 +9,7 @@ use crate::helpers::{
     scope::Scope,
     keyval::KeyVal,
 };
-use crate::setup::{variables::SettingsVars};
+use crate::configurations::{variables::SettingsVars};
 use crate::middlewares::request_builder::RequestBuilder;
 
 
@@ -19,9 +19,14 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let mut con = app_state.redis.get_async_connection().await.unwrap();
     
     
-    let pkce = Pkce::new().to_string();
+    let pkce: String = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
-    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike, Scope::WriteUsers];
+    Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
+
+    // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
+    // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
+    // sqlx::query!(r#"INSERT INTO auth_two (pkce) VALUES ($1)"#, pkce)
+    //     .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
     
     con.set("pkce", &pkce).await?;
 
