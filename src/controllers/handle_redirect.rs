@@ -34,16 +34,18 @@ async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redi
 
     if let Some(map) = Interceptor::v2_tokens(res) {
         // authentication service user_id would be used to insert here
-        sqlx::query!(r#"UPDATE auth_two
-            SET access_token=$1, refresh_token=$2
-            WHERE pkce=$3"#, 
-            &map.get(V2TokensType::Access), &map.get(V2TokensType::Refresh), pkce)
-            .execute(&db_client).await.map_err(|e| { 
-                // tracing here later
-                eprintln!("ERROR ADDING ACCESS TOKEN {:#?}", e)}).unwrap();
+        // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
+        // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
+        // sqlx::query!(r#"UPDATE auth_two
+        //     SET access_token=$1, refresh_token=$2
+        //     WHERE pkce=$3"#, 
+        //     &map.get(V2TokensType::Access), &map.get(V2TokensType::Refresh), pkce)
+        //     .execute(&db_client).await.map_err(|e| { 
+        //         // tracing here later
+        //         eprintln!("ERROR ADDING ACCESS TOKEN {:#?}", e)}).unwrap();
 
-        // redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
-        // redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
+        redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
+        redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
         return Ok(())
     }
 

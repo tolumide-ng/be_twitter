@@ -14,6 +14,7 @@ pub async fn routes(
     state: AppState
 ) -> TResult<ApiBody> {
     // migrate this to [routerify](https://docs.rs/routerify/latest/routerify/) eventually
+    // OR JUST USE procedural attribute macros (so this looks like the way rocket annotates controllers with route properties)
     let req = &state.req;
 
     match (req.method(), req.uri().path(), req.uri().query()) {
