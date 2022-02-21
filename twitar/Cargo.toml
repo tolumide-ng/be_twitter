@@ -37,6 +37,8 @@ tower = { version = "0.4.12", features=["retry", "limit", "timeout"] }
 url = { version = "2.2.2", features = ["serde"] }
 urlencoding = "2.1.0"
 uuid = { version = "0.8.2", features = ["v4"] }
+twitar_macro = { path = "../twitar_macro" }
+twitar_macro_derive = { path = "../twitar_macro_derive" }
 
 
 [dependencies.sqlx]
