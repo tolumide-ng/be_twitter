@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "twitar"
+    "twitar",
+    "twitar_macro",
+    "twitar_macro_derive",
 ]
