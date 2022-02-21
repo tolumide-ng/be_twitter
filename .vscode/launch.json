@@ -1,0 +1,65 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'twitar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=twitar"
+                ],
+                "filter": {
+                    "name": "twitar",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            // "program": "${workspaceFolder}/debug"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'playtweet'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=playtweet",
+                    "--package=twitar"
+                ],
+                "filter": {
+                    "name": "playtweet",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'playtweet'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=playtweet",
+                    "--package=twitar"
+                ],
+                "filter": {
+                    "name": "playtweet",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
