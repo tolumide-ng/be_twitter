@@ -2,19 +2,7 @@ use dotenv::dotenv;
 use serde::Deserialize;
 use std::env;
 
-use crate::helpers::gen_pkce::Pkce;
-
-#[derive(Debug, Clone, Deserialize, derive_more::Display)]
-pub enum AppEnv {
-    #[display(fmt = "local")]
-    Local,
-    #[display(fmt = "test")]
-    Test,
-    #[display(fmt = "staging")]
-    Staging,
-    #[display(fmt = "production")]
-    Production,
-}
+use crate::helpers::{gen_pkce::Pkce, commons::AppEnv};
 
 
 #[derive(Debug, Clone, Deserialize)]
@@ -30,7 +18,7 @@ pub struct SettingsVars {
     pub api_key_secret: String,
     pub client_secret: String,
     pub twitter_url: String,
-    pub app_env: String,
+    pub app_env: AppEnv,
     pub db_host: String,
     pub db_port: u16,
     pub db_username: String,
@@ -69,7 +57,7 @@ impl SettingsVars {
             api_key_secret: Self::get_var("API_KEY_SECRET"),
             client_secret: Self::get_var("CLIENT_SECRET"),
             twitter_url: Self::get_var("TWITTER_API"),
-            app_env: Self::get_var("APP_ENV"),
+            app_env: AppEnv::new(Self::get_var("APP_ENV")),
             db_host: Self::get_var("DB_HOST"),
             db_port: Self::get_var("DB_PORT").parse::<u16>().unwrap(),
             db_username: Self::get_var("DB_USERNAME"),

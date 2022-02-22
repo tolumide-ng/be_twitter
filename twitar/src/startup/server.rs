@@ -11,6 +11,7 @@ use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
 use crate::configurations::db_settings::DatabaseSettings;
+use crate::helpers::commons::AppEnv;
 use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
 use crate::configurations::variables::SettingsVars;
@@ -20,6 +21,7 @@ use crate::configurations::variables::SettingsVars;
 type GenericError = hyper::Error;
 
 
+#[derive(Debug)]
 pub struct AppState {
     pub redis: RedisClient,
     pub hyper: HyperClient,
@@ -28,9 +30,21 @@ pub struct AppState {
     pub db_pool: Pool<Postgres>,
 }
 
+#[derive(Debug, Clone)]
+pub struct LocalAppState {
+    pub redis: RedisClient,
+    pub app_env: AppEnv,
+    pub db_pool: Pool<Postgres>,
+}
+
 impl AppState {
     fn new(env_vars: SettingsVars, req: Request<Body>, hyper: HyperClient, redis: RedisClient, db_pool: Pool<Postgres>) -> Self {
         Self { redis, hyper, req, env_vars, db_pool}
+    }
+
+    pub fn to_local(&self) -> LocalAppState {
+        let app_env = self.env_vars.app_env.clone();
+        LocalAppState { redis: self.redis.clone(), app_env: app_env, db_pool: self.db_pool.clone() }
     }
 }
 
