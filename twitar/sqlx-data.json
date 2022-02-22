@@ -11,5 +11,19 @@
       }
     },
     "query": "INSERT INTO auth_two (pkce) VALUES ($1)"
+  },
+  "31a5da9b895390da875ff36e4cebd34125f3382a01f9ff523fd47a0b5463b610": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE auth_two SET access_token=$1, refresh_token=$2\n                    WHERE pkce=$3"
   }
 }

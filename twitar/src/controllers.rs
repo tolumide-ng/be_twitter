@@ -8,6 +8,7 @@ mod refresh_token;
 mod user_lookup;
 mod destroy;
 mod oauth_flow;
+mod commons;
 
 
 pub use not_found::not_found;

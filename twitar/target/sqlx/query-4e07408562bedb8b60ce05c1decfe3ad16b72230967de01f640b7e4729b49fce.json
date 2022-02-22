@@ -1,0 +1,15 @@
+{
+  "query": "UPDATE auth_two SET access_token=$1, refresh_token=$2\n                            WHERE pkce=$3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9428fd947c6323ab737cddb76eeb1bd4badaf46cb65317eed87fc87b4eeb7e7a"
+}

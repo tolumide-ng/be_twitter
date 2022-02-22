@@ -1,7 +1,7 @@
 use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
 
-use crate::base_repository::base_repository::DBInsert;
+use crate::helpers::commons::AppEnv;
 use crate::startup::server::AppState;
 use crate::helpers::response::ApiBody;
 use crate::helpers::{
@@ -15,21 +15,27 @@ use crate::middlewares::request_builder::RequestBuilder;
 
 
 pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
-    let SettingsVars {client_id, callback_url, state, ..} = app_state.env_vars.clone();
+    let SettingsVars {client_id, callback_url, state, app_env, ..} = app_state.env_vars.clone();
     // store this pkce value in redis for the specific user associated by email
-    // let mut con = app_state.redis.clone().get_async_connection().await.unwrap();
+    let mut con = app_state.redis.get_async_connection().await.unwrap();
     let pkce: String = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
     
-    // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
+    // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env : Won't work :eyes
     // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
-    // sqlx::query!(r#"INSERT INTO auth_two (pkce) VALUES ($1)"#, pkce)
-    //     .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
+    match app_env {
+        AppEnv::Local | AppEnv::Test => {
+            con.set("pkce", &pkce).await?;
+        }
+        AppEnv::Production | AppEnv::Staging => {
+            sqlx::query!(r#"INSERT INTO auth_two (pkce) VALUES ($1)"#, pkce)
+                .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
+        }
+    }
     
-    // con.set("pkce", &pkce).await?;
-    let local_state = app_state.to_local();
-    DBInsert::create("auth_two".into(), vec![("pkce", &pkce)], false).execute(local_state).await;
+    // let local_state = app_state.to_local();
+    // DBInsert::create("auth_two".into(), vec![("pkce", &pkce)], false).execute(local_state).await;
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![
