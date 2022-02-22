@@ -1,6 +1,8 @@
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
 
-use super::variables::{SettingsVars, AppEnv};
+use crate::helpers::commons::AppEnv;
+
+use super::variables::{SettingsVars};
 
 // sqlx::migrate!().run(<&your_pool OR &mut your_connection>).await?;
 
@@ -18,7 +20,7 @@ impl DatabaseSettings {
     pub fn new(vars: SettingsVars) -> Self {
         let mut require_ssl = true;
 
-        if [AppEnv::Local.to_string(), AppEnv::Test.to_string()].contains(&vars.app_env) {
+        if [AppEnv::Local, AppEnv::Test].contains(&vars.app_env) {
             require_ssl = false;
         }
 

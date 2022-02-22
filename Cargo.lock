@@ -1840,6 +1840,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "tower",
+ "twitar_macro",
+ "twitar_macro_derive",
  "url",
  "urlencoding",
  "uuid",
