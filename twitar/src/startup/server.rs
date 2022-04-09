@@ -80,7 +80,6 @@ pub async fn server() {
 
 
 pub fn get_pool(config: DatabaseSettings) -> PgPool {
-    println!("THE CONFIG WITH DB {:#?}", config.with_db());
     PgPoolOptions::new()
         .connect_timeout(Duration::from_secs(2))
         .connect_lazy_with(config.with_db())

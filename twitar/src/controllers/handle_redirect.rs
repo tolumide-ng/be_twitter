@@ -60,17 +60,17 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
 
     
 
-    let mut con = redis.get_async_connection().await?;
+    let mut conn = redis.get_async_connection().await?;
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
 
     match is_v1_callback {
          Some(k) => {
-            let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut con).await?;
+            let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut conn).await?;
             if k.validate("oauth_token".into(),oauth_token.clone()) {
                 let verifier = k.get("oauth_verifier").unwrap();
-                redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut con).await?;
+                redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut conn).await?;
 
                 let target = format!("{}/oauth/access_token", twitter_url);
 
@@ -87,9 +87,9 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
                     let params = KeyVal::string_to_keyval(body_string);
 
                     if let Some(map) = params {
-                        redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut con).await?;
-                        redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut con).await?;
-                        redis::cmd("SET").arg(&["userid", map.get("user_id").unwrap()]).query_async(&mut con).await?;
+                        redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut conn).await?;
+                        redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut conn).await?;
+                        redis::cmd("SET").arg(&["userid", map.get("user_id").unwrap()]).query_async(&mut conn).await?;
                         
                         return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                     }

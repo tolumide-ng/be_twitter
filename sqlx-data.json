@@ -1,0 +1,23 @@
+{
+  "db": "PostgreSQL",
+  "cac8d792ab60596a07bd60aa3de7703a3fb176036f2d9937023c0f3c7f392cf8": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "INSERT INTO auth_two (user_id) VALUES ($1) RETURNING user_id"
+  }
+}
