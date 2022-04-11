@@ -13,25 +13,9 @@ use crate::{
         }, keypair::KeyPair
     }, middlewares::request_builder::{RequestBuilder, AuthType}, configurations::variables::SettingsVars, startup::server::AppState
 };
+use crate::helpers::db::{TweetType};
 
 type Ids = HashMap<String, Vec<String>>;
-
-#[derive(Clone, Debug, PartialEq, Copy)]
-pub enum TweetType {
-    Tweets,
-    Rts,
-    Likes,
-}
-
-impl std::fmt::Display for TweetType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Tweets => write!(f, "tweets"),
-            Self::Rts => write!(f, "rts"),
-            Self::Likes => write!(f, "likes"),
-        }
-    }
-}
 
 
 const MAX_SINGLE_DELETES: usize = 50;
@@ -45,8 +29,6 @@ impl PostIds {
     pub fn parse(s: Ids) -> Self {
         let received_keys = s.keys().cloned().collect::<Vec<String>>();
         let expected_keys = [TweetType::Rts, TweetType::Tweets, TweetType::Likes];
-
-        println!("::::::::::::::::::::::::::::::::::::::::::::::::");
 
         if received_keys.contains(&TweetType::Rts.to_string()) && received_keys.contains(&&TweetType::Tweets.to_string()) {
             let total_rts = s.get(&TweetType::Rts.to_string()).unwrap().len();

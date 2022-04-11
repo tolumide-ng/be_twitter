@@ -9,12 +9,18 @@ use crate::{
     middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState
 };
 
-use super::destroy::TweetType;
+use crate::helpers::db::{TweetType};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum TimelineBody {
     Data(Vec<String>),
     Meta(HashMap<String, String>)
+}
+
+impl TimelineBody {
+    pub fn get(&self) {
+        // let ab = self.0;
+    }
 }
 
 
@@ -99,6 +105,60 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
             }
         }
     }).await;
+
+    // take tweets/rts/likes in vectors of 10s or less and save them on the db
+    // format data to save it on the database
+    let all = res_body.clone();
+    let read_all = all.read().unwrap();
+    let mut tweets: Vec<&Vec<String>> = vec![];
+    let mut rts: Vec<&Vec<String>> = vec![];
+    let mut likes: Vec<&Vec<String>> = vec![];
+    let tweet_types = vec![TweetType::Rts, TweetType::Tweets, TweetType::Likes];
+    const MULTIPLES_OF_TEN: usize = 10;
+
+    for tweet_type in tweet_types {
+        let mut map = &*read_all.get(&tweet_type.to_string()).unwrap();
+        println!("..........>>>>>>>>>>>>>>........>>>>>>>>>......>>>>>>>>>>>>>>> {:#?}", map);
+        
+        
+        if let TimelineBody::Data(data) = map {
+            // we intend to save the ids in an array of 10 ids
+            let mut times: usize = data.len()/MULTIPLES_OF_TEN;
+            let mut is_multiple = false;
+            let mut current = 0;
+            
+            // let mut ids: &Vec<String> = &Vec::with_capacity(10);
+
+            if times * MULTIPLES_OF_TEN != data.len() {
+                // the extra time to get the remainder < 10 into the db
+                times += 1;
+                is_multiple = true;
+            }
+
+            loop {
+                times -= 1;
+                let ids = &data[current..11].to_vec();
+                match tweet_type {
+                    TweetType::Rts => { 
+                        // 
+                     }
+                    TweetType::Tweets => {}
+                    TweetType::Likes => {}
+                }
+                break;
+            }
+
+
+
+            // for ids in 0..times + is_multiples_of_ten {
+            //     if is_multiples_of_ten == 1 && ids == data.len() - 1 {
+
+            //     } else {
+            //         // let new: Vec<_> = data.splice(0.., vec![]).collect();
+            //     }
+            // }
+        }
+    }
 
     ResponseBuilder::new("Ok".into(), Some(res_body), StatusCode::OK.as_u16()).reply()
 }
