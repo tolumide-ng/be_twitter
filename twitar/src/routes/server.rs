@@ -24,7 +24,7 @@ pub async fn routes(
         (&Method::POST, "/revoke", _) => revoke_token(state).await,
         (&Method::GET, "/refresh", _) => refresh_token(state).await,
         (&Method::GET, "/user", _x) => user_lookup(state).await,
-        (&Method::GET, "/timeline", _x) => get_timeline(state).await,
+        (&Method::GET, "/timeline", user_id) => get_timeline(&state, user_id).await,
         (&Method::POST, "/remove", _) => handle_delete(state).await,
         (&Method::GET, "/oauth1", _) => request_token(state).await,
         _ => {

@@ -1,5 +1,8 @@
-use sqlx::{Pool, Postgres};
+use anyhow::Context;
+use sqlx::{Pool, Postgres, Transaction};
 use uuid::Uuid;
+
+use crate::{helpers::{db::{AllTweetIds, TweetType, TweetIds}, response::TResult, commons::UserId}, errors::response::TError};
 
 #[derive(Debug)]
 pub struct DbAuth2;
@@ -33,4 +36,45 @@ impl DbAuth2 {
         }
         // 
     }
+
+    pub async fn insert_tweet_ids<'a>(pool: &Pool<Postgres>, user_id: Uuid, all_tweets: AllTweetIds<'a>) -> TResult<()> {
+        let mut transaction = pool.begin().await.context("Unable to acquire db pool connection")?;
+
+        let original_tweets = all_tweets.get_tweets();
+        DbAuth2::save_ids(&mut transaction, original_tweets, user_id, TweetType::Tweets).await?;
+        let likes = all_tweets.get_likes();
+        DbAuth2::save_ids(&mut transaction, likes, user_id, TweetType::Likes).await?;
+        let rts = all_tweets.get_rts();
+        DbAuth2::save_ids(&mut transaction, rts, user_id, TweetType::Rts).await?;
+
+        transaction.commit().await.context("Failed to commit SQL transaction to save all tweet ids")?;
+
+
+        Ok(())
+    }
+
+    async fn save_ids<'a>(transaction: &mut Transaction<'_, Postgres>, ids: &TweetIds<'a>, user_id: Uuid, tweet_type: TweetType) -> TResult<()>{
+        for id_vec in ids {
+            let the_ids: Vec<&str> = id_vec.iter().map( |x| {x.as_str()}).collect();
+            sqlx::query(r#"INSERT INTO play_tweets (user_id, tweet_type, tweet_ids) VALUES ($1, $2, $3)"#)
+                .bind(user_id)
+                .bind(tweet_type)
+                .bind(the_ids)
+                .execute(&mut *transaction).await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn user_exists(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<bool> {
+        let res = sqlx::query(r#"SELECT * FROM auth_two WHERE (user_id = $1)"#)
+            .bind(user_id.to_string())
+            .fetch_optional(pool).await;
+        
+        match res {
+            Ok(exists) => {Ok(exists.is_some())}
+            Err(e) => { Err(TError::DatabaseError(e))}
+        }
+    }
+
 }

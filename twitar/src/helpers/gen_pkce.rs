@@ -1,4 +1,3 @@
-use std::fmt;
 use pkce;
 
 #[derive(Debug, Clone, derive_more::From, derive_more::Display)]

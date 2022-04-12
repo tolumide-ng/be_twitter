@@ -95,7 +95,11 @@ pub enum TError {
     #[error("{0}")]
     ValidationError(String),
     #[error("SQLX Error")]
-    StoreTokenError(#[from] sqlx::Error),
+    DatabaseError(#[from] sqlx::Error),
+    #[error("{0}")]
+    InvalidUserId(&'static str),
+    #[error("Error parsing Uuid")]
+    UuidError(#[from] uuid::Error)
     // #[error("")]
     // PStoreTokenError(#[from] ())
 }

@@ -2,14 +2,16 @@ use std::{collections::HashMap, sync::{Arc, RwLock}};
 use hyper::{StatusCode, Method};
 use futures::{stream, StreamExt};
 use serde::{Serialize, Deserialize};
+use sqlx::{Pool, Postgres};
 use tokio;
+use uuid::Uuid;
 
 use crate::{
-    helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, 
-    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState
+    helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}, commons::UserId}, 
+    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::oauth_2::DbAuth2, errors::response::TError
 };
 
-use crate::helpers::db::{TweetType};
+use crate::helpers::db::{TweetType, AllTweetIds, TweetIds};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum TimelineBody {
@@ -26,8 +28,12 @@ impl TimelineBody {
 
 const MAX_TWEETS: &'static str = "100";
 
-pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, env_vars, ..} = app_state;
+
+pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResult<ApiBody> {
+    // parse the user_id
+    UserId::parse(user_id)?;
+
+    let AppState {redis, hyper, env_vars, db_pool, ..} = app_state;
     let SettingsVars { twitter_url, ..} = env_vars;
     
     let mut con = redis.get_async_connection().await?;
@@ -106,15 +112,12 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
         }
     }).await;
 
-    // take tweets/rts/likes in vectors of 10s or less and save them on the db
-    // format data to save it on the database
-    let all_tweets = res_body.clone();
-    let read_all = all_tweets.read().unwrap();
-    let mut tweets: Vec<Vec<&String>> = vec![];
-    let mut rts: Vec<Vec<&String>> = vec![];
-    let mut likes: Vec<Vec<&String>> = vec![];
+    let read_all = Arc::try_unwrap(res_body).unwrap().into_inner().unwrap();
+    let mut tweets: TweetIds = vec![];
+    let mut rts: TweetIds = vec![];
+    let mut likes: TweetIds = vec![];
 
-    let tweet_types = vec![TweetType::Rts, TweetType::Tweets, TweetType::Likes];
+    let tweet_types = TweetType::get_all_as_vec();
 
 
     for tweet_type in tweet_types {
@@ -139,9 +142,18 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
         }
     }
 
-    println!("ALL THE LIKES IDS!!!!!!!! {:#?}", likes);
+    let formatted_ids = AllTweetIds::new(tweets, rts, likes);
 
-    ResponseBuilder::new("Ok".into(), Some(res_body), StatusCode::OK.as_u16()).reply()
+    // let mut transaction = db_pool.begin().await.context("Failed to acquire Postgres connection")?;
+    // std::thread::spawn(|| async {
+    // });
+    
+    let fake_user_id = Uuid::new_v4();
+    DbAuth2::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
+    // AB::talk(&db_pool, formatted_ids);
+    // tokio::spawn(async move {
+    // });
+
+    ResponseBuilder::new("Ok".into(), Some("res_body"), StatusCode::OK.as_u16()).reply()
 }
-
 
