@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{helpers::{db::{AllTweetIds, TweetType, TweetIds}, response::TResult, commons::UserId}, errors::response::TError};
 
 #[derive(Debug)]
-pub struct DbAuth2;
+pub struct DB;
 
 #[derive(Debug)]
 pub struct AuthUser2 {
@@ -17,7 +17,7 @@ pub struct AuthUser2 {
 }
 
 
-impl DbAuth2 {
+impl DB {
     pub async fn add_user(pool: &Pool<Postgres>, user_id: Uuid) {
         let user = sqlx::query!(r#"INSERT INTO auth_two (user_id) VALUES ($1) RETURNING user_id"#, user_id).fetch_one(pool).await;
 
@@ -42,11 +42,11 @@ impl DbAuth2 {
         let mut transaction = pool.begin().await.context("Unable to acquire db pool connection")?;
 
         let original_tweets = all_tweets.get_tweets();
-        DbAuth2::save_ids(&mut transaction, original_tweets, user_id, TweetType::Tweets).await?;
+        DB::save_ids(&mut transaction, original_tweets, user_id, TweetType::Tweets).await?;
         let likes = all_tweets.get_likes();
-        DbAuth2::save_ids(&mut transaction, likes, user_id, TweetType::Likes).await?;
+        DB::save_ids(&mut transaction, likes, user_id, TweetType::Likes).await?;
         let rts = all_tweets.get_rts();
-        DbAuth2::save_ids(&mut transaction, rts, user_id, TweetType::Rts).await?;
+        DB::save_ids(&mut transaction, rts, user_id, TweetType::Rts).await?;
 
         transaction.commit().await.context("Failed to commit SQL transaction to save all tweet ids")?;
 

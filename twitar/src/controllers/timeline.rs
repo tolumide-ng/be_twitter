@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::{
     helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}, commons::UserId}, 
-    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::oauth_2::DbAuth2, errors::response::TError
+    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::DB, errors::response::TError
 };
 
 use crate::helpers::db::{TweetType, AllTweetIds, TweetIds};
@@ -30,12 +30,12 @@ pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResul
     let mut con = redis.get_async_connection().await?;
 
     // let user_id: String = redis::cmd("GET").arg(&["userid"]).query_async(&mut con).await?;
-    
+
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let get_url = |path: &'static str| -> RequestBuilder {
         RequestBuilder::new
-        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user_id, path))
+        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user_id.unwrap(), path))
         .with_auth(AuthType::Bearer, access_token.clone())
     };
 
@@ -138,7 +138,7 @@ pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResul
 
     // let mut transaction = db_pool.begin().await.context("Failed to acquire Postgres connection")?;
     let fake_user_id = Uuid::new_v4();
-    DbAuth2::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
+    DB::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
 
     ResponseBuilder::new("Ok".into(), Some("Success"), StatusCode::OK.as_u16()).reply()
 }

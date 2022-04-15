@@ -15,5 +15,5 @@ pub struct Db {}
 
 pub enum DbType {
     Redis(Client),
-    Postgres(&Pool<Potsgres>),
+    Postgres(Pool<Postgres>),
 }

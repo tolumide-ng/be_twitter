@@ -1,7 +1,7 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use crate::{errors::response::TError, base_repository::oauth_2::DbAuth2};
+use crate::{errors::response::TError, base_repository::db::DB};
 
 use super::response::TResult;
 
@@ -35,7 +35,7 @@ impl UserId {
     }
 
     pub async fn verify(user_id: Uuid, pool: &Pool<Postgres>) -> TResult<Self> {
-        let user_exists = DbAuth2::user_exists(pool, user_id).await?;
+        let user_exists = DB::user_exists(pool, user_id).await?;
 
         if let Some(user) = user_exists {
             return Ok(Self(user_id))
@@ -45,7 +45,7 @@ impl UserId {
     }
 
     pub async fn can_use_v2(user_id: Uuid, pool: &Pool<Postgres>) -> TResult<Self> {
-        let user = DbAuth2::user_exists(pool, user_id).await?;
+        let user = DB::user_exists(pool, user_id).await?;
 
         if let Some(exact_user) = user {
             // if exact_user.access_token.is_some() && exact_user.pkce && exact_user.refresh_token {}
