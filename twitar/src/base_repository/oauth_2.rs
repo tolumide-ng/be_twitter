@@ -8,11 +8,12 @@ use crate::{helpers::{db::{AllTweetIds, TweetType, TweetIds}, response::TResult,
 pub struct DbAuth2;
 
 #[derive(Debug)]
-pub struct Auth2 {
+pub struct AuthUser2 {
     user_id: Uuid,
-    pkce: String,
-    access_token: String,
-    refresh_token: String,
+    twitter_user_id: Option<String>,
+    pkce: Option<String>,
+    access_token: Option<String>,
+    refresh_token: Option<String>,
 }
 
 
@@ -66,15 +67,22 @@ impl DbAuth2 {
         Ok(())
     }
 
-    pub async fn user_exists(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<bool> {
-        let res = sqlx::query(r#"SELECT * FROM auth_two WHERE (user_id = $1)"#)
-            .bind(user_id.to_string())
-            .fetch_optional(pool).await;
-        
-        match res {
-            Ok(exists) => {Ok(exists.is_some())}
-            Err(e) => { Err(TError::DatabaseError(e))}
+    pub async fn user_exists(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<AuthUser2>> {
+        let user = sqlx::query_as!(
+            AuthUser2, 
+            r#"SELECT * FROM auth_two WHERE (user_id = $1)"#, user_id
+        )
+            .fetch_one(pool)
+            .await;
+
+        if let Err(e) = user {
+            return match e {
+                RowNotFound => Ok(None),
+                _ => {Err(TError::DatabaseError(e))}
+            }
         }
+
+        Ok(Some(user.unwrap()))
     }
 
 }

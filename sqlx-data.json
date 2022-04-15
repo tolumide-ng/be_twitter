@@ -1,5 +1,49 @@
 {
   "db": "PostgreSQL",
+  "3e9983edda5b0573d4d657d428d62a8cc4a13d7fc56987ed2e6ee092d067c369": {
+    "describe": {
+      "columns": [
+        {
+          "name": "user_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "twitter_user_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "pkce",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "access_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM auth_two WHERE (user_id = $1)"
+  },
   "cac8d792ab60596a07bd60aa3de7703a3fb176036f2d9937023c0f3c7f392cf8": {
     "describe": {
       "columns": [

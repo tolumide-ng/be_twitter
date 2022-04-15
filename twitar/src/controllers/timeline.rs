@@ -2,7 +2,6 @@ use std::{collections::HashMap, sync::{Arc, RwLock}};
 use hyper::{StatusCode, Method};
 use futures::{stream, StreamExt};
 use serde::{Serialize, Deserialize};
-use sqlx::{Pool, Postgres};
 use tokio;
 use uuid::Uuid;
 
@@ -19,18 +18,9 @@ enum TimelineBody {
     Meta(HashMap<String, String>)
 }
 
-impl TimelineBody {
-    pub fn get(&self) {
-        // let ab = self.0;
-    }
-}
-
-
 const MAX_TWEETS: &'static str = "100";
 
-
 pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResult<ApiBody> {
-    // parse the user_id
     UserId::parse(user_id)?;
 
     let AppState {redis, hyper, env_vars, db_pool, ..} = app_state;
@@ -145,15 +135,9 @@ pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResul
     let formatted_ids = AllTweetIds::new(tweets, rts, likes);
 
     // let mut transaction = db_pool.begin().await.context("Failed to acquire Postgres connection")?;
-    // std::thread::spawn(|| async {
-    // });
-    
     let fake_user_id = Uuid::new_v4();
     DbAuth2::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
-    // AB::talk(&db_pool, formatted_ids);
-    // tokio::spawn(async move {
-    // });
 
-    ResponseBuilder::new("Ok".into(), Some("res_body"), StatusCode::OK.as_u16()).reply()
+    ResponseBuilder::new("Ok".into(), Some("Success"), StatusCode::OK.as_u16()).reply()
 }
 
