@@ -8,7 +8,14 @@ use crate::{helpers::{db::{AllTweetIds, TweetType, TweetIds}, response::TResult,
 pub struct DB;
 
 #[derive(Debug)]
-pub struct AuthUser2 {
+pub struct AuthUser {
+    pub user_id: Uuid,
+    pub v1_active: bool,
+    pub v2_active: bool,
+}
+
+pub struct V2User {
+    pub id: i32,
     pub user_id: Uuid,
     pub twitter_user_id: Option<String>,
     pub pkce: Option<String>,
@@ -67,9 +74,27 @@ impl DB {
         Ok(())
     }
 
-    pub async fn user_exists(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<AuthUser2>> {
+    pub async fn user_exists(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<AuthUser>> {
         let user = sqlx::query_as!(
-            AuthUser2, 
+            AuthUser, 
+            r#"SELECT * FROM user_preference WHERE (user_id = $1)"#, user_id
+        )
+            .fetch_one(pool)
+            .await;
+
+        if let Err(e) = user {
+            return match e {
+                RowNotFound => Ok(None),
+                _ => {Err(TError::DatabaseError(e))}
+            }
+        }
+
+        Ok(Some(user.unwrap()))
+    }
+
+    pub async fn v2_user(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<V2User>> {
+        let user = sqlx::query_as!(
+            V2User, 
             r#"SELECT * FROM auth_two WHERE (user_id = $1)"#, user_id
         )
             .fetch_one(pool)

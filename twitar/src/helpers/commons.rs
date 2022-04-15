@@ -1,7 +1,7 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use crate::{errors::response::TError, base_repository::db::DB};
+use crate::{errors::response::TError, base_repository::db::{DB, AuthUser, V2User}};
 
 use super::response::TResult;
 
@@ -25,32 +25,31 @@ impl std::fmt::Display for GrantType {
 pub struct UserId(#[display(fmt = "0")] Uuid,);
 
 impl UserId {
-    pub fn parse(input: Option<&str>) -> TResult<Uuid> {
+    pub fn parse(input: Option<&str>) -> TResult<Self> {
         if let Some(id) = input {
             let user_id = Uuid::parse_str(id)?;
-            return Ok(user_id)
+            return Ok(Self(user_id))
         }
         
         Err(TError::InvalidUserId("User id is not present"))
     }
 
-    pub async fn verify(user_id: Uuid, pool: &Pool<Postgres>) -> TResult<Self> {
-        let user_exists = DB::user_exists(pool, user_id).await?;
+    pub async fn verify(&self, pool: &Pool<Postgres>) -> TResult<AuthUser> {
+        let user_exists = DB::user_exists(pool, self.0).await?;
 
         if let Some(user) = user_exists {
-            return Ok(Self(user_id))
+            return Ok(user)
         }
 
         return Err(TError::InvalidUserId("User does not exist"))
     }
 
-    pub async fn can_use_v2(user_id: Uuid, pool: &Pool<Postgres>) -> TResult<Self> {
-        let user = DB::user_exists(pool, user_id).await?;
+    pub async fn v2_credentials(&self, pool: &Pool<Postgres>) -> TResult<V2User> {
+        let user = DB::v2_user(pool, self.0).await?;
 
-        if let Some(exact_user) = user {
-            // if exact_user.access_token.is_some() && exact_user.pkce && exact_user.refresh_token {}
+        if let Some(credentials) = user {
+            return Ok(credentials)
         }
-
-        return Ok(Self(user_id))
+        return Err(TError::InvalidUserId("User dpes not exist"))
     }
 }
