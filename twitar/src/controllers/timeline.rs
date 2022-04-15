@@ -21,6 +21,7 @@ enum TimelineBody {
 const MAX_TWEETS: &'static str = "100";
 
 pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResult<ApiBody> {
+    // have a middleware instead to check if the user_id is valid and if the user has authenticated with oauth_1 and oauth_2
     UserId::parse(user_id)?;
 
     let AppState {redis, hyper, env_vars, db_pool, ..} = app_state;
@@ -28,7 +29,8 @@ pub async fn get_timeline(app_state: &AppState, user_id: Option<&str>) -> TResul
     
     let mut con = redis.get_async_connection().await?;
 
-    let user_id: String = redis::cmd("GET").arg(&["userid"]).query_async(&mut con).await?;
+    // let user_id: String = redis::cmd("GET").arg(&["userid"]).query_async(&mut con).await?;
+    
     let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
 
     let get_url = |path: &'static str| -> RequestBuilder {

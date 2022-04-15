@@ -9,11 +9,11 @@ pub struct DbAuth2;
 
 #[derive(Debug)]
 pub struct AuthUser2 {
-    user_id: Uuid,
-    twitter_user_id: Option<String>,
-    pkce: Option<String>,
-    access_token: Option<String>,
-    refresh_token: Option<String>,
+    pub user_id: Uuid,
+    pub twitter_user_id: Option<String>,
+    pub pkce: Option<String>,
+    pub access_token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 
