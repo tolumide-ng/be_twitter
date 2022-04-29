@@ -1,6 +1,7 @@
 use hyper::{Method, Body, Response};
 use redis::{AsyncCommands};
 
+use crate::base_repository::db::DB;
 use crate::startup::server::AppState;
 use crate::helpers::response::ApiBody;
 use crate::helpers::{
@@ -14,10 +15,7 @@ use crate::middlewares::request_builder::RequestBuilder;
 
 
 pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
-    let SettingsVars {client_id, callback_url, state, ..} = app_state.env_vars;
-    // store this pkce value in redis for the specific user associated by email
-    let mut con = app_state.redis.get_async_connection().await.unwrap();
-    
+    let SettingsVars {client_id, callback_url, state, ..} = app_state.env_vars;    
     
     let pkce: String = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
@@ -28,7 +26,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     // sqlx::query!(r#"INSERT INTO auth_two (pkce) VALUES ($1)"#, pkce)
     //     .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
     
-    con.set("pkce", &pkce).await?;
+    DB::update_pkce(&app_state.db_pool, &pkce).await?;
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![

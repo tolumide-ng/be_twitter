@@ -34,15 +34,12 @@ impl DB {
         // 
     }
 
-    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: String) {
-        let res = sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user=$2 RETURNING *"#)
+    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: &str) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user=$2 RETURNING *"#)
             .bind(pkce)
-            .execute(&*pool).await;
+            .execute(&*pool).await?;
 
-        if let Err(e) = res {
-            // 
-        }
-        // 
+        Ok(())
     }
 
     pub async fn insert_tweet_ids<'a>(pool: &Pool<Postgres>, user_id: Uuid, all_tweets: AllTweetIds<'a>) -> TResult<()> {
@@ -109,5 +106,4 @@ impl DB {
 
         Ok(Some(user.unwrap()))
     }
-
 }
