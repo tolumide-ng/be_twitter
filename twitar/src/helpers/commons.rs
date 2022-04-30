@@ -50,6 +50,15 @@ impl UserId {
         if let Some(credentials) = user {
             return Ok(credentials)
         }
-        return Err(TError::InvalidUserId("User dpes not exist"))
+        return Err(TError::InvalidUserId("User does not exist"))
     }
+
+    // pub async fn v1_credentials(&self, pool: &Pool<Postgres>) -> TResult<V1User> {
+    //     let user = DB::v1_user(pool, self.0).await?;
+
+    //     if let Some(credentials) = user {
+    //         return Ok(credentials)
+    //     }
+    //     return Err(TError::InvalidUserId("User does not exist"))
+    // }
 }

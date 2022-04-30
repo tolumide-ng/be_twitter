@@ -10,7 +10,7 @@ use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
-use crate::base_repository::db::{AuthUser, V2User};
+use crate::base_repository::db::{AuthUser, V1User, V2User};
 use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
 use crate::routes::server::Routes;
@@ -30,15 +30,14 @@ type GenericError = hyper::Error;
 #[derive(Debug)]
 pub struct CurrentUser {
     pub basic: AuthUser,
-    // v1_user: 
     pub v2_user: V2User,
 }
 
 impl CurrentUser {
-    pub fn new(basic: AuthUser, v2_user: V2User
-    ) -> Self {
+    pub fn new(basic: AuthUser, v2_user: V2User) -> Self {
         Self {
             basic,
+            // v1_user,
             v2_user,
         }
     }

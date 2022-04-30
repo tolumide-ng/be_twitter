@@ -24,6 +24,16 @@ pub struct V2User {
     pub refresh_token: Option<String>,
 }
 
+#[derive(Debug)]
+pub struct V1User {
+    pub id: i32,
+    pub user_id: Uuid,
+    pub twitter_user_id: Option<String>,
+    pub oauth_token: String,
+    pub oauth_secret: String,
+    pub oauth_verifier: String,
+}
+
 
 impl DB {
     pub async fn add_user(pool: &Pool<Postgres>, user_id: Uuid) {
@@ -107,4 +117,22 @@ impl DB {
 
         Ok(Some(user.unwrap()))
     }
+
+    // pub async fn v1_user(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<V1User>> {
+    //     let user = sqlx::query_as!(
+    //         V1User,
+    //         r#"SELECT * FROM auth_one WHERE (user_id = $1)"#, user_id
+    //     )
+    //         .fetch_one(pool)
+    //         .await;
+
+    //     if let Err(e) = user {
+    //         return match e {
+    //             RowNotFound => Ok(None),
+    //             _ => {Err(TError::DatabaseError(e))}
+    //         }
+    //     }
+
+    //     Ok(Some(user.unwrap()))
+    // }
 }
