@@ -13,7 +13,7 @@ use redis::{Client as RedisClient};
 use crate::base_repository::db::{AuthUser, V2User};
 use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
-use crate::routes::server::routes;
+use crate::routes::server::Routes;
 use crate::configurations::variables::SettingsVars;
 
 // use super::timeout::TimeoutLayer;
@@ -27,6 +27,7 @@ type GenericError = hyper::Error;
 //     // All(AuthUser, V2User)
 // }
 
+#[derive(Debug)]
 pub struct CurrentUser {
     pub basic: AuthUser,
     // v1_user: 
@@ -44,6 +45,7 @@ impl CurrentUser {
 }
 
 
+#[derive(Debug)]
 pub struct AppState {
     pub redis: RedisClient,
     pub db_pool: Pool<Postgres>,
@@ -58,8 +60,12 @@ impl AppState {
         Self { redis, hyper, req, env_vars, db_pool, user: None}
     }
 
-    pub fn with_user(state: AppState, user: CurrentUser) -> Self {
-        Self {user: Some(user), ..state}
+    pub fn with_user(&mut self, user: CurrentUser) {
+        self.user = Some(user);
+    }
+
+    pub fn add_user(state: Self, user: CurrentUser) -> Self {
+        Self { user: Some(user), ..state }
     }
 }
 
@@ -85,12 +91,8 @@ pub async fn server() {
                 let state = AppState::new(vars.clone(), 
                     req, client.to_owned(), redis.to_owned(), db_pool.to_owned());
                 
-                routes(state)
+                Routes::wrapper(state)
             });
-
-        // let svc = ServiceBuilder::new()
-        //     .layer(TimeoutLayer::new(Duration::new(60, 0)))
-        //     .service(svc).inner;
         
         let svc = ServiceBuilder::new()
             .timeout(Duration::new(45, 0))

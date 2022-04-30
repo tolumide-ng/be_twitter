@@ -20,11 +20,6 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let pkce: String = Pkce::new().to_string();
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
-
-    // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
-    // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
-    // sqlx::query!(r#"INSERT INTO auth_two (pkce) VALUES ($1)"#, pkce)
-    //     .execute(&app_state.db_pool).await.map_err(|e| {eprintln!("ERROR ADDING PKCE {:#?}", e)}).unwrap();
     
     DB::update_pkce(&app_state.db_pool, &pkce).await?;
 

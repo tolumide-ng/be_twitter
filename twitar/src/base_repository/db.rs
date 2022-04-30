@@ -14,6 +14,7 @@ pub struct AuthUser {
     pub v2_active: bool,
 }
 
+#[derive(Debug)]
 pub struct V2User {
     pub id: i32,
     pub user_id: Uuid,
