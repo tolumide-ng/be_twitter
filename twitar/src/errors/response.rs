@@ -99,7 +99,11 @@ pub enum TError {
     #[error("{0}")]
     InvalidUserId(&'static str),
     #[error("Error parsing Uuid")]
-    UuidError(#[from] uuid::Error)
+    UuidError(#[from] uuid::Error),
+    #[error("Unauthenticated: {0}")]
+    Unauthenticated(&'static str),
+    #[error("Unauthorized")]
+    Forbidden(String)
     // #[error("")]
     // PStoreTokenError(#[from] ())
 }

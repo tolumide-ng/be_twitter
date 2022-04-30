@@ -58,8 +58,8 @@ impl AppState {
         Self { redis, hyper, req, env_vars, db_pool, user: None}
     }
 
-    pub fn with_user(self, user: CurrentUser) -> Self {
-        Self {user: Some(user), ..self}
+    pub fn with_user(state: AppState, user: CurrentUser) -> Self {
+        Self {user: Some(user), ..state}
     }
 }
 
@@ -84,6 +84,7 @@ pub async fn server() {
         let svc= service_fn(move |req| {
                 let state = AppState::new(vars.clone(), 
                     req, client.to_owned(), redis.to_owned(), db_pool.to_owned());
+                
                 routes(state)
             });
 
