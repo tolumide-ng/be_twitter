@@ -22,24 +22,20 @@ const MAX_TWEETS: &'static str = "100";
 
 pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     
-    let AppState {redis, hyper, env_vars, db_pool, req, ..} = app_state;
+    let AppState {hyper, env_vars, db_pool, req, user, ..} = app_state;
     let user_id = req.uri().query();
-    let user = UserId::parse(user_id)?.verify(&db_pool).await?;
+    // let user = UserId::parse(user_id)?.verify(&db_pool).await?;
     // have a middleware instead to check if the user_id is valid and if the user has authenticated with oauth_1 and oauth_2
     let SettingsVars { twitter_url, ..} = env_vars;
 
-    let v2_credentials = UserId::parse(user_id)?.v2_credentials(&db_pool).await?;
+    // let v2_credentials = UserId::parse(user_id)?.v2_credentials(&db_pool).await?;
 
-    let access_token = v2_credentials.access_token.unwrap();
+    let user = user.unwrap().v2_user;
     
-    // let mut con = redis.get_async_connection().await?;
-
-    // let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
-
     let get_url = |path: &'static str| -> RequestBuilder {
         RequestBuilder::new
         (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user.user_id, path))
-        .with_auth(AuthType::Bearer, access_token.clone())
+        .with_auth(AuthType::Bearer, user.access_token.clone().unwrap())
     };
 
     let requests = vec![TweetType::Tweets, TweetType::Likes];

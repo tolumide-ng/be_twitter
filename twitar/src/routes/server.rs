@@ -1,7 +1,8 @@
 use hyper::{Method};
 
 use crate::helpers::commons::UserId;
-use crate::startup::server::AppState;
+use crate::helpers::request::req_query;
+use crate::startup::server::{AppState, CurrentUser};
 use crate::helpers::response::{ApiBody};
 use crate::{helpers::response::TResult};
 use crate::controllers::{not_found, authorize_bot, 
@@ -42,6 +43,17 @@ pub async fn routes(
     let req = &state.req;
 
     // CREATE THE MIDDLEWARE AS A MACRO??
+    let protected_paths = ["/timeline"];
+
+    if protected_paths.contains(&req.uri().path()) {
+        let query = req.uri().query();
+        let user_id = req_query(query, "user_id");
+        let parsed_user_id = UserId::parse(user_id)?;
+        let auth_user = parsed_user_id.verify(&state.db_pool).await?;
+        let v2_credentials = parsed_user_id.v2_credentials(&state.db_pool).await?;
+        let user_credentials = CurrentUser::new(auth_user, v2_credentials);
+        state.with_user(user_credentials);
+    }
 
     match (req.method(), req.uri().path(), req.uri().query()) {
         (&Method::GET, "/", _) => health_check().await,

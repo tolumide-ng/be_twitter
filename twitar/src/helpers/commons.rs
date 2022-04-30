@@ -25,7 +25,7 @@ impl std::fmt::Display for GrantType {
 pub struct UserId(#[display(fmt = "0")] Uuid,);
 
 impl UserId {
-    pub fn parse(input: Option<&str>) -> TResult<Self> {
+    pub fn parse(input: Option<&String>) -> TResult<Self> {
         if let Some(id) = input {
             let user_id = Uuid::parse_str(id)?;
             return Ok(Self(user_id))

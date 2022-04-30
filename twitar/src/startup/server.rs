@@ -10,6 +10,7 @@ use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
+use crate::base_repository::db::{AuthUser, V2User};
 use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
 use crate::routes::server::routes;
@@ -19,18 +20,46 @@ use crate::configurations::variables::SettingsVars;
 
 type GenericError = hyper::Error;
 
+// pub enum User {
+//     AuthUser(AuthUser),
+//     V1User(),
+//     V2User(V2User),
+//     // All(AuthUser, V2User)
+// }
+
+pub struct CurrentUser {
+    pub basic: AuthUser,
+    // v1_user: 
+    pub v2_user: V2User,
+}
+
+impl CurrentUser {
+    pub fn new(basic: AuthUser, v2_user: V2User
+    ) -> Self {
+        Self {
+            basic,
+            v2_user,
+        }
+    }
+}
+
 
 pub struct AppState {
     pub redis: RedisClient,
+    pub db_pool: Pool<Postgres>,
     pub hyper: HyperClient,
     pub req: Request<Body>,
     pub env_vars: SettingsVars,
-    pub db_pool: Pool<Postgres>,
+    pub user: Option<CurrentUser>,
 }
 
 impl AppState {
     fn new(env_vars: SettingsVars, req: Request<Body>, hyper: HyperClient, redis: RedisClient, db_pool: Pool<Postgres>) -> Self {
-        Self { redis, hyper, req, env_vars, db_pool}
+        Self { redis, hyper, req, env_vars, db_pool, user: None}
+    }
+
+    pub fn with_user(self, user: CurrentUser) -> Self {
+        Self {user: Some(user), ..self}
     }
 }
 
