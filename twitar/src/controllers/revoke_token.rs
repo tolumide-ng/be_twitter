@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 use crate::{helpers::{
     keyval::KeyVal, response::{TResult, ApiBody, make_request, ResponseBuilder}}, 
     configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptors::handle_request::Interceptor, startup::server::AppState
+    interceptors::handle_request::Interceptor, startup::server::AppState, base_repository::db::V2User
 };
 
 
@@ -15,12 +15,12 @@ struct ApiResponse {
 }
 
 pub async fn revoke_token(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, env_vars, ..} = app_state;
+    let AppState { hyper, user, env_vars, ..} = app_state;
     let SettingsVars{client_id, client_secret, twitter_url, ..} = env_vars;
-    let mut con = redis.get_async_connection().await.unwrap();
+    let V2User { access_token, ..} = user.unwrap().v2_user;
 
     let req_body = KeyVal::new().add_list_keyval(vec![
-        ("token".into(), redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?),
+        ("token".into(), access_token.unwrap()),
         ("client_id".into(), client_id.clone()),
         ("token_type_hint".into(), "access_token".into()),
     ]).to_urlencode();
