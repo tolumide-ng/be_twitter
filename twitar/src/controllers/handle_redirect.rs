@@ -30,7 +30,7 @@ async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Cur
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
     if let Some(map) = Interceptor::v2_tokens(res) {
-        DB::update_secets(&pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await;
+        DB::update_secets(&pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await?;
         return Ok(())
     }
 

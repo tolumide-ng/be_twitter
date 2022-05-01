@@ -76,7 +76,8 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
     let AppState {env_vars, req, hyper, user, ..} = app_state;
     let SettingsVars { twitter_url, .. } = env_vars;
 
-    let V2User {access_token, user_id, ..} = user.unwrap().v2_user;
+    let V2User {access_token, twitter_user_id, ..} = user.unwrap().v2_user;
+    let twitter_user_id = twitter_user_id.unwrap();
 
     // let mut con = redis.get_async_connection().await?;
     // let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
@@ -86,7 +87,6 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
     let req_body = req.into_body();
     let  byte_body = hyper::body::to_bytes(req_body).await?.to_owned();
     let body: Ids = serde_json::from_slice(&byte_body).unwrap();
-    // let user_id: String = redis::cmd("GET").arg(&["userid"]).query_async(&mut con).await.unwrap();
 
     let post_ids = PostIds::parse(body).0;
     let parallel_requests = post_ids.len();
@@ -107,11 +107,11 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
                     .with_auth(AuthType::Bearer, token).build_request());
             }
             TweetType::Rts => {
-                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/retweets/{}", twitter_url, user_id, id.0))
+                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/retweets/{}", twitter_url, twitter_user_id, id.0))
                     .with_auth(AuthType::Bearer, token).build_request());
             }
             TweetType::Likes => {
-                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/likes/{}", twitter_url, user_id, id.0))
+                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/likes/{}", twitter_url, twitter_user_id, id.0))
                     .with_auth(AuthType::Bearer, token).build_request());
             }
         };

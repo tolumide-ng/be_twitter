@@ -30,12 +30,12 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
 
     // let v2_credentials = UserId::parse(user_id)?.v2_credentials(&db_pool).await?;
 
-    let user = user.unwrap().v2_user;
+    let V2User { user_id, access_token, .. } = user.unwrap().v2_user;
     
     let get_url = |path: &'static str| -> RequestBuilder {
         RequestBuilder::new
-        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user.user_id, path))
-        .with_auth(AuthType::Bearer, user.access_token.clone().unwrap())
+        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user_id, path))
+        .with_auth(AuthType::Bearer, access_token.clone().unwrap())
     };
 
     let requests = vec![TweetType::Tweets, TweetType::Likes];
@@ -135,9 +135,7 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
 
     let formatted_ids = AllTweetIds::new(tweets, rts, likes);
 
-    // let mut transaction = db_pool.begin().await.context("Failed to acquire Postgres connection")?;
-    let fake_user_id = Uuid::new_v4();
-    DB::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
+    DB::insert_tweet_ids(&db_pool, user_id, formatted_ids).await?;
 
     ResponseBuilder::new("Ok".into(), Some("Success"), StatusCode::OK.as_u16()).reply()
 }
