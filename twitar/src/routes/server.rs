@@ -4,7 +4,7 @@ use crate::errors::response::TError;
 use crate::helpers::commons::UserId;
 use crate::helpers::request::req_query;
 use crate::startup::server::{AppState, CurrentUser};
-use crate::helpers::response::{ApiBody};
+use crate::helpers::response::{ApiBody, ResponseBuilder};
 use crate::{helpers::response::TResult};
 use crate::controllers::{not_found, authorize_bot, 
     health_check, handle_redirect, revoke_token, refresh_token, user_lookup, 
@@ -57,11 +57,14 @@ impl Routes {
         
         let protected_paths = ["/enable", "/revoke", "/remove", "/refresh", "/user", "/timeline"];
 
+        
         match protected_paths.contains(&req.uri().path()) {
             true => {
                 let query = req.uri().query();
                 let user_id = req_query(query, "user_id");
+                println!("\n\nTHE CONTENT>>>>||||<<<< {:#?}\n\n", user_id);
                 if let Ok(parsed_user_id) = UserId::parse(user_id) {
+                    println!("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;");
                     let auth_user = parsed_user_id.verify(&state.db_pool).await?;
                     let v2_credentials = parsed_user_id.v2_credentials(&state.db_pool).await?;
                     
@@ -83,8 +86,14 @@ impl Routes {
     }
 
     pub async fn wrapper(state: AppState) -> TResult<ApiBody> {
-        let new_state = Self::auth_middleware(state).await.unwrap();
-        Self::routes(new_state).await
+        let auth = Self::auth_middleware(state).await;
+        if let Ok(new_state) = auth {
+            println!(":[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]:::::");
+            return Self::routes(new_state).await
+        }
+
+        println!("ERROR--ERROR--ERROR--ERROR--ERROR--ERROR--ERROR--ERROR--");
+        return ResponseBuilder::new("Missing or Invalid user id".into(), Some(""), 401).reply();
     }
 
 
