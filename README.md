@@ -12,6 +12,7 @@ cargo run -p twitar
 | 6 | Undo a retweet | 50r/15m/app | | | |
 
 ### TWEET DELETE PLAN
+use best_sum for best approach towards deletion
 > Scenario: Assuming 2 users are selected 
 <br /> - The Goal is to delete 960 reqs/day | limit - 1000reqs/day
 > <br /> - 240 reqs/3hrs | limit - 300reqs/3hrs

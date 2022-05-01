@@ -21,7 +21,7 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     let scopes = vec![Scope::ReadTweet, Scope::ReadUsers, Scope::ReadFollows, Scope::WriteFollows, 
     Scope::OfflineAccess, Scope::WriteTweet, Scope::WriteLike, Scope::ReadLike];
     
-    DB::update_pkce(&app_state.db_pool, &pkce).await?;
+    DB::update_pkce(&app_state.db_pool, &pkce, app_state.user.unwrap().v2_user.user_id).await?;
 
     let query_params = KeyVal::new()
         .add_list_keyval(vec![

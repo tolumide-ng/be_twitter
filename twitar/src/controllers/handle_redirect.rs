@@ -1,27 +1,24 @@
 use http::Method;
 use hyper::{StatusCode};
-use redis::{Client as RedisClient};
 use sqlx::{Pool, Postgres};
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
     configurations::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState
+    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::{AppState, CurrentUser}, base_repository::db::{V2User, DB}
 };
 
 
-async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redis_client: RedisClient, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: CurrentUser, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
-    let mut con = redis_client.get_async_connection().await.unwrap();
-
-    let pkce: String = redis::cmd("GET").arg(&["pkce"]).query_async(&mut con).await?;
+    let V2User {pkce, user_id, ..} = user.v2_user;
 
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), GrantType::Authorization.to_string()),
         ("client_id".to_string(), client_id.clone()),
         ("redirect_uri".to_string(), callback_url),
-        ("code_verifier".to_string(), pkce.clone())
+        ("code_verifier".to_string(), pkce.unwrap().clone())
     ]).to_urlencode();
 
     let content_type = "application/x-www-form-urlencoded";
@@ -33,19 +30,7 @@ async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redi
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
     if let Some(map) = Interceptor::v2_tokens(res) {
-        // authentication service user_id would be used to insert here
-        // - todo()! need macros to write the sqlx query in a prod env and use redis in a local env
-        // take classes on rust macros - https://veykril.github.io/tlborm/syntax-extensions.html
-        // sqlx::query!(r#"UPDATE auth_two
-        //     SET access_token=$1, refresh_token=$2
-        //     WHERE pkce=$3"#, 
-        //     &map.get(V2TokensType::Access), &map.get(V2TokensType::Refresh), pkce)
-        //     .execute(&db_client).await.map_err(|e| { 
-        //         // tracing here later
-        //         eprintln!("ERROR ADDING ACCESS TOKEN {:#?}", e)}).unwrap();
-
-        redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
-        redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
+        DB::update_secets(&pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await;
         return Ok(())
     }
 
@@ -55,10 +40,8 @@ async fn access_token(hyper_client: HyperClient, db_client: Pool<Postgres>, redi
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, req, env_vars, ..} = app_state;
+    let AppState {redis, hyper, req, env_vars, user, ..} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
-
-    
 
     let mut conn = redis.get_async_connection().await?;
     
@@ -105,7 +88,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper.clone(), app_state.db_pool, redis, code).await?;
+                    access_token(hyper.clone(), app_state.db_pool, user.unwrap(), code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }

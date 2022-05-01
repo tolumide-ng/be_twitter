@@ -45,9 +45,10 @@ impl DB {
         // 
     }
 
-    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: &str) -> TResult<()> {
-        sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user=$2 RETURNING *"#)
+    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: &str, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user_id=$2 RETURNING *"#)
             .bind(pkce)
+            .bind(user_id)
             .execute(&*pool).await?;
 
         Ok(())
@@ -118,21 +119,13 @@ impl DB {
         Ok(Some(user.unwrap()))
     }
 
-    // pub async fn v1_user(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<V1User>> {
-    //     let user = sqlx::query_as!(
-    //         V1User,
-    //         r#"SELECT * FROM auth_one WHERE (user_id = $1)"#, user_id
-    //     )
-    //         .fetch_one(pool)
-    //         .await;
+    pub async fn update_secets(pool: &Pool<Postgres>, access_token: String, refresh_token: String, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_one SET access_token=$1, refresh_token=$2 WHERE user_id=$3 RETURNING *"#)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(user_id)
+            .execute(&*pool).await?;
 
-    //     if let Err(e) = user {
-    //         return match e {
-    //             RowNotFound => Ok(None),
-    //             _ => {Err(TError::DatabaseError(e))}
-    //         }
-    //     }
-
-    //     Ok(Some(user.unwrap()))
-    // }
+        Ok(())
+    }
 }
