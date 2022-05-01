@@ -120,12 +120,21 @@ impl DB {
     }
 
     pub async fn update_secets(pool: &Pool<Postgres>, access_token: String, refresh_token: String, user_id: Uuid) -> TResult<()> {
-        sqlx::query(r#"UPDATE auth_one SET access_token=$1, refresh_token=$2 WHERE user_id=$3 RETURNING *"#)
+        sqlx::query(r#"UPDATE auth_two SET access_token=$1, refresh_token=$2 WHERE user_id=$3 RETURNING *"#)
             .bind(access_token)
             .bind(refresh_token)
             .bind(user_id)
             .execute(&*pool).await?;
 
+        Ok(())
+    }
+
+    pub async fn update_twitter_id(pool: &Pool<Postgres>, twitter_user_id: &str, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET twitter_user_id=$1 WHERE user_id=$2"#)
+            .bind(twitter_user_id)
+            .bind(user_id)
+            .execute(&*pool).await?;
+            
         Ok(())
     }
 }

@@ -3,7 +3,6 @@ use hyper::{StatusCode, Method};
 use futures::{stream, StreamExt};
 use serde::{Serialize, Deserialize};
 use tokio;
-use uuid::Uuid;
 
 use crate::{
     helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, 
@@ -22,7 +21,7 @@ const MAX_TWEETS: &'static str = "100";
 
 pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     
-    let AppState {hyper, env_vars, db_pool, req, user, ..} = app_state;
+    let AppState {hyper, env_vars, db_pool, user, ..} = app_state;
     let SettingsVars { twitter_url, ..} = env_vars;
 
     let V2User { user_id, access_token, .. } = user.unwrap().v2_user;
