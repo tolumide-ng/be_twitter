@@ -23,12 +23,7 @@ const MAX_TWEETS: &'static str = "100";
 pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     
     let AppState {hyper, env_vars, db_pool, req, user, ..} = app_state;
-    let user_id = req.uri().query();
-    // let user = UserId::parse(user_id)?.verify(&db_pool).await?;
-    // have a middleware instead to check if the user_id is valid and if the user has authenticated with oauth_1 and oauth_2
     let SettingsVars { twitter_url, ..} = env_vars;
-
-    // let v2_credentials = UserId::parse(user_id)?.v2_credentials(&db_pool).await?;
 
     let V2User { user_id, access_token, .. } = user.unwrap().v2_user;
     
