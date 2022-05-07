@@ -62,14 +62,16 @@ impl Routes {
             true => {
                 let query = req.uri().query();
                 let user_id = req_query(query, "user_id");
+                // user_id should be moved into the request header
                 println!("\n\nTHE CONTENT>>>>||||<<<< {:#?}\n\n", user_id);
                 if let Ok(parsed_user_id) = UserId::parse(user_id) {
                     println!("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;");
                     let auth_user = parsed_user_id.verify(&state.db_pool).await?;
                     let v2_credentials = parsed_user_id.v2_credentials(&state.db_pool).await?;
+                    let v1_credentials = parsed_user_id.v1_credentials(&state.db_pool).await?;
                     
                     if auth_user.v1_active && auth_user.v2_active {
-                        let user_credentials = CurrentUser::new(auth_user, v2_credentials);
+                        let user_credentials = CurrentUser::new(auth_user, v1_credentials, v2_credentials);
                         let new_state = AppState::add_user(state, user_credentials);
                         // Pointer for heap allocation for the return type
                         return Ok(new_state)

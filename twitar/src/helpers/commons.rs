@@ -1,7 +1,7 @@
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-use crate::{errors::response::TError, base_repository::db::{DB, AuthUser, V2User}};
+use crate::{errors::response::TError, base_repository::db::{DB, AuthUser, V2User, V1User}};
 
 use super::response::TResult;
 
@@ -46,6 +46,15 @@ impl UserId {
 
     pub async fn v2_credentials(&self, pool: &Pool<Postgres>) -> TResult<V2User> {
         let user = DB::v2_user(pool, self.0).await?;
+
+        if let Some(credentials) = user {
+            return Ok(credentials)
+        }
+        return Err(TError::InvalidUserId("User does not exist"))
+    }
+
+    pub async fn v1_credentials(&self, pool: &Pool<Postgres>) -> TResult<V1User> {
+        let user = DB::v1_user(pool, self.0).await?;
 
         if let Some(credentials) = user {
             return Ok(credentials)

@@ -24,11 +24,13 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     let AppState {hyper, env_vars, db_pool, user, ..} = app_state;
     let SettingsVars { twitter_url, ..} = env_vars;
 
-    let V2User { user_id, access_token, .. } = user.unwrap().v2_user;
+    let V2User { twitter_user_id, access_token, user_id, .. } = user.unwrap().v2_user;
+
+    let twitter_user = twitter_user_id.unwrap();
     
     let get_url = |path: &'static str| -> RequestBuilder {
         RequestBuilder::new
-        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user_id, path))
+        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, twitter_user, path))
         .with_auth(AuthType::Bearer, access_token.clone().unwrap())
     };
 

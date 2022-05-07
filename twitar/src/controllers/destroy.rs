@@ -11,7 +11,7 @@ use crate::{
         }, signature::{
             OAuth, OAuthAddons
         }, keypair::KeyPair
-    }, middlewares::request_builder::{RequestBuilder, AuthType}, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::V2User
+    }, middlewares::request_builder::{RequestBuilder, AuthType}, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{V2User, V1User}
 };
 use crate::helpers::db::{TweetType};
 
@@ -74,9 +74,11 @@ impl PostIds {
 // rename this module to destory which then contains destory RTs and destory Posts
 pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
     let AppState {env_vars, req, hyper, user, ..} = app_state;
-    let SettingsVars { twitter_url, .. } = env_vars;
+    let SettingsVars { twitter_url, api_key, api_key_secret, .. } = env_vars;
+    let user = user.unwrap();
 
-    let V2User {access_token, twitter_user_id, ..} = user.unwrap().v2_user;
+    let V2User {access_token, twitter_user_id, ..} = user.v2_user;
+    let V1User {oauth_token, oauth_secret, ..} = user.v1_user;
     let twitter_user_id = twitter_user_id.unwrap();
 
     // let mut con = redis.get_async_connection().await?;
@@ -90,6 +92,9 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
 
     let post_ids = PostIds::parse(body).0;
     let parallel_requests = post_ids.len();
+
+    let oauth_token = KeyPair::new(oauth_token, oauth_secret);
+    let consumer = KeyPair::new(api_key, api_key_secret);
     
     let bodies = stream::iter(post_ids)
     .map(|id: (String, TweetType)| {
@@ -107,8 +112,13 @@ pub async fn handle_delete(app_state: AppState) -> TResult<ApiBody> {
                     .with_auth(AuthType::Bearer, token).build_request());
             }
             TweetType::Rts => {
-                request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/retweets/{}", twitter_url, twitter_user_id, id.0))
-                    .with_auth(AuthType::Bearer, token).build_request());
+                // this would have been best, but we can't use this, because it requires using the source_tweet_id which is the original tweets id, that would have required an extra lookup
+                // request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/retweets/{}", twitter_url, twitter_user_id, id.0))
+                //     .with_auth(AuthType::Bearer, token).build_request());
+                 let base_url = format!("{}/1.1/statuses/unretweet/{}.json", twitter_url, id.0);
+                    let signature = OAuth::new(consumer.clone(), Some(oauth_token.clone()), OAuthAddons::None, Method::POST).generate_signature(base_url.clone());
+                    request = Some(RequestBuilder::new(Method::POST, base_url)
+                        .with_auth(AuthType::OAuth, signature.to_string()).build_request());
             }
             TweetType::Likes => {
                 request = Some(RequestBuilder::new(Method::DELETE, format!("{}/2/users/{}/likes/{}", twitter_url, twitter_user_id, id.0))

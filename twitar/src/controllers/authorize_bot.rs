@@ -23,6 +23,8 @@ pub async fn authorize_bot(app_state: AppState) -> TResult<ApiBody> {
     
     DB::update_pkce(&app_state.db_pool, &pkce, app_state.user.unwrap().v2_user.user_id).await?;
 
+    use uuid::Uuid;
+
     let query_params = KeyVal::new()
         .add_list_keyval(vec![
             ("response_type".to_string(), "code".to_string()),

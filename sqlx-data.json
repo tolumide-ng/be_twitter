@@ -32,6 +32,56 @@
     },
     "query": "SELECT * FROM user_preference WHERE (user_id = $1)"
   },
+  "3014442d3be877d4916c7e8f86d92c0578100e0215639f8c3f681a81bbd437ac": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "twitter_user_id",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "oauth_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "oauth_secret",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "oauth_verifier",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM auth_one WHERE (user_id = $1)"
+  },
   "3e9983edda5b0573d4d657d428d62a8cc4a13d7fc56987ed2e6ee092d067c369": {
     "describe": {
       "columns": [

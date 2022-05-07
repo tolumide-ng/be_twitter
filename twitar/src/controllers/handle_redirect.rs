@@ -1,6 +1,7 @@
 use http::Method;
 use hyper::{StatusCode};
 use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
@@ -9,10 +10,12 @@ use crate::{helpers::{
 };
 
 
-async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: CurrentUser, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Option<CurrentUser>, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
-    let V2User {pkce, user_id, ..} = user.v2_user;
-
+    // let V2User {pkce, user_id, ..} = user.v2_user;
+    let user = DB::v2_user(&pool, Uuid::parse_str("1b97475c-4ba1-4ccf-8a62-35baf9ff1075")?).await?;
+    let V2User {pkce, user_id, ..} = user.unwrap();
+    
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("code".into(), auth_code.clone()),
         ("grant_type".to_string(), GrantType::Authorization.to_string()),
@@ -40,6 +43,8 @@ async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Cur
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
+    println!("\n THE APP STATE {:#?} \n\n", app_state.req);
+    // since this endpoint would be called by the frontend, the <USER> data would be available in the request header. Please note, change the callback URL on twitter developers to the frontend_url
     let AppState {redis, hyper, req, env_vars, user, ..} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
 
@@ -88,7 +93,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper.clone(), app_state.db_pool, user.unwrap(), code).await?;
+                    access_token(hyper.clone(), app_state.db_pool, user, code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }

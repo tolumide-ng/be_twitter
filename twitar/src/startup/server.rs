@@ -20,24 +20,25 @@ use crate::configurations::variables::SettingsVars;
 
 type GenericError = hyper::Error;
 
-// pub enum User {
-//     AuthUser(AuthUser),
-//     V1User(),
-//     V2User(V2User),
-//     // All(AuthUser, V2User)
-// }
+pub enum User {
+    AuthUser(AuthUser),
+    V1User(),
+    V2User(V2User),
+    // All(AuthUser, V2User)
+}
 
 #[derive(Debug)]
 pub struct CurrentUser {
     pub basic: AuthUser,
     pub v2_user: V2User,
+    pub v1_user: V1User,
 }
 
 impl CurrentUser {
-    pub fn new(basic: AuthUser, v2_user: V2User) -> Self {
+    pub fn new(basic: AuthUser, v1_user: V1User, v2_user: V2User) -> Self {
         Self {
             basic,
-            // v1_user,
+            v1_user,
             v2_user,
         }
     }
