@@ -10,7 +10,7 @@ use crate::{helpers::{
 // use this endpoint to verify the validity of the username when they want to request for their timeline when using OAuth2.0
 pub async fn user_lookup(app_state: AppState) -> TResult<ApiBody> {
     // todo!() move this to params once route management is migrated to routerify
-    let AppState{redis, req, hyper, user, db_pool, env_vars, ..} = app_state;
+    let AppState{ req, hyper, user, db_pool, env_vars, ..} = app_state;
     let SettingsVars {twitter_url, ..} = env_vars;
     let V2User { user_id, access_token, ..} = user.unwrap().v2_user;
     let username = req_query(req.uri().query(), "username").unwrap();
