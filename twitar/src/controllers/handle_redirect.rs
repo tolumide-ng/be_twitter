@@ -6,11 +6,11 @@ use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
     configurations::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::{AppState, CurrentUser}, base_repository::db::{V2User, DB}
+    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::{AppState, CurrentUser}, base_repository::db::{V2User, DB, V1User}
 };
 
 
-async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Option<CurrentUser>, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, pool: &Pool<Postgres>, user: &V2User, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
     // let V2User {pkce, user_id, ..} = user.v2_user;
     let user = DB::v2_user(&pool, Uuid::parse_str("1b97475c-4ba1-4ccf-8a62-35baf9ff1075")?).await?;
@@ -33,7 +33,7 @@ async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Opt
     let res = Interceptor::intercept(make_request(request, hyper_client.clone()).await);
 
     if let Some(map) = Interceptor::v2_tokens(res) {
-        DB::update_secets(&pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await?;
+        DB::update_secets(pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await?;
         return Ok(())
     }
 
@@ -43,22 +43,29 @@ async fn access_token(hyper_client: HyperClient, pool: Pool<Postgres>, user: Opt
 
 // req: Request<hyper::Body>, hyper_client: HyperClient, redis_client: RedisClient
 pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
-    println!("\n THE APP STATE {:#?} \n\n", app_state.req);
     // since this endpoint would be called by the frontend, the <USER> data would be available in the request header. Please note, change the callback URL on twitter developers to the frontend_url
-    let AppState {redis, hyper, req, env_vars, user, ..} = app_state;
+    let AppState {redis, hyper, db_pool, req, env_vars, user, ..} = app_state;
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
 
+    
     let mut conn = redis.get_async_connection().await?;
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
-
+    
     match is_v1_callback {
-         Some(k) => {
-            let oauth_token: String = redis::cmd("GET").arg(&["oauth_token"]).query_async(&mut conn).await?;
+        Some(k) => {
+            // USER WOULD THE PROVIDED BY THE FRONTEND ONCE THIS IS CONNECTED!!!::::
+            //  let V1User { oauth_token, user_id, ..} = &user.as_ref().unwrap().v1_user;
+
+            let v1_user = DB::v1_user(&db_pool, Uuid::parse_str("1b97475c-4ba1-4ccf-8a62-35baf9ff1075")?).await?;
+            // let user = DB::v1_user(pool, user_id).await?;
+             let V1User { oauth_token, user_id, ..} = v1_user.unwrap();
+
+
             if k.validate("oauth_token".into(),oauth_token.clone()) {
                 let verifier = k.get("oauth_verifier").unwrap();
-                redis::cmd("SET").arg(&["oauth_verifier", verifier]).query_async(&mut conn).await?;
+                DB::add_oauth_verifier(&db_pool, verifier, user_id.to_owned()).await?;
 
                 let target = format!("{}/oauth/access_token", twitter_url);
 
@@ -75,9 +82,11 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
                     let params = KeyVal::string_to_keyval(body_string);
 
                     if let Some(map) = params {
-                        redis::cmd("SET").arg(&["oauth_token", map.get("oauth_token").unwrap()]).query_async(&mut conn).await?;
-                        redis::cmd("SET").arg(&["oauth_token_secret", map.get("oauth_token_secret").unwrap()]).query_async(&mut conn).await?;
-                        redis::cmd("SET").arg(&["userid", map.get("user_id").unwrap()]).query_async(&mut conn).await?;
+
+                        let token = map.get("oauth_token").unwrap().to_string();
+                        let secret = map.get("oauth_token_secret").unwrap().to_string();
+                        
+                        DB::update_v1_secets(&db_pool, token, secret, user_id.to_owned()).await?;
                         
                         return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                     }
@@ -93,7 +102,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
                     let code = dict.get("code").unwrap().to_string();
-                    access_token(hyper.clone(), app_state.db_pool, user, code).await?;
+                    access_token(hyper.clone(), &db_pool, &user.unwrap().v2_user, code).await?;
 
                     return ResponseBuilder::new("Access Granted".into(), Some(""), StatusCode::OK.as_u16()).reply();
                 }
