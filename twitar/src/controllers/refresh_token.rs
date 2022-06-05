@@ -1,20 +1,20 @@
 use hyper::{Method, StatusCode};
 
 use crate::{helpers::{keyval::KeyVal, response::{make_request, TResult, ApiBody, ResponseBuilder}, commons::GrantType}, 
-configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState};
+configurations::variables::SettingsVars, middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::AppState, base_repository::db::{V2User, DB}};
 
 pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, env_vars, ..} = app_state;
+    let AppState {db_pool, hyper, env_vars, user, ..} = app_state;
     let SettingsVars {client_id, client_secret, twitter_url, ..} = env_vars;
 
-    let mut con = redis.get_async_connection().await.unwrap();
+    let V2User {refresh_token, user_id, ..} = user.unwrap().v2_user;
     let content = "application/x-www-form-urlencoded";
 
 
     let req_body = KeyVal::new().add_list_keyval(vec![
         ("grant_type".into(), GrantType::Refresh.to_string()),
         ("client_id".into(), client_id.clone()),
-        ("refresh_token".into(), redis::cmd("GET").arg(&["refresh_token"]).query_async(&mut con).await.unwrap())
+        ("refresh_token".into(), refresh_token.unwrap())
     ]).to_urlencode();
 
 
@@ -26,8 +26,7 @@ pub async fn refresh_token(app_state: AppState) -> TResult<ApiBody> {
     let res = Interceptor::intercept(make_request(request, hyper.clone()).await);
 
     if let Some(map) = Interceptor::v2_tokens(res) {
-        redis::cmd("SET").arg(&["access_token", &map.get(V2TokensType::Access)]).query_async(&mut con).await?;
-        redis::cmd("SET").arg(&["refresh_token", &map.get(V2TokensType::Refresh)]).query_async(&mut con).await?;
+        DB::update_secets(&db_pool, map.get(V2TokensType::Access), map.get(V2TokensType::Refresh), user_id).await?;
         return ResponseBuilder::new("Refresh token obtained".into(), Some(""), StatusCode::OK.as_u16()).reply();
     }
 

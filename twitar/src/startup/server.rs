@@ -10,27 +10,62 @@ use std::{net::SocketAddr};
 use dotenv::dotenv;
 use redis::{Client as RedisClient};
 
+use crate::base_repository::db::{AuthUser, V1User, V2User};
 use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
-use crate::routes::server::routes;
+use crate::routes::server::Routes;
 use crate::configurations::variables::SettingsVars;
 
 // use super::timeout::TimeoutLayer;
 
 type GenericError = hyper::Error;
 
+pub enum User {
+    AuthUser(AuthUser),
+    V1User(),
+    V2User(V2User),
+    // All(AuthUser, V2User)
+}
 
+#[derive(Debug)]
+pub struct CurrentUser {
+    pub basic: AuthUser,
+    pub v2_user: V2User,
+    pub v1_user: V1User,
+}
+
+impl CurrentUser {
+    pub fn new(basic: AuthUser, v1_user: V1User, v2_user: V2User) -> Self {
+        Self {
+            basic,
+            v1_user,
+            v2_user,
+        }
+    }
+}
+
+
+#[derive(Debug)]
 pub struct AppState {
     pub redis: RedisClient,
+    pub db_pool: Pool<Postgres>,
     pub hyper: HyperClient,
     pub req: Request<Body>,
     pub env_vars: SettingsVars,
-    pub db_pool: Pool<Postgres>,
+    pub user: Option<CurrentUser>,
 }
 
 impl AppState {
     fn new(env_vars: SettingsVars, req: Request<Body>, hyper: HyperClient, redis: RedisClient, db_pool: Pool<Postgres>) -> Self {
-        Self { redis, hyper, req, env_vars, db_pool}
+        Self { redis, hyper, req, env_vars, db_pool, user: None}
+    }
+
+    pub fn with_user(&mut self, user: CurrentUser) {
+        self.user = Some(user);
+    }
+
+    pub fn add_user(state: Self, user: CurrentUser) -> Self {
+        Self { user: Some(user), ..state }
     }
 }
 
@@ -55,12 +90,9 @@ pub async fn server() {
         let svc= service_fn(move |req| {
                 let state = AppState::new(vars.clone(), 
                     req, client.to_owned(), redis.to_owned(), db_pool.to_owned());
-                routes(state)
+                
+                Routes::wrapper(state)
             });
-
-        // let svc = ServiceBuilder::new()
-        //     .layer(TimeoutLayer::new(Duration::new(60, 0)))
-        //     .service(svc).inner;
         
         let svc = ServiceBuilder::new()
             .timeout(Duration::new(45, 0))

@@ -7,5 +7,5 @@ CREATE TABLE auth_one(
     twitter_user_id TEXT UNIQUE,
     oauth_token VARCHAR(128) NOT NULL,
     oauth_secret VARCHAR(128) NOT NULL,
-    oauth_verifier VARCHAR(128) NOT NULL
+    oauth_verifier VARCHAR(128)
 );

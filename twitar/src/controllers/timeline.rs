@@ -3,10 +3,9 @@ use hyper::{StatusCode, Method};
 use futures::{stream, StreamExt};
 use serde::{Serialize, Deserialize};
 use tokio;
-use uuid::Uuid;
 
 use crate::{
-    helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}, commons::UserId}, 
+    helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, 
     middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{DB, V2User}, errors::response::TError
 };
 
@@ -22,24 +21,17 @@ const MAX_TWEETS: &'static str = "100";
 
 pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
     
-    let AppState {redis, hyper, env_vars, db_pool, req, ..} = app_state;
-    let user_id = req.uri().query();
-    let user = UserId::parse(user_id)?.verify(&db_pool).await?;
-    // have a middleware instead to check if the user_id is valid and if the user has authenticated with oauth_1 and oauth_2
+    let AppState {hyper, env_vars, db_pool, user, ..} = app_state;
     let SettingsVars { twitter_url, ..} = env_vars;
 
-    let v2_credentials = UserId::parse(user_id)?.v2_credentials(&db_pool).await?;
+    let V2User { twitter_user_id, access_token, user_id, .. } = user.unwrap().v2_user;
 
-    let access_token = v2_credentials.access_token.unwrap();
+    let twitter_user = twitter_user_id.unwrap();
     
-    // let mut con = redis.get_async_connection().await?;
-
-    // let access_token: String = redis::cmd("GET").arg(&["access_token"]).query_async(&mut con).await?;
-
     let get_url = |path: &'static str| -> RequestBuilder {
         RequestBuilder::new
-        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, user.user_id, path))
-        .with_auth(AuthType::Bearer, access_token.clone())
+        (Method::GET, format!("{}/2/users/{}/{}", twitter_url, twitter_user, path))
+        .with_auth(AuthType::Bearer, access_token.clone().unwrap())
     };
 
     let requests = vec![TweetType::Tweets, TweetType::Likes];
@@ -139,9 +131,7 @@ pub async fn get_timeline(app_state: AppState) -> TResult<ApiBody> {
 
     let formatted_ids = AllTweetIds::new(tweets, rts, likes);
 
-    // let mut transaction = db_pool.begin().await.context("Failed to acquire Postgres connection")?;
-    let fake_user_id = Uuid::new_v4();
-    DB::insert_tweet_ids(&db_pool, fake_user_id, formatted_ids).await?;
+    DB::insert_tweet_ids(&db_pool, user_id, formatted_ids).await?;
 
     ResponseBuilder::new("Ok".into(), Some("Success"), StatusCode::OK.as_u16()).reply()
 }

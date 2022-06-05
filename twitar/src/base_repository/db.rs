@@ -14,6 +14,7 @@ pub struct AuthUser {
     pub v2_active: bool,
 }
 
+#[derive(Debug)]
 pub struct V2User {
     pub id: i32,
     pub user_id: Uuid,
@@ -23,9 +24,19 @@ pub struct V2User {
     pub refresh_token: Option<String>,
 }
 
+#[derive(Debug)]
+pub struct V1User {
+    pub id: i32,
+    pub user_id: Uuid,
+    pub twitter_user_id: Option<String>,
+    pub oauth_token: String,
+    pub oauth_secret: String,
+    pub oauth_verifier: Option<String>,
+}
+
 
 impl DB {
-    pub async fn add_user(pool: &Pool<Postgres>, user_id: Uuid) {
+    pub async fn add_v2_user(pool: &Pool<Postgres>, user_id: Uuid) {
         let user = sqlx::query!(r#"INSERT INTO auth_two (user_id) VALUES ($1) RETURNING user_id"#, user_id).fetch_one(pool).await;
 
         if let Err(e) = user {
@@ -34,15 +45,24 @@ impl DB {
         // 
     }
 
-    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: String) {
-        let res = sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user=$2 RETURNING *"#)
-            .bind(pkce)
-            .execute(&*pool).await;
+    pub async fn add_v1_user(pool: &Pool<Postgres>, user_id: Uuid) {
+        let user = sqlx::query!(
+            r#"INSERT INTO auth_one (user_id) VALUES ($1) RETURNING user_id"#, user_id)
+            .fetch_one(pool).await;
 
-        if let Err(e) = res {
+        if let Err(e) = user {
             // 
         }
         // 
+    }
+
+    pub async fn update_pkce(pool: &Pool<Postgres>, pkce: &str, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET pkce=$1 WHERE user_id=$2 RETURNING *"#)
+            .bind(pkce)
+            .bind(user_id)
+            .execute(&*pool).await?;
+
+        Ok(())
     }
 
     pub async fn insert_tweet_ids<'a>(pool: &Pool<Postgres>, user_id: Uuid, all_tweets: AllTweetIds<'a>) -> TResult<()> {
@@ -110,4 +130,77 @@ impl DB {
         Ok(Some(user.unwrap()))
     }
 
+     pub async fn v1_user(pool: &Pool<Postgres>, user_id: Uuid) -> TResult<Option<V1User>> {
+         let user = sqlx::query_as!(
+             V1User, 
+             r#"SELECT * FROM auth_one WHERE (user_id = $1)"#, user_id
+            ).fetch_one(pool).await;
+
+        if let Err(e) = user {
+            println!("THERE WAS AN ERROR::::::: {:#?}", e);
+            return match e {
+                RowNotFound => Ok(None),
+                _ => {Err(TError::DatabaseError(e))}
+            }
+        }
+
+        println!("THE V1 USER TO OBTAIN:::::::::::::::::::::::::::::::::::___________________::::::::::::::::::::::::::::::::::: {:#?}", user);
+
+        Ok(Some(user.unwrap()))
+    }
+
+    pub async fn update_secets(pool: &Pool<Postgres>, access_token: String, refresh_token: String, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET access_token=$1, refresh_token=$2 WHERE user_id=$3 RETURNING *"#)
+            .bind(access_token)
+            .bind(refresh_token)
+            .bind(user_id)
+            .execute(&*pool).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_v1_secets(pool: &Pool<Postgres>, oauth_token: String, oauth_secret: String, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_one SET oauth_token=$1, oauth_secret=$2 WHERE user_id=$3 RETURNING *"#)
+            .bind(oauth_token)
+            .bind(oauth_secret)
+            .bind(user_id)
+            .execute(&*pool).await?;
+
+        Ok(())
+    }
+
+
+    pub async fn add_oauth_verifier(pool: &Pool<Postgres>, oauth_verifier: &str, user_id: Uuid) -> TResult<()>{
+        sqlx::query(r#"UPDATE auth_one SET oauth_verifier=$1 WHERE user_id=$2 RETURNING *"#)
+            .bind(oauth_verifier)
+            .bind(user_id)
+            .execute(&*pool).await?;
+
+        Ok(())
+    }
+
+     pub async fn create_v1_secets(pool: &Pool<Postgres>, user_id: Uuid, oauth_token: String, oauth_secret: String) -> TResult<()> {
+         if DB::v1_user(pool, user_id).await?.is_some() {
+             sqlx::query(r#"DELETE FROM auth_one WHERE user_id=$1"#).bind(user_id).execute(&*pool).await?;
+         }
+
+        sqlx::query(r#"INSERT INTO auth_one (user_id, oauth_token, oauth_secret) VALUES ($1, $2, $3) RETURNING user_id"#)
+            .bind(user_id)
+            .bind(oauth_token)
+            .bind(oauth_secret)
+            .execute(&*pool).await?;
+
+        Ok(())
+    }
+
+    // let user = sqlx::query!(r#"INSERT INTO auth_two (user_id) VALUES ($1) RETURNING user_id"#, user_id).fetch_one(pool).await;
+
+    pub async fn update_twitter_id(pool: &Pool<Postgres>, twitter_user_id: &str, user_id: Uuid) -> TResult<()> {
+        sqlx::query(r#"UPDATE auth_two SET twitter_user_id=$1 WHERE user_id=$2"#)
+            .bind(twitter_user_id)
+            .bind(user_id)
+            .execute(&*pool).await?;
+            
+        Ok(())
+    }
 }
