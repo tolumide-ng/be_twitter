@@ -1,0 +1,70 @@
+version: "3.9"
+services:
+  redis:
+    image: bitnami/redis
+    environment:
+      redis_uri: ${REDIS_URI}
+      REDIS_PASSWORD: password123
+    volumes:
+      - redis:/bitnami/redis/data
+  postgres:
+    # container_name: postgres_db
+    # hostname: db
+    image: debezium/postgres:12
+    # healthcheck:
+    #   test: "pg_isready -U postgresuser -d ${DB_NAME}"
+    #   interval: 2s
+    #   timeout: 20s
+    #   retries: 10
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+    restart: on-failure:2
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USERNAME: ${DB_USERNAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PORT: ${DB_PORT}
+      POSTGRES_HOST: ${DB_HOST}
+      POSTGRES_NAME: ${DB_NAME}
+      # POSTGRES_DB: ${DB_NAME}
+    ports:
+      - 5432:5432
+  web:
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    links:
+      - postgres
+      - redis
+    environment:
+      STATE_CODE: ${STATE_CODE}
+      BASE_URL: ${BASE_URL}
+      RESPONSE_TYPE: ${RESPONSE_TYPE}
+      CALLBACK_URL: ${CALLBACK_URL}
+      TWITTER_API: ${TWITTER_API}
+      APP_ADDRESS: ${APP_ADDRESS}
+      API_KEY: ${API_KEY}
+      API_KEY_SECRET: ${API_KEY_SECRET}
+      BEARER_TOKEN: ${BEARER_TOKEN}
+      CLIENT_URL: ${CLIENT_URL}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+      REQUEST_URL: ${REQUEST_URL}
+      ACCESS_TOKEN: ${ACCESS_TOKEN}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+      APP_ENV: ${APP_ENV}
+      DATABASE_URL: ${DATABASE_URL}
+      SQLX_OFFLINE: ${SQLX_OFFLINE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      DB_HOST: ${DB_HOST}
+      DB_NAME: ${DB_NAME}
+      APP_PORT: ${APP_PORT}
+      REDIS_URI: ${REDIS_URI}
+volumes:
+  pgdata:
+  static_volume:
+  redis:
