@@ -1,0 +1,15 @@
+db:
+  host: localhost
+  port: 5432
+  username: tolumideshopein
+  password: password
+  database_name: play_bot
+  require_ssl: false
+app:
+  port: 8080
+  env: local
+  base_url: "https://twitter.com/2/authorize"
+  response_type: "code"
+  callback_url: "https://ugatc.eu.ngrok.io/oauth/callback"
+  twitter_api: "https://api.twitter.com"
+  
