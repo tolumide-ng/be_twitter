@@ -3,9 +3,9 @@ use dotenv::dotenv;
 use serde::{Deserialize};
 use crate::settings::{database::DbSettings, app::AppSettings, variables::AppEnv};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
-    pub database: DbSettings,
+    pub db: DbSettings,
     pub app: AppSettings,
     pub redis_uri: String,
 }
@@ -24,9 +24,9 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
      }
 
      let settings =  ConfigBuilder::<DefaultState>::default()
-        .add_source(config::File::from(config_dir.join("base")).required(true))
-        .add_source(config::File::from(config_dir.join(app_env.to_string())).required(true))
-        .add_source(Environment::with_prefix("BOT").separator("__"))
+        .add_source(config::File::from(config_dir.join("base")))
+        .add_source(config::File::from(config_dir.join(app_env.to_string())))
+        .add_source(Environment::with_prefix("bot").separator("__"))
         .add_source(Environment::with_prefix(&app_env.to_string()).separator("__"));
 
     settings.build()?.try_deserialize()

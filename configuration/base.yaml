@@ -5,11 +5,12 @@ db:
   password: password
   database_name: play_bot
   require_ssl: false
-app:
-  port: 8080
-  env: local
-  base_url: "https://twitter.com/2/authorize"
-  response_type: "code"
-  callback_url: "https://ugatc.eu.ngrok.io/oauth/callback"
-  twitter_api: "https://api.twitter.com"
+# app:
+#   port: 8080
+#   env: local
+#   base_url: "https://twitter.com/2/authorize"
+#   response_type: "code"
+#   callback_url: "https://ugatc.eu.ngrok.io/oauth/callback"
+#   twitter_api: "https://api.twitter.com"
+#   access_token: 185620309-Kc1XwVP5ou4L9GNIIrJYYhr1Lo63JLsA1Ksqqoa2
   

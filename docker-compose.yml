@@ -40,30 +40,26 @@ services:
       - postgres
       - redis
     environment:
-      STATE_CODE: ${STATE_CODE}
-      BASE_URL: ${BASE_URL}
-      RESPONSE_TYPE: ${RESPONSE_TYPE}
-      CALLBACK_URL: ${CALLBACK_URL}
-      TWITTER_API: ${TWITTER_API}
-      APP_ADDRESS: ${APP_ADDRESS}
-      API_KEY: ${API_KEY}
-      API_KEY_SECRET: ${API_KEY_SECRET}
-      BEARER_TOKEN: ${BEARER_TOKEN}
-      CLIENT_URL: ${CLIENT_URL}
-      CLIENT_SECRET: ${CLIENT_SECRET}
-      REQUEST_URL: ${REQUEST_URL}
-      ACCESS_TOKEN: ${ACCESS_TOKEN}
-      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
-      APP_ENV: ${APP_ENV}
-      DATABASE_URL: ${DATABASE_URL}
-      SQLX_OFFLINE: ${SQLX_OFFLINE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_PORT: ${DB_PORT}
-      DB_HOST: ${DB_HOST}
-      DB_NAME: ${DB_NAME}
-      APP_PORT: ${APP_PORT}
-      REDIS_URI: ${REDIS_URI}
+      bot__app__state_code: ${STATE_CODE}
+      bot__app__base_url: ${BASE_URL}
+      bot__app__response_type: ${RESPONSE_TYPE}
+      bot__app__app_address: ${APP_ADDRESS}
+      bot__app__app_env: ${APP_env}
+      bot__app__api_key: ${API_KEY}
+      bot__app__api_key_secret: ${API_KEY_SECRET}
+      bot__app__bearer_token: ${BEARER_TOKEN}
+      bot__app__callback_url: ${CALLBACK_URL}
+      bot__app__client_url: ${CLIENT_URL}
+      bot__app__client_secret: ${CLIENT_SECRET}
+      bot__app__request_url: ${REQUEST_URL}
+      bot__app__access_token: ${ACCESS_TOKEN}
+      bot__app__access_token_secret: ${ACCESS_TOKEN_SECRET}
+      bot__db__pasword: ${DB_PASSWORD}
+      bot__db__username`: ${DB_USERNAME}
+      bot__db__port: ${DB_PORT}
+      bot__db__host: ${DB_HOST}
+      bot__db__database_name: ${DB_NAME}
+      bot__redis_uri: ${REDIS_URI}
 volumes:
   pgdata:
   static_volume:

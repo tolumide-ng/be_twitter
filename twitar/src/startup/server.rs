@@ -74,12 +74,14 @@ impl AppState {
 pub async fn server() {
     dotenv().ok();
     let app_config = config::get_configuration();
-    if let Ok(config)  = app_config {
-        println!("THE OBTAINED SETTINGS BECAUSE WE FOUND SOMETHING USEFUL")
-    }
 
-    if let Err(e) = app_config {
-        println!("THERE'S A LOT OF THINGS WRONG BUT FIRST LET'S START HERE!!!!!!!!!!!!!!!!!!!!!! {:#?} ", e);
+    match app_config {
+        Ok(config) => {
+            println!("THE OBTAINED SETTINGS BECAUSE WE FOUND SOMETHING USEFUL {:#?}", config);
+        }
+        Err(e) => {
+            println!("THERE'S A LOT OF THINGS WRONG BUT FIRST LET'S START HERE!!!!!!!!!!!!!!!!!!!!!! {:#?} ", e);
+        }
     }
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     let https = HttpsConnector::new();
