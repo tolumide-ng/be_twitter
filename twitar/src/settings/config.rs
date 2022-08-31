@@ -1,3 +1,5 @@
+use config::{ConfigBuilder, builder::DefaultState, Environment};
+use dotenv::dotenv;
 use serde::{Deserialize};
 use crate::settings::{database::DbSettings, app::AppSettings, variables::AppEnv};
 
@@ -10,5 +12,22 @@ pub struct Settings {
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     dotenv().ok();
-    let app_env: AppEnv = std::env::var("APP_ENV");
+    let app_env: AppEnv = std::env::var("APP_ENV")
+        .unwrap_or_else(|_| "local".into())
+        .try_into().expect("Failed to parse APP_ENV");
+
+     let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+     let mut config_dir = base_path.join("configuration");
+
+     if app_env == AppEnv::Test {
+        config_dir = base_path.join("../configuration");
+     }
+
+     let settings =  ConfigBuilder::<DefaultState>::default()
+        .add_source(config::File::from(config_dir.join("base")).required(true))
+        .add_source(config::File::from(config_dir.join(app_env.to_string())).required(true))
+        .add_source(Environment::with_prefix("BOT").separator("__"))
+        .add_source(Environment::with_prefix(&app_env.to_string()).separator("__"));
+
+    settings.build()?.try_deserialize()
 }

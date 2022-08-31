@@ -20,7 +20,7 @@ impl TryFrom<String> for AppEnv {
     type Error = String;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
-        match s.to_lowercaSe().as_str() {
+        match s.to_lowercase().as_str() {
             "production" => Ok(Self::Production),
             "staging" => Ok(Self::Staging),
             "test" => Ok(Self::Test),

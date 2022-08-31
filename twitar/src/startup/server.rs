@@ -15,6 +15,7 @@ use crate::configurations::db_settings::DatabaseSettings;
 use crate::helpers::request::HyperClient;
 use crate::routes::server::Routes;
 use crate::configurations::variables::SettingsVars;
+use crate::settings::config;
 
 // use super::timeout::TimeoutLayer;
 
@@ -72,6 +73,14 @@ impl AppState {
 
 pub async fn server() {
     dotenv().ok();
+    let app_config = config::get_configuration();
+    if let Ok(config)  = app_config {
+        println!("THE OBTAINED SETTINGS BECAUSE WE FOUND SOMETHING USEFUL")
+    }
+
+    if let Err(e) = app_config {
+        println!("THERE'S A LOT OF THINGS WRONG BUT FIRST LET'S START HERE!!!!!!!!!!!!!!!!!!!!!! {:#?} ", e);
+    }
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     let https = HttpsConnector::new();
     let hyper_pool = Client::builder().build::<_, hyper::Body>(https);

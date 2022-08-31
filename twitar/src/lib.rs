@@ -7,3 +7,4 @@ pub mod middlewares;
 pub mod interceptors;
 pub mod configurations;
 pub mod base_repository;
+pub mod settings;

@@ -1,1 +1,1 @@
-CREATE DATABASE "play_twitar"
+CREATE DATABASE "play_bot"
