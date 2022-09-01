@@ -13,7 +13,6 @@ pub struct DbSettings {
 
 impl DbSettings {
     pub fn without_db(&self) -> PgConnectOptions {
-        println!("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: {:#?}", self);
         let ssl_mode = if self.require_ssl {
             PgSslMode::Require
         } else {

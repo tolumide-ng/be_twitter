@@ -9,7 +9,7 @@ use crate::{
     middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{DB, V2User}, errors::response::TError
 };
 
-use crate::helpers::db::{TweetType, AllTweetIds, TweetIds};
+use crate::helpers::db_helper::db::{TweetType, AllTweetIds, TweetIds};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum TimelineBody {

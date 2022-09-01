@@ -1,8 +1,9 @@
 use anyhow::Context;
 use sqlx::{Pool, Postgres, Transaction};
 use uuid::Uuid;
-
-use crate::{helpers::{db::{AllTweetIds, TweetType, TweetIds}, response::TResult, commons::UserId}, errors::response::TError};
+use crate::helpers::db_helper::db::{AllTweetIds, TweetIds, TweetType};
+use crate::helpers::{response::TResult, commons::UserId};
+use crate::errors::response::TError;
 
 #[derive(Debug)]
 pub struct DB;
@@ -80,13 +81,13 @@ impl DB {
 
         Ok(())
     }
-
+    
     async fn save_ids<'a>(transaction: &mut Transaction<'_, Postgres>, ids: &TweetIds<'a>, user_id: Uuid, tweet_type: TweetType) -> TResult<()>{
         for id_vec in ids {
             let the_ids: Vec<&str> = id_vec.iter().map( |x| {x.as_str()}).collect();
             sqlx::query(r#"INSERT INTO play_tweets (user_id, tweet_type, tweet_ids) VALUES ($1, $2, $3)"#)
                 .bind(user_id)
-                .bind(tweet_type)
+                .bind(tweet_type.to_string())
                 .bind(the_ids)
                 .execute(&mut *transaction).await?;
         }

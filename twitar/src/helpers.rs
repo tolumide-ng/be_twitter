@@ -6,4 +6,4 @@ pub mod request;
 pub mod keyval;
 pub mod signature;
 pub mod commons;
-pub mod db;
+pub mod db_helper;
