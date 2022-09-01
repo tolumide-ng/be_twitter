@@ -1,8 +1,8 @@
 use anyhow::Context;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Error::RowNotFound, Pool, Postgres, Transaction};
 use uuid::Uuid;
 use crate::helpers::db_helper::db::{AllTweetIds, TweetIds, TweetType};
-use crate::helpers::{response::TResult, commons::UserId};
+use crate::helpers::{response::TResult};
 use crate::errors::response::TError;
 
 #[derive(Debug)]
@@ -41,7 +41,7 @@ impl DB {
         let user = sqlx::query!(r#"INSERT INTO auth_two (user_id) VALUES ($1) RETURNING user_id"#, user_id).fetch_one(pool).await;
 
         if let Err(e) = user {
-            // 
+            println!("THE EXPERIENCED ERROR {:#?}", e);
         }
         // 
     }
@@ -51,7 +51,7 @@ impl DB {
             r#"INSERT INTO auth_one (user_id) VALUES ($1) RETURNING user_id"#, user_id)
             .fetch_one(pool).await;
 
-        if let Err(e) = user {
+        if let Err(_e) = user {
             // 
         }
         // 
@@ -81,7 +81,7 @@ impl DB {
 
         Ok(())
     }
-    
+
     async fn save_ids<'a>(transaction: &mut Transaction<'_, Postgres>, ids: &TweetIds<'a>, user_id: Uuid, tweet_type: TweetType) -> TResult<()>{
         for id_vec in ids {
             let the_ids: Vec<&str> = id_vec.iter().map( |x| {x.as_str()}).collect();

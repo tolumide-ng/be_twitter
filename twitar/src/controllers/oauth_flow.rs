@@ -12,8 +12,8 @@ use crate::{
 
 
 pub async fn request_token(app_state: AppState) -> TResult<ApiBody> {
-    let AppState {redis, hyper, db_pool, env_vars, ..} = app_state;
-    let mut con = redis.get_async_connection().await?;
+    let AppState {hyper, db_pool, env_vars, ..} = app_state;
+    // let mut con = redis.get_async_connection().await?;
     let SettingsVars{api_key, api_key_secret, callback_url, twitter_url, ..} = env_vars;
 
     // println!("THE CONTENT {:#?}", user);

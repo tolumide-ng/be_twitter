@@ -1,8 +1,4 @@
-use dotenv::dotenv;
 use serde::Deserialize;
-use std::env;
-
-
 
 #[derive(Debug, Clone, Deserialize, derive_more::Display, PartialEq)]
 pub enum AppEnv {

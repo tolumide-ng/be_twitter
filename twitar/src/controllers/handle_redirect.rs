@@ -6,11 +6,11 @@ use crate::{helpers::{
     response::{TResult, ApiBody, make_request, ResponseBuilder}, 
     request::{HyperClient}, keyval::KeyVal, commons::GrantType}, 
     configurations::variables::SettingsVars, errors::response::{TError}, middlewares::request_builder::{RequestBuilder, AuthType}, 
-    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::{AppState, CurrentUser}, base_repository::db::{V2User, DB, V1User}
+    interceptors::handle_request::{Interceptor, V2TokensType}, startup::server::{AppState}, base_repository::db::{V2User, DB, V1User}
 };
 
 
-async fn access_token(hyper_client: HyperClient, pool: &Pool<Postgres>, user: &V2User, auth_code: String) -> Result<(), TError> {
+async fn access_token(hyper_client: HyperClient, pool: &Pool<Postgres>, _user: &V2User, auth_code: String) -> Result<(), TError> {
     let SettingsVars{client_id, callback_url, client_secret, twitter_url, ..} = SettingsVars::new();
     // let V2User {pkce, user_id, ..} = user.v2_user;
     let user = DB::v2_user(&pool, Uuid::parse_str("1b97475c-4ba1-4ccf-8a62-35baf9ff1075")?).await?;
@@ -48,7 +48,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
     let SettingsVars{state, api_key, twitter_url, ..} = env_vars;
 
     
-    let mut conn = redis.get_async_connection().await?;
+    // let mut conn = redis.get_async_connection().await?;
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
     let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);

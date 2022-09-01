@@ -6,7 +6,7 @@ use tokio;
 
 use crate::{
     helpers::{response::{TResult, ApiBody, ResponseBuilder, make_request, TwitterResponseData}}, 
-    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{DB, V2User}, errors::response::TError
+    middlewares::request_builder::{RequestBuilder, AuthType}, interceptors::handle_request::Interceptor, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{DB, V2User}
 };
 
 use crate::helpers::db_helper::db::{TweetType, AllTweetIds, TweetIds};
