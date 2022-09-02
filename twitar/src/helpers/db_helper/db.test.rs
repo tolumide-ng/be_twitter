@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod test_db_helper {
-    use std::fmt::format;
 
     use crate::helpers::db_helper::{TweetType, AllTweetIds};
 
@@ -16,15 +15,6 @@ mod test_db_helper {
         assert_eq!(TweetType::Rts.to_string(), "rts");
         assert_eq!(TweetType::Tweets.to_string(), "tweets");
         assert_eq!(TweetType::Likes.to_string(), "likes");
-    }
-
-    fn string_vec<'a>(value: &Vec<&'a String>) -> Vec<String> {
-        let mut new_val: Vec<String> = vec![];
-        value.clone().iter().for_each(|x| {
-            // let new_x = x.to_string();
-            new_val.push(x.to_string())
-        });
-        new_val
     }
 
     #[test]
