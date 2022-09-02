@@ -46,6 +46,10 @@ play_prod:
 play_test:
 	docker compose run --rm web cargo test
 
+.PHONY: Run test locally in watch mode (docker compose in not up)
+play_test_watch:
+	docker compose run web cargo watch -x test -p twitar
+
 .PHONY: Stop all running containers
 play_down:
 	docker compose down

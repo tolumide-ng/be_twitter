@@ -1,7 +1,7 @@
 use anyhow::Context;
 use sqlx::{Error::RowNotFound, Pool, Postgres, Transaction};
 use uuid::Uuid;
-use crate::helpers::db_helper::db::{AllTweetIds, TweetIds, TweetType};
+use crate::helpers::db_helper::{AllTweetIds, TweetIds, TweetType};
 use crate::helpers::{response::TResult};
 use crate::errors::response::TError;
 

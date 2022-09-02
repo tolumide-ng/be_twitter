@@ -13,7 +13,7 @@ use crate::{
         }, keypair::KeyPair
     }, middlewares::request_builder::{RequestBuilder, AuthType}, configurations::variables::SettingsVars, startup::server::AppState, base_repository::db::{V2User, V1User}
 };
-use crate::helpers::db_helper::db::{TweetType};
+use crate::helpers::db_helper::{TweetType};
 
 type Ids = HashMap<String, Vec<String>>;
 
