@@ -1,18 +1,3 @@
-#[derive(Debug, Clone)]
-pub struct KeyPair {
-    pub key: String,
-    pub secret: String,
-}
+mod keypair;
 
-impl KeyPair {
-    /// Creates KeyPair with the given key and secret.
-    pub fn new(key: String, secret: String) -> KeyPair {
-        KeyPair { key: key.into(), secret: secret.into() }
-    }
-
-    // Create an empty KeyPair
-    pub fn empty() -> KeyPair {
-        KeyPair { key: "".into(), secret: "".into() }
-    }
-}
-
+pub use keypair::KeyPair;
