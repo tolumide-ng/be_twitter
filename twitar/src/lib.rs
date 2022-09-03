@@ -8,3 +8,6 @@ pub mod interceptors;
 pub mod configurations;
 pub mod base_repository;
 pub mod settings;
+
+// #[cfg(feature="test")]
+// pub mod stubs;
