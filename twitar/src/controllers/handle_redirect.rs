@@ -51,7 +51,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
     // let mut conn = redis.get_async_connection().await?;
     
     let query_params = KeyVal::query_params_to_keyval(req.uri())?;
-    let is_v1_callback = query_params.verify_present(vec!["oauth_token".into(), "oauth_verifier".into()]);
+    let is_v1_callback = query_params.every(vec!["oauth_token".into(), "oauth_verifier".into()]);
     
     match is_v1_callback {
         Some(k) => {
@@ -97,7 +97,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
         }
         None => {
             // maybe it is a v2 callback
-            let is_v2_callback = query_params.verify_present(vec!["code".into(), "state".into()]);
+            let is_v2_callback = query_params.every(vec!["code".into(), "state".into()]);
 
             if let Some(dict) = is_v2_callback {
                 if query_params.validate("state".into(), state) {
@@ -110,7 +110,7 @@ pub async fn handle_redirect(app_state: AppState) -> TResult<ApiBody> {
         }
     }
 
-    if query_params.verify_present(vec!["denied".into()]).is_some() {
+    if query_params.every(vec!["denied".into()]).is_some() {
         return ResponseBuilder::new("Unauthorized".into(), Some("Permission denied"), StatusCode::UNAUTHORIZED.as_u16()).reply()
     }
 
