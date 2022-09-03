@@ -12,6 +12,9 @@ path = "src/lib.rs"
 name = "twitar"
 path = "src/main.rs"
 
+[features]
+test = []
+
 [dependencies]
 anyhow = "1.0.53"
 base64 = "0.13.0"
@@ -53,3 +56,8 @@ features = [
     "migrate",
     "offline"
 ]
+
+
+[dev-dependencies]
+wiremock="0.5.14"
+# httpmock="0.6.6"
