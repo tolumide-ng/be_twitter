@@ -1,7 +1,8 @@
 use uuid::Uuid;
 use std::env;
 
-use crate::twitar::settings::config::{get_configuration, Settings};
+use auth::settings::twitar::{`, Settings};
+// use crate::twitar::settings::config::{get_configuration, Settings};
 
 
 fn get_test_config() -> Settings {
@@ -13,6 +14,7 @@ fn get_test_config() -> Settings {
         app_config.db.database_name = db_name;
 
         app_config
-    }
+    };
+
     return config;
 }
